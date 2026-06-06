@@ -1,0 +1,11 @@
+{
+  "name": "eac-solutions-platform",
+  "version": "1.0.0",
+  "description": "Enterprise Platform for EAC Solutions",
+  "scripts": {
+    "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "dev:frontend": "npm.cmd run dev --prefix frontend",
+    "dev:backend": "node backend/server.js",
+    "build:frontend": "npm.cmd run build --prefix frontend"
+  }
+}
