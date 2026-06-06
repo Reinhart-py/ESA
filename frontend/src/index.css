@@ -7,28 +7,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-off-white);
+  background: var(--bg-color);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 25, 44, 0.15);
+  background: rgba(0, 168, 150, 0.2);
   border-radius: var(--border-radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 25, 44, 0.3);
-}
-
-/* Premium Card Style */
-.premium-card {
-  background: var(--bg-card);
-  border: 1px solid rgba(15, 25, 44, 0.06);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: var(--spacing-lg);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-}
-.premium-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: rgba(0, 168, 150, 0.4);
 }
 
 /* Premium Buttons */
@@ -45,29 +31,29 @@
 }
 .btn-primary {
   background: var(--primary-navy);
-  color: var(--text-light);
+  color: #fff;
 }
 .btn-primary:hover {
   background: var(--primary-navy-light);
 }
 .btn-teal {
   background: var(--accent-teal);
-  color: var(--text-light);
+  color: #fff;
 }
 .btn-teal:hover {
   background: var(--accent-teal-light);
 }
 .btn-secondary {
   background: transparent;
-  color: var(--primary-navy);
-  border: 1px solid rgba(15, 25, 44, 0.15);
+  color: var(--text-primary);
+  border: 1px solid var(--card-border);
 }
 .btn-secondary:hover {
-  background: rgba(15, 25, 44, 0.03);
+  background: rgba(255, 255, 255, 0.05);
 }
 .btn-text {
   background: transparent;
-  color: var(--accent-teal);
+  color: var(--accent-teal-light);
   padding: 0.25rem 0.5rem;
 }
 .btn-text:hover {
@@ -105,8 +91,9 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: var(--border-radius-sm);
-  border: 1px solid rgba(15, 25, 44, 0.15);
-  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-primary);
   font-family: inherit;
   font-size: 0.9rem;
   transition: border-color var(--transition-fast);
@@ -118,10 +105,10 @@
 
 /* Grid & Utilities */
 .text-muted {
-  color: var(--text-muted);
+  color: var(--text-sec);
 }
 .text-teal {
-  color: var(--accent-teal);
+  color: var(--accent-teal-light);
 }
 .font-semibold {
   font-weight: 600;

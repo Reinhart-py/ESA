@@ -19,6 +19,7 @@ const initialClients = [
 
 export const AppProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(() => localStorage.getItem('eac_role') || 'guest');
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('eac_theme') || 'light');
   
   const [clients, setClients] = useState(initialClients);
   const [professionals] = useState(initialProfessionals);
@@ -67,12 +68,21 @@ export const AppProvider = ({ children }) => {
   }, [userRole]);
 
   useEffect(() => {
+    localStorage.setItem('eac_theme', themeMode);
+    document.documentElement.setAttribute('data-theme', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
     localStorage.setItem('eac_bookings', JSON.stringify(bookings));
   }, [bookings]);
 
   useEffect(() => {
     syncState();
   }, []);
+
+  const toggleTheme = () => {
+    setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   // API Call Helpers
   const createFolder = async (name, parentId = null, clientId = 'c1') => {
@@ -89,15 +99,12 @@ export const AppProvider = ({ children }) => {
     } catch (e) {
       console.error(e);
     }
-    
-    // Fallback context implementation
     const newFolder = { id: 'f_' + Date.now(), name, parentId, clientId };
     setFolders(prev => [...prev, newFolder]);
   };
 
   const uploadFile = async (name, size, folderId, category = 'General', clientId = 'c1') => {
     try {
-      // 1. Get pre-signed location key
       const presignRes = await fetch(`${API_BASE}/documents/upload-presign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,8 +113,6 @@ export const AppProvider = ({ children }) => {
       
       if (presignRes.ok) {
         const descriptor = await presignRes.json();
-        
-        // 2. Upload file to drive / storage mock
         const uploadRes = await fetch(`${API_BASE}/documents/upload-drive-mock`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -115,7 +120,6 @@ export const AppProvider = ({ children }) => {
             name, size, folderId, category, clientId, fileKey: descriptor.fileKey
           })
         });
-
         if (uploadRes.ok) {
           syncState();
           return;
@@ -125,7 +129,6 @@ export const AppProvider = ({ children }) => {
       console.error("Upload process error", e);
     }
 
-    // Fallback
     const newFile = {
       id: 'doc_' + Date.now(),
       name, folderId, clientId, size,
@@ -224,6 +227,8 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       userRole,
       setUserRole,
+      themeMode,
+      toggleTheme,
       clients,
       setClients,
       professionals,
