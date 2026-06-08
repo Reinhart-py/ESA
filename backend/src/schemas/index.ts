@@ -44,3 +44,18 @@ export const createTicketSchema = z.object({
     priority: z.enum(['Low', 'Medium', 'High'])
   })
 });
+
+export const createInviteSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+    role: z.string().min(1, 'Role is required')
+  })
+});
+
+export const acceptInviteSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Token is required'),
+    userId: z.string().uuid('Invalid user ID'),
+    fullName: z.string().min(2, 'Name must be at least 2 characters')
+  })
+});

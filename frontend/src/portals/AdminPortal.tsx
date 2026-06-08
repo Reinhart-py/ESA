@@ -1,7 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext.tsx';
+import { apiClient } from '../api/client.ts';
 import { 
-  Building, ShieldCheck, HelpCircle, LogOut, Database, Lock
+  Building, ShieldCheck, HelpCircle, LogOut, Database, Lock, Eye, EyeOff
 } from 'lucide-react';
 
 export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
@@ -9,10 +10,39 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   if (!context) return null;
 
   const { 
-    tickets, auditLogs, invoices, files
+    tickets, auditLogs, invoices, files, syncState
   } = context;
 
   const [activeSubTab, setActiveSubTab] = useState('metrics');
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
+
+  const fetchTenants = async () => {
+    try {
+      const res = await apiClient.get('/tenants');
+      setTenants(res.data || []);
+    } catch (err) {
+      console.error('Error fetching tenants list:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'metrics') {
+      fetchTenants();
+    }
+  }, [activeSubTab]);
+
+  const handleImpersonate = async (tenantId: string) => {
+    if (tenantId) {
+      localStorage.setItem('impersonate_tenant_id', tenantId);
+      setImpersonatingId(tenantId);
+    } else {
+      localStorage.removeItem('impersonate_tenant_id');
+      setImpersonatingId('');
+    }
+    // Sync context state after context header changes
+    await syncState();
+  };
 
   const totalStorage = files.reduce((acc, f) => acc + f.size_bytes, 0);
 
@@ -101,6 +131,57 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
                   <span style={{ color: '#10b981', fontWeight: 600 }}>Operational</span>
                 </div>
               </div>
+            </div>
+
+            {/* Tenants Directory & Impersonation */}
+            <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #cbd5e1', marginTop: '2rem' }}>
+              <h3 style={{ marginBottom: '1.5rem' }}>Active Tenants Directory & Impersonation</h3>
+              {impersonatingId && (
+                <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', color: '#B45309', padding: '0.75rem 1rem', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <span>Currently impersonating Tenant ID: <strong>{impersonatingId}</strong></span>
+                  <button 
+                    onClick={() => handleImpersonate('')} 
+                    style={{ background: '#F59E0B', color: '#fff', border: 'none', padding: '0.25rem 0.75rem', borderRadius: 4, cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    <EyeOff size={14} /> Stop Impersonating
+                  </button>
+                </div>
+              )}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#6B7280' }}>
+                    <th style={{ padding: '0.5rem' }}>Tenant Name</th>
+                    <th>Business Type</th>
+                    <th>Compliance Score</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenants.map(t => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '0.5rem', fontWeight: 600 }}>{t.name}</td>
+                      <td>{t.business_type}</td>
+                      <td>
+                        <span style={{ color: t.compliance_score >= 80 ? '#10B981' : '#EF4444', fontWeight: 'bold' }}>
+                          {t.compliance_score}%
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {impersonatingId === t.id ? (
+                          <span style={{ color: '#10B981', fontSize: '0.85rem', fontWeight: 600 }}>Impersonating</span>
+                        ) : (
+                          <button 
+                            onClick={() => handleImpersonate(t.id)}
+                            style={{ padding: '0.25rem 0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
+                            <Eye size={14} /> Impersonate
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

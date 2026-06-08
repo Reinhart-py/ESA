@@ -41,11 +41,16 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       return res.status(403).json({ error: `User account is ${profile.status}` });
     }
 
+    let tenantId = profile.tenant_id;
+    if ((profile.role === 'super_admin' || profile.role === 'admin') && req.headers['x-impersonate-tenant-id']) {
+      tenantId = req.headers['x-impersonate-tenant-id'] as string;
+    }
+
     req.user = {
       id: user.id,
       email: user.email || '',
       role: profile.role,
-      tenant_id: profile.tenant_id
+      tenant_id: tenantId
     };
 
     next();

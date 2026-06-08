@@ -51,5 +51,44 @@ export const EmailService = {
         BODY: ${obligationTitle} due ${dueDate}`);
       return true;
     }
+  },
+
+  sendInviteEmail: async (toEmail: string, inviteLink: string): Promise<boolean> => {
+    const fromAddress = process.env.EMAIL_FROM || 'notifications@eacsolutions.com';
+    const subject = `You are invited to join EAC Solutions`;
+    const html = `
+      <div style="font-family: sans-serif; padding: 20px; color: #1F2937;">
+        <h2 style="color: #0B192C;">Welcome to EAC Solutions</h2>
+        <p>You have been invited to collaborate on a tenant workspace in EAC Solutions.</p>
+        <p>Please click the link below to accept your invitation and complete your profile setup:</p>
+        <div style="margin: 30px 0;">
+          <a href="${inviteLink}" style="background: #00A896; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Accept Invitation</a>
+        </div>
+        <p>If you did not expect this invite, you can safely ignore this email.</p>
+        <br/>
+        <p>Best regards,<br/>EAC Solutions Onboarding Desk</p>
+      </div>
+    `;
+
+    if (resend) {
+      console.log(`[Resend] Dispatching invite email to ${toEmail}`);
+      try {
+        await resend.emails.send({
+          from: fromAddress,
+          to: toEmail,
+          subject: subject,
+          html: html,
+        });
+        return true;
+      } catch (err) {
+        console.error('Resend delivery failed:', err);
+        return false;
+      }
+    } else {
+      console.log(`[Email Service Mock] (Resend Not Configured) Send invite email:
+        TO: ${toEmail}
+        LINK: ${inviteLink}`);
+      return true;
+    }
   }
 };

@@ -7,7 +7,7 @@ import { apiClient } from '../api/client.ts';
 import { 
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
-  Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon
+  Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users
 } from 'lucide-react';
 
 const ticketSchema = z.object({
@@ -23,6 +23,11 @@ const folderSchema = z.object({
 
 const messageSchema = z.object({
   content: z.string().min(1, 'Message content cannot be empty'),
+});
+
+const inviteUserSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  role: z.string().min(1, 'Role is required')
 });
 
 export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
@@ -54,6 +59,40 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
     resolver: zodResolver(messageSchema),
     defaultValues: { content: '' }
   });
+
+  const { register: registerInvite, handleSubmit: handleSubmitInvite, reset: resetInvite, formState: { errors: inviteErrors } } = useForm({
+    resolver: zodResolver(inviteUserSchema),
+    defaultValues: { email: '', role: 'client_staff' }
+  });
+
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [inviteSuccessMsg, setInviteSuccessMsg] = useState('');
+
+  const fetchTeamMembers = async () => {
+    try {
+      const res = await apiClient.get('/users');
+      setTeamMembers(res.data || []);
+    } catch (err) {
+      console.error('Error fetching team members:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeSubTab === 'team') {
+      fetchTeamMembers();
+    }
+  }, [activeSubTab]);
+
+  const handleSendInviteSubmit = async (data: { email: string; role: string }) => {
+    setInviteSuccessMsg('');
+    try {
+      await apiClient.post('/auth/invite', { email: data.email, role: data.role });
+      setInviteSuccessMsg(`Successfully sent invite to ${data.email}!`);
+      resetInvite();
+    } catch (err: any) {
+      console.error('Error sending invitation:', err);
+    }
+  };
 
   const [uploadName, setUploadName] = useState('');
   const [uploadCategory, setUploadCategory] = useState('Taxation');
@@ -162,6 +201,13 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             onClick={() => setActiveSubTab('billing')}
           >
             <CreditCard size={18} /> Invoices & Plan
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'team' ? '#fff' : '#9CA3AF', background: activeSubTab === 'team' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('team')}
+          >
+            <Users size={18} /> Team & Permissions
           </button>
         </nav>
 
@@ -425,7 +471,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
               </thead>
               <tbody>
                 {invoices.map(inv => (
-                  <tr key={inv.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <tr key={inv.id} style={{ borderBottom: '1px solid #334155' }}>
                     <td style={{ padding: '0.5rem' }}>{inv.due_date}</td>
                     <td>${(inv.amount_cents / 100).toFixed(2)}</td>
                     <td>{inv.status}</td>
@@ -433,6 +479,82 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Team & Permissions */}
+        {activeSubTab === 'team' && (
+          <div>
+            <h2>Team & Permissions</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', marginTop: '1.5rem' }}>
+              <div>
+                <h3>Active Workspace Members</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: '#1e293b', borderRadius: '8px', overflow: 'hidden' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #334155', textAlign: 'left', color: '#94a3b8', fontSize: '0.85rem' }}>
+                      <th style={{ padding: '0.75rem 1rem' }}>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamMembers.map(m => (
+                      <tr key={m.id} style={{ borderBottom: '1px solid #334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '0.75rem 1rem' }}>{m.full_name}</td>
+                        <td>{m.email}</td>
+                        <td>
+                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: '#334155' }}>
+                            {m.role}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ color: m.status === 'active' ? '#10b981' : '#f59e0b', fontSize: '0.85rem' }}>
+                            ● {m.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', height: 'fit-content' }}>
+                <h3>Invite Member</h3>
+                {inviteSuccessMsg && (
+                  <div style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px', padding: '0.5rem 0.75rem', color: '#34d399', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                    {inviteSuccessMsg}
+                  </div>
+                )}
+                <form onSubmit={handleSubmitInvite(handleSendInviteSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Email Address</label>
+                    <input 
+                      type="email" 
+                      {...registerInvite('email')}
+                      placeholder="colleague@company.com"
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: inviteErrors.email ? '1px solid #ef4444' : '1px solid #334155', background: '#0f172a', color: '#fff', outline: 'none' }}
+                    />
+                    {inviteErrors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{inviteErrors.email.message}</span>}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Role</label>
+                    <select 
+                      {...registerInvite('role')}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', outline: 'none' }}
+                    >
+                      <option value="client_manager">Client Manager</option>
+                      <option value="client_staff">Client Staff</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" style={{ padding: '0.5rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
+                    Send Invitation
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         )}
       </main>

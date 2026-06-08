@@ -21,9 +21,10 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
+import { InviteService } from './services/inviteService.js';
 
 dotenv.config();
 
@@ -106,6 +107,38 @@ app.post('/api/auth/register', validateRequest(registerSchema), async (req, res)
     // 2. Create profile map in public.users via UserRepository
     // Note: auth account itself is created by client SDK directly before profile sync
     res.status(201).json({ success: true, tenant, message: 'Tenant space generated successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/invite', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(createInviteSchema), async (req: AuthenticatedRequest, res) => {
+  const { email, role } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const invite = await InviteService.sendInvitation(tenantId, email, role);
+    await logActivity(req, 'Auth', `Sent team invitation to ${email}`, { role });
+    res.status(201).json(invite);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/auth/invite/validate', async (req, res) => {
+  const token = req.query.token as string;
+  try {
+    const invite = await InviteService.validateInvite(token);
+    res.json(invite);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/invite/accept', validateRequest(acceptInviteSchema), async (req, res) => {
+  const { token, userId, fullName } = req.body;
+  try {
+    const profile = await InviteService.acceptInvitation(token, userId, fullName);
+    res.status(200).json({ success: true, profile });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

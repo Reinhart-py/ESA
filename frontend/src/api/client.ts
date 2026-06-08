@@ -16,6 +16,10 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const impersonateTenantId = localStorage.getItem('impersonate_tenant_id');
+    if (impersonateTenantId && config.headers) {
+      config.headers['x-impersonate-tenant-id'] = impersonateTenantId;
+    }
     return config;
   },
   (error) => {

@@ -357,3 +357,52 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+
+-- --- PHASE 1 COMPLIANCE OS TABLES ---
+
+-- 1. Company Profiles
+CREATE TABLE company_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    registration_number VARCHAR(100),
+    tax_id VARCHAR(100),
+    legal_address TEXT,
+    incorporation_date DATE,
+    country VARCHAR(100) DEFAULT 'US',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. User/Member Invitations
+CREATE TABLE invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'expired')),
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. KYC Verification logs
+CREATE TABLE kyc_verifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    document_type VARCHAR(100) NOT NULL,
+    document_status VARCHAR(50) DEFAULT 'pending' CHECK (document_status IN ('pending', 'verified', 'rejected')),
+    verified_at TIMESTAMP WITH TIME ZONE,
+    verified_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Row Level Security policies
+ALTER TABLE company_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kyc_verifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY company_profile_all ON company_profiles FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY invitations_all ON invitations FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY kyc_all ON kyc_verifications FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
