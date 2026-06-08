@@ -8,11 +8,13 @@ import {
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
   Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users,
-  BookOpen
+  BookOpen, Terminal
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 import VaultProPanel from './VaultProPanel.tsx';
+import DashboardAnalytics from './DashboardAnalytics.tsx';
+import DeveloperSettings from './DeveloperSettings.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -220,6 +222,13 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
           >
             <Users size={18} /> Team & Permissions
           </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'developer' ? '#fff' : '#9CA3AF', background: activeSubTab === 'developer' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('developer')}
+          >
+            <Terminal size={18} /> Developer Settings
+          </button>
         </nav>
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -247,16 +256,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-              <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px' }}>
-                <h3>Active Obligations</h3>
-                <p style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{obligations.length}</p>
-              </div>
-              <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px' }}>
-                <h3>Support Tickets</h3>
-                <p style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{tickets.length}</p>
-              </div>
-            </div>
+            <DashboardAnalytics />
           </div>
         )}
 
@@ -505,6 +505,9 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
               </div>
             </div>
           </div>
+        )}
+        {activeSubTab === 'developer' && (
+          <DeveloperSettings />
         )}
       </main>
     </div>

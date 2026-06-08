@@ -30,10 +30,38 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
   if (!context) return null;
 
   const { 
-    obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask
+    obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask, syncState
   } = context;
 
   const [activeSubTab, setActiveSubTab] = useState('portfolio');
+  const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
+  const [tenants, setTenants] = useState<any[]>([]);
+
+  const fetchTenants = async () => {
+    try {
+      const res = await apiClient.get('/tenants');
+      setTenants(res.data || []);
+    } catch (err) {
+      console.error('Error fetching tenants list:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    if (currentUser?.role === 'senior_accountant') {
+      fetchTenants();
+    }
+  }, [currentUser]);
+
+  const handleImpersonate = async (tenantId: string) => {
+    if (tenantId) {
+      localStorage.setItem('impersonate_tenant_id', tenantId);
+      setImpersonatingId(tenantId);
+    } else {
+      localStorage.removeItem('impersonate_tenant_id');
+      setImpersonatingId('');
+    }
+    await syncState();
+  };
 
   // React Hook Forms
   const { register: registerTask, handleSubmit: handleSubmitTask, reset: resetTask, formState: { errors: taskErrors } } = useForm({
@@ -125,6 +153,24 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
             <span style={{ fontSize: '0.75rem', color: '#00A896' }}>{currentUser?.full_name || 'Accountant Specialist'}</span>
           </div>
         </div>
+
+        {currentUser?.role === 'senior_accountant' && (
+          <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <ShieldAlert size={14} style={{ color: '#00A896' }} /> Impersonate Tenant
+            </label>
+            <select
+              value={impersonatingId}
+              onChange={(e) => handleImpersonate(e.target.value)}
+              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+            >
+              <option value="">-- No Impersonation --</option>
+              {tenants.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <button 

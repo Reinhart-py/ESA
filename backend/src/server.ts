@@ -21,7 +21,7 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema, createApiKeySchema, createWebhookConfigSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
@@ -32,6 +32,8 @@ import { ComplianceFilingRepository } from './repositories/complianceFilingRepos
 import { ComplianceFilingService } from './services/complianceFilingService.js';
 import { DocumentProRepository } from './repositories/documentProRepository.js';
 import { DocumentProService } from './services/documentProService.js';
+import { DeveloperRepository } from './repositories/developerRepository.js';
+import { DeveloperService } from './services/developerService.js';
 
 dotenv.config();
 
@@ -152,7 +154,7 @@ app.post('/api/auth/invite/accept', validateRequest(acceptInviteSchema), async (
 });
 
 // --- TENANTS & PORTALS ---
-app.get('/api/tenants', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+app.get('/api/tenants', requireAuth, requireRoles(['super_admin', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
   try {
     const data = await TenantRepository.getAll();
     res.json(data);
@@ -601,6 +603,117 @@ app.post('/api/compliance/submissions/:id/review', requireAuth, requireRoles(['s
     const data = await ComplianceFilingService.reviewSubmission(tenantId, submissionId, userId, action, comments);
     await logActivity(req, 'Compliance', `Reviewed filing submission: ${action}`, { submissionId, action });
     res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ENTERPRISE DEVELOPER CONFIGS & WEBHOOKS ---
+app.get('/api/developer/keys', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.getApiKeysByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/developer/keys', requireAuth, validateRequest(createApiKeySchema), async (req: AuthenticatedRequest, res) => {
+  const { keyName, expiresInDays } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperService.generateApiKey(tenantId, keyName, expiresInDays);
+    await logActivity(req, 'Developer', `Created developer API key: ${keyName}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/developer/keys/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const keyId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.deleteApiKey(keyId, tenantId);
+    await logActivity(req, 'Developer', `Revoked developer API key`, { keyId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/developer/webhooks', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.getWebhookConfigsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/developer/webhooks', requireAuth, validateRequest(createWebhookConfigSchema), async (req: AuthenticatedRequest, res) => {
+  const { url, secret } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.createWebhookConfig({
+      tenant_id: tenantId,
+      url,
+      secret
+    });
+    await logActivity(req, 'Developer', `Added webhook endpoint: ${url}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/developer/webhooks/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const hookId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.deleteWebhookConfig(hookId, tenantId);
+    await logActivity(req, 'Developer', `Deleted webhook configuration`, { hookId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ENTERPRISE ANALYTICS & METRICS ---
+app.get('/api/analytics/metrics', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    // 1. Storage limit and used bytes
+    const tenant = await TenantRepository.getById(tenantId);
+    
+    // 2. Active obligations
+    const obligations = await ComplianceRepository.getObligationsByTenant(tenantId);
+    
+    // 3. Active tasks
+    const tasks = await TaskRepository.getTasksByTenant(tenantId);
+    const incompleteTasksCount = tasks.filter((t: any) => t.status !== 'Done').length;
+    
+    // 4. MRR Estimate from Subscription
+    const subscription = await BillingRepository.getSubscriptionByTenant(tenantId);
+    let mrrCents = 0;
+    if (subscription && subscription.status === 'active' && subscription.billing_plans) {
+      mrrCents = subscription.billing_plans.price_cents;
+    }
+
+    // 5. Recent audit logs
+    const logs = await AuditRepository.getLogsByTenant(tenantId);
+    const recentLogs = logs.slice(0, 10);
+
+    res.json({
+      storageUsedBytes: tenant?.storage_used_bytes || 0,
+      storageLimitBytes: 10 * 1024 * 1024 * 1024, // 10 GB default fallback limit
+      activeObligationsCount: obligations.length,
+      activeTasksCount: incompleteTasksCount,
+      mrrEstimateCents: mrrCents,
+      recentLogs
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

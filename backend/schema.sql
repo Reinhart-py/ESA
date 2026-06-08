@@ -538,5 +538,35 @@ CREATE POLICY secure_shares_all ON secure_shares FOR ALL USING (tenant_id = user
 -- E-sign requests isolated by tenant workspace
 CREATE POLICY esign_requests_all ON esign_requests FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
+-- 9. Webhooks Configuration
+CREATE TABLE webhooks_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    url VARCHAR(2048) NOT NULL,
+    secret VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. API Keys
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    key_name VARCHAR(255) NOT NULL,
+    key_prefix VARCHAR(16) NOT NULL,
+    hashed_key VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE webhooks_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY webhooks_config_all ON webhooks_config FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY api_keys_all ON api_keys FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+
 
 

@@ -20,4 +20,15 @@ export class TenantRepository {
     if (error) throw error;
     return data;
   }
+
+  static async getById(id: string) {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
 }

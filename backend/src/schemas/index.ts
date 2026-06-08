@@ -159,5 +159,20 @@ export const bulkDownloadSchema = z.object({
   })
 });
 
+export const createApiKeySchema = z.object({
+  body: z.object({
+    keyName: z.string().min(1, 'API key name is required'),
+    expiresInDays: z.number().int().positive().optional().default(30)
+  })
+});
+
+export const createWebhookConfigSchema = z.object({
+  body: z.object({
+    url: z.string().url('Invalid webhook URL endpoint'),
+    secret: z.string().min(8, 'HMAC signature secret must be at least 8 characters')
+  })
+});
+
+
 
 

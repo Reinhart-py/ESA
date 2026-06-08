@@ -42,7 +42,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     }
 
     let tenantId = profile.tenant_id;
-    if ((profile.role === 'super_admin' || profile.role === 'admin') && req.headers['x-impersonate-tenant-id']) {
+    if ((profile.role === 'super_admin' || profile.role === 'admin' || profile.role === 'senior_accountant') && req.headers['x-impersonate-tenant-id']) {
       tenantId = req.headers['x-impersonate-tenant-id'] as string;
     }
 
