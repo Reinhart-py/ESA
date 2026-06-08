@@ -1,10 +1,27 @@
 import React, { useState, useContext } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
   ShieldAlert, TrendingUp, X, MessageSquareText, Link
 } from 'lucide-react';
+
+const createTaskSchema = z.object({
+  title: z.string().min(1, 'Task title is required'),
+  description: z.string().optional(),
+  priority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
+});
+
+const commentSchema = z.object({
+  content: z.string().min(1, 'Comment content is required'),
+});
+
+const messageSchema = z.object({
+  content: z.string().min(1, 'Message content cannot be empty'),
+});
 
 export default function AccountantPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -15,16 +32,27 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
   } = context;
 
   const [activeSubTab, setActiveSubTab] = useState('portfolio');
-  const [chatInput, setChatInput] = useState('');
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDesc, setTaskDesc] = useState('');
-  const [taskPriority, setTaskPriority] = useState('Medium');
 
-  // Task details, comments, and dependency state
+  // React Hook Forms
+  const { register: registerTask, handleSubmit: handleSubmitTask, reset: resetTask, formState: { errors: taskErrors } } = useForm({
+    resolver: zodResolver(createTaskSchema),
+    defaultValues: { title: '', description: '', priority: 'Medium' as const }
+  });
+
+  const { register: registerComment, handleSubmit: handleSubmitComment, reset: resetComment, formState: { errors: commentErrors } } = useForm({
+    resolver: zodResolver(commentSchema),
+    defaultValues: { content: '' }
+  });
+
+  const { register: registerMessage, handleSubmit: handleSubmitMessage, reset: resetMessage, formState: { errors: messageErrors } } = useForm({
+    resolver: zodResolver(messageSchema),
+    defaultValues: { content: '' }
+  });
+
+  // Task details and dependency state
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [dependencies, setDependencies] = useState<any[]>([]);
-  const [newCommentText, setNewCommentText] = useState('');
   const [selectedDepTaskId, setSelectedDepTaskId] = useState('');
   const [depError, setDepError] = useState('');
 
@@ -43,13 +71,12 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     }
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTask || !newCommentText.trim()) return;
+  const handleAddCommentSubmit = async (data: { content: string }) => {
+    if (!selectedTask) return;
     try {
-      const res = await apiClient.post(`/tasks/${selectedTask.id}/comments`, { content: newCommentText });
+      const res = await apiClient.post(`/tasks/${selectedTask.id}/comments`, { content: data.content });
       setComments([...comments, res.data]);
-      setNewCommentText('');
+      resetComment();
     } catch (err) {
       console.error('Error adding comment:', err);
     }
@@ -71,23 +98,18 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     }
   };
 
-  const handleSendChatSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    await sendMessage(chatInput, 't1');
-    setChatInput('');
+  const handleSendChatSubmit = async (data: { content: string }) => {
+    await sendMessage(data.content, 't1');
+    resetMessage();
   };
 
   const handleUpdateStatus = async (obId: string, newStatus: string) => {
     await updateObligationStatus(obId, newStatus);
   };
 
-  const handleCreateTaskSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskTitle.trim()) return;
-    await createTask(taskTitle, taskDesc, new Date().toISOString().split('T')[0], taskPriority);
-    setTaskTitle('');
-    setTaskDesc('');
+  const handleCreateTaskSubmit = async (data: { title: string; description?: string; priority: 'Low' | 'Medium' | 'High' | 'Urgent' }) => {
+    await createTask(data.title, data.description || '', new Date().toISOString().split('T')[0], data.priority);
+    resetTask();
   };
 
   return (
@@ -254,37 +276,50 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                       )}
                     </div>
 
-                    <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input 
-                        type="text" 
-                        value={newCommentText}
-                        onChange={e => setNewCommentText(e.target.value)}
-                        placeholder="Add comment..."
-                        style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-                      />
-                      <button type="submit" style={{ padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                        Post
-                      </button>
+                    <form onSubmit={handleSubmitComment(handleAddCommentSubmit)} style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="text" 
+                          {...registerComment('content')}
+                          placeholder="Add comment..."
+                          style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: commentErrors.content ? '1px solid #ef4444' : '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                        />
+                        <button type="submit" style={{ padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                          Post
+                        </button>
+                      </div>
+                      {commentErrors.content && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{commentErrors.content.message}</span>}
                     </form>
                   </div>
                 </div>
               ) : (
                 <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', height: 'fit-content' }}>
                   <h3>Assign New Task</h3>
-                  <form onSubmit={handleCreateTaskSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <form onSubmit={handleSubmitTask(handleCreateTaskSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <input 
                       type="text" 
-                      value={taskTitle}
-                      onChange={e => setTaskTitle(e.target.value)}
+                      {...registerTask('title')}
                       placeholder="Task Title"
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: taskErrors.title ? '1px solid #ef4444' : '1px solid #cbd5e1' }}
                     />
+                    {taskErrors.title && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{taskErrors.title.message}</span>}
+                    
                     <textarea 
-                      value={taskDesc}
-                      onChange={e => setTaskDesc(e.target.value)}
+                      {...registerTask('description')}
                       placeholder="Task Description"
                       style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', minHeight: '80px' }}
                     />
+                    
+                    <select
+                      {...registerTask('priority')}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff' }}
+                    >
+                      <option value="Low">Low Priority</option>
+                      <option value="Medium">Medium Priority</option>
+                      <option value="High">High Priority</option>
+                      <option value="Urgent">Urgent Priority</option>
+                    </select>
+
                     <button type="submit" style={{ padding: '0.5rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                       Create Task
                     </button>
@@ -337,17 +372,19 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                   </div>
                 ))}
               </div>
-              <form onSubmit={handleSendChatSubmit} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <input 
-                  type="text" 
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  placeholder="Type message..." 
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                />
-                <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                  Send Chat
-                </button>
+              <form onSubmit={handleSubmitMessage(handleSendChatSubmit)} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    {...registerMessage('content')}
+                    placeholder="Type message..." 
+                    style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: messageErrors.content ? '1px solid #ef4444' : '1px solid #cbd5e1' }}
+                  />
+                  <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                    Send Chat
+                  </button>
+                </div>
+                {messageErrors.content && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{messageErrors.content.message}</span>}
               </form>
             </div>
           </div>
