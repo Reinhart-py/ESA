@@ -21,13 +21,15 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
 import { LedgerRepository } from './repositories/ledgerRepository.js';
 import { LedgerService } from './services/ledgerService.js';
 import { ExpenseRepository } from './repositories/expenseRepository.js';
+import { ComplianceFilingRepository } from './repositories/complianceFilingRepository.js';
+import { ComplianceFilingService } from './services/complianceFilingService.js';
 
 dotenv.config();
 
@@ -431,6 +433,82 @@ app.post('/api/finance/expenses/:id/receipt', requireAuth, validateRequest(linkR
   try {
     const data = await ExpenseRepository.linkReceipt(expenseId, tenantId, receiptFileId);
     await logActivity(req, 'Finance', `Linked receipt to expense`, { expenseId, receiptFileId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- REGIONAL COMPLIANCE & FILING WORKFLOWS ---
+app.get('/api/compliance/packs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const data = await ComplianceFilingRepository.getCompliancePacks();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/packs', requireAuth, requireRoles(['super_admin', 'admin']), validateRequest(createCompliancePackSchema), async (req: AuthenticatedRequest, res) => {
+  const { name, countryCode, authority, description, rules } = req.body;
+  try {
+    const data = await ComplianceFilingRepository.createCompliancePack({
+      name,
+      country_code: countryCode,
+      authority,
+      description,
+      rules
+    });
+    await logActivity(req, 'Compliance', `Created regional compliance pack: ${name}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/packs/subscribe', requireAuth, validateRequest(subscribePackSchema), async (req: AuthenticatedRequest, res) => {
+  const { packId } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ComplianceFilingService.subscribeToPack(tenantId, packId);
+    await logActivity(req, 'Compliance', `Subscribed workspace to compliance pack`, { packId });
+    res.status(200).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/submissions', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ComplianceFilingRepository.getFilingSubmissions(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/submissions/:id/submit', requireAuth, validateRequest(submitEvidenceSchema), async (req: AuthenticatedRequest, res) => {
+  const submissionId = req.params.id;
+  const { evidenceFileId, comments } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ComplianceFilingService.submitEvidence(tenantId, submissionId, evidenceFileId, comments);
+    await logActivity(req, 'Compliance', `Submitted evidence for compliance obligation`, { submissionId, evidenceFileId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/submissions/:id/review', requireAuth, requireRoles(['super_admin', 'admin', 'senior_accountant', 'accountant', 'auditor']), validateRequest(reviewSubmissionSchema), async (req: AuthenticatedRequest, res) => {
+  const submissionId = req.params.id;
+  const { action, comments } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  try {
+    const data = await ComplianceFilingService.reviewSubmission(tenantId, submissionId, userId, action, comments);
+    await logActivity(req, 'Compliance', `Reviewed filing submission: ${action}`, { submissionId, action });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

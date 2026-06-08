@@ -11,6 +11,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
+import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -327,22 +328,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
         {/* Compliance */}
         {activeSubTab === 'compliance' && (
-          <div>
-            <h2>Compliance Obligations</h2>
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {obligations.map(ob => (
-                <div key={ob.id} style={{ padding: '1rem', background: '#1e293b', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h4>{ob.title}</h4>
-                    <p>Due: {ob.due_date} | Category: {ob.type}</p>
-                  </div>
-                  <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', background: ob.status === 'Late' ? '#ef4444' : '#10b981' }}>
-                    {ob.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ComplianceFilingDashboard isAccountant={false} />
         )}
 
         {/* Communication */}

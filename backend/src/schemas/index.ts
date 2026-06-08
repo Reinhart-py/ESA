@@ -98,3 +98,39 @@ export const linkReceiptSchema = z.object({
   })
 });
 
+export const createCompliancePackSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Pack name is required'),
+    countryCode: z.string().min(2, 'Country code is required'),
+    authority: z.string().min(1, 'Tax authority name is required'),
+    description: z.string().optional(),
+    rules: z.array(z.object({
+      title: z.string().min(1, 'Obligation title is required'),
+      due_month: z.number().int().min(1).max(12),
+      due_day: z.number().int().min(1).max(31),
+      type: z.enum(['GST', 'VAT', 'TDS', 'Corporate Tax', 'Payroll Tax', 'Company Return', 'License Renewal', 'Regulatory Filing', 'Audit'])
+    })).min(1, 'At least one filing calendar rule is required')
+  })
+});
+
+export const subscribePackSchema = z.object({
+  body: z.object({
+    packId: z.string().uuid('Invalid pack ID')
+  })
+});
+
+export const submitEvidenceSchema = z.object({
+  body: z.object({
+    evidenceFileId: z.string().uuid('Invalid evidence file ID'),
+    comments: z.string().optional().nullable()
+  })
+});
+
+export const reviewSubmissionSchema = z.object({
+  body: z.object({
+    action: z.enum(['approve', 'reject']),
+    comments: z.string().optional().nullable()
+  })
+});
+
+

@@ -467,3 +467,40 @@ CREATE POLICY ledger_all ON ledger_entries FOR ALL USING (tenant_id = user_tenan
 CREATE POLICY journal_all ON journal_lines FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 CREATE POLICY expenses_all ON expenses FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
+-- 5. Compliance Packs
+CREATE TABLE compliance_packs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    country_code VARCHAR(10) NOT NULL,
+    authority VARCHAR(100) NOT NULL,
+    description TEXT,
+    rules JSONB DEFAULT '[]'::jsonb, -- e.g., [{ "title": "Corporate Tax Filing", "due_month": 3, "due_day": 15, "type": "Corporate Tax" }]
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Filing Submissions
+CREATE TABLE filing_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    obligation_id UUID NOT NULL REFERENCES compliance_obligations(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'Draft' CHECK (status IN ('Draft', 'Under Review', 'Approved', 'Rejected', 'Filed')),
+    evidence_file_id UUID REFERENCES files(id) ON DELETE SET NULL,
+    comments TEXT,
+    reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE compliance_packs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE filing_submissions ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+-- Compliance packs are read-only for all authenticated users, writable by admin/super_admin
+CREATE POLICY compliance_packs_read ON compliance_packs FOR SELECT USING (true);
+CREATE POLICY compliance_packs_all ON compliance_packs FOR ALL USING (is_admin());
+
+-- Filing submissions are segregated by tenant
+CREATE POLICY filing_submissions_all ON filing_submissions FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+

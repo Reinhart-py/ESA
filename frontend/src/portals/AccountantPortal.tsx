@@ -9,6 +9,7 @@ import {
   ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
+import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -340,32 +341,7 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
         {/* Compliance Filings */}
         {activeSubTab === 'filings' && (
-          <div>
-            <h2>Compliance Management Obligations</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem', background: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#6B7280', background: '#f8fafc' }}>
-                  <th style={{ padding: '1rem' }}>Filing Name</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right', paddingRight: '1rem' }}>Controls</th>
-                </tr>
-              </thead>
-              <tbody>
-                {obligations.map(ob => (
-                  <tr key={ob.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '1rem' }}>{ob.title}</td>
-                    <td>{ob.due_date}</td>
-                    <td>{ob.status}</td>
-                    <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
-                      <button style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => handleUpdateStatus(ob.id, 'Filed')}>Filed</button>
-                      <button style={{ padding: '0.25rem 0.5rem', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => handleUpdateStatus(ob.id, 'Needs Review')}>Review</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ComplianceFilingDashboard isAccountant={true} />
         )}
 
         {activeSubTab === 'ledger' && (
