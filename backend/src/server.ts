@@ -1,0 +1,379 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { requireAuth, requireRoles, AuthenticatedRequest } from './middleware/auth.js';
+// Services & Engines
+import { StorageService } from './services/storage.js';
+import { EmailService } from './services/email.js';
+import { ComplianceEngine } from './services/compliance.js';
+import { ReportingEngine } from './services/reports.js';
+
+// Repositories
+import { TenantRepository } from './repositories/tenantRepository.js';
+import { UserRepository } from './repositories/userRepository.js';
+import { DocumentRepository } from './repositories/documentRepository.js';
+import { ComplianceRepository } from './repositories/complianceRepository.js';
+import { TaskRepository } from './repositories/taskRepository.js';
+import { MessageRepository } from './repositories/messageRepository.js';
+import { SupportRepository } from './repositories/supportRepository.js';
+import { BillingRepository } from './repositories/billingRepository.js';
+import { AuditRepository } from './repositories/auditRepository.js';
+
+dotenv.config();
+
+// STRICT ENVIRONMENT ENFORCEMENT (P1 ARCHITECTURE GAP REMEDIATION)
+const requiredEnvVars = [
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'GOOGLE_DRIVE_REFRESH_TOKEN',
+  'GOOGLE_DRIVE_CLIENT_ID',
+  'GOOGLE_DRIVE_CLIENT_SECRET',
+  'RESEND_API_KEY'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`FATAL STARTUP ERROR: Environment variable "${envVar}" is missing.`);
+    process.exit(1);
+  }
+}
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Helper to record audit logs via repository pattern
+const logActivity = async (req: AuthenticatedRequest, category: string, action: string, details: any = {}) => {
+  const userId = req.user?.id || null;
+  const userIdentity = req.user?.email || 'Anonymous';
+  const tenantId = req.user?.tenant_id || null;
+  const ipAddress = req.ip || req.socket.remoteAddress || null;
+
+  try {
+    await AuditRepository.createLog({
+      tenant_id: tenantId,
+      user_id: userId,
+      user_identity: userIdentity,
+      action,
+      category,
+      details,
+      ip_address: ipAddress
+    });
+  } catch (err: any) {
+    console.error('Failed to write audit log:', err.message);
+  }
+};
+
+// Diagnostic Status
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'online',
+    storageProvider: StorageService.getProviderName(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// --- AUTHENTICATION & USERS ---
+app.post('/api/auth/register', async (req, res) => {
+  const { email, fullName, businessName, businessType } = req.body;
+  try {
+    // 1. Create Tenant via TenantRepository
+    const tenant = await TenantRepository.create({ name: businessName, business_type: businessType });
+
+    // 2. Create profile map in public.users via UserRepository
+    // Note: auth account itself is created by client SDK directly before profile sync
+    res.status(201).json({ success: true, tenant, message: 'Tenant space generated successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- TENANTS & PORTALS ---
+app.get('/api/tenants', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const data = await TenantRepository.getAll();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/users', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await UserRepository.getByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- FILE / DOCUMENT MANAGEMENT ---
+app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const folders = await DocumentRepository.getFoldersByTenant(tenantId);
+    const files = await DocumentRepository.getFilesByTenant(tenantId);
+    res.json({ folders, files });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/folder', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { name, parentId } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DocumentRepository.createFolder({ tenant_id: tenantId, name, parent_id: parentId });
+    await logActivity(req, 'Files', `Created folder: ${name}`, { folderId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/upload', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { name, sizeBytes, category, mimeType, folderId, fileData } = req.body; // base64 encoded
+  const tenantId = req.user?.tenant_id;
+  const userId = req.user?.id;
+
+  if (!tenantId || !userId) {
+    return res.status(400).json({ error: 'Context tenant_id and user_id are required' });
+  }
+
+  try {
+    const fileBuffer = Buffer.from(fileData, 'base64');
+    const storageKey = await StorageService.uploadFile(name, mimeType, fileBuffer, tenantId, category);
+
+    // Save to Database
+    const data = await DocumentRepository.createFile({
+      tenant_id: tenantId,
+      folder_id: folderId || null,
+      name,
+      size_bytes: sizeBytes,
+      category,
+      uploaded_by: userId,
+      storage_provider: StorageService.getProviderName(),
+      storage_key: storageKey,
+      mime_type: mimeType
+    });
+
+    await logActivity(req, 'Files', `Uploaded file: ${name}`, { fileId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/documents/file/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const file = await DocumentRepository.getFileById(fileId, tenantId);
+
+    // Delete in storage provider
+    await StorageService.deleteFile(file.storage_key);
+
+    // Soft delete in database
+    await DocumentRepository.softDeleteFile(fileId, tenantId);
+
+    await logActivity(req, 'Files', `Deleted file: ${file.name}`, { fileId });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- COMPLIANCE ENGINE ---
+app.get('/api/compliance/obligations', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await ComplianceRepository.getObligationsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/obligation', requireAuth, requireRoles(['super_admin', 'admin', 'accountant']), async (req: AuthenticatedRequest, res) => {
+  const { title, dueDate, type, assignedSpecialistId, notes, complianceScoreImpact } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+
+  try {
+    const data = await ComplianceRepository.createObligation({
+      tenant_id: tenantId,
+      title,
+      due_date: dueDate,
+      type,
+      assigned_specialist_id: assignedSpecialistId,
+      notes,
+      compliance_score_impact: complianceScoreImpact
+    });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/status', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { obligationId, status } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const obligation = await ComplianceRepository.getObligationById(obligationId, tenantId);
+    await ComplianceRepository.updateObligationStatus(obligationId, tenantId, status);
+
+    if (status === 'Late') {
+      await EmailService.sendDeadlineNotification(
+        req.user?.email || '',
+        'Authorized Workspace Representative',
+        obligation.title,
+        obligation.due_date
+      );
+    }
+
+    await logActivity(req, 'Compliance', `Updated compliance status: ${obligation.title} to ${status}`, { obligationId });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dynamic calculations using ComplianceEngine
+app.post('/api/compliance/calculate', requireAuth, (req: AuthenticatedRequest, res) => {
+  const { type, referenceDate } = req.body;
+  try {
+    const ref = referenceDate ? new Date(referenceDate) : new Date();
+    const nextDue = ComplianceEngine.getNextDueDate(type, ref);
+    res.json({ type, nextDue: nextDue.toISOString().split('T')[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Server-side Report Compiler
+app.get('/api/reports/pl', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const report = await ReportingEngine.compilePLStatement(tenantId);
+    await logActivity(req, 'Reports', 'Compiled Profit & Loss financial forecast', { type: 'P&L' });
+    res.json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CSV Export route
+app.get('/api/reports/pl/export', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const report = await ReportingEngine.compilePLStatement(tenantId);
+    const csvData = ReportingEngine.exportToCSV(report);
+    
+    await logActivity(req, 'Reports', 'Exported Profit & Loss statement to CSV format');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=PL_Report_${tenantId}.csv`);
+    res.status(200).send(csvData);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- TASK MANAGEMENT ---
+app.get('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await TaskRepository.getTasksByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { title, description, dueDate, priority, assignedTo } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+
+  try {
+    const data = await TaskRepository.createTask({
+      tenant_id: tenantId,
+      title,
+      description,
+      due_date: dueDate,
+      priority,
+      assigned_to: assignedTo,
+      created_by: userId
+    });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- MESSAGES / CONVERSATIONS ---
+app.get('/api/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const threads = await MessageRepository.getThreadsByTenant(tenantId);
+    const threadIds = threads.map(t => t.id);
+    const messages = await MessageRepository.getMessagesByThreads(threadIds);
+
+    res.json({ threads, messages });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages/send', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { content, threadId } = req.body;
+  const userId = req.user?.id || '';
+  try {
+    const data = await MessageRepository.createMessage({
+      thread_id: threadId,
+      sender_id: userId,
+      content
+    });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- AUDIT TRAIL ---
+app.get('/api/audit-logs', requireAuth, requireRoles(['super_admin', 'admin', 'auditor']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await AuditRepository.getLogsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- BILLING & SUBSCRIPTIONS ---
+app.get('/api/billing/subscription', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await BillingRepository.getSubscriptionByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/invoices', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await BillingRepository.getInvoicesByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SYSTEM INITIALIZER BOOTSTRAP ---
+app.listen(PORT, () => {
+  console.log(`EAC Solutions server running on http://localhost:${PORT}`);
+});
