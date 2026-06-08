@@ -1,4 +1,7 @@
 import React, { useState, useContext } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
@@ -6,6 +9,21 @@ import {
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
   Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon
 } from 'lucide-react';
+
+const ticketSchema = z.object({
+  subject: z.string().min(1, 'Subject is required'),
+  description: z.string().min(1, 'Description details are required'),
+  category: z.string().min(1, 'Category is required'),
+  priority: z.enum(['Low', 'Medium', 'High'])
+});
+
+const folderSchema = z.object({
+  name: z.string().min(1, 'Folder name is required'),
+});
+
+const messageSchema = z.object({
+  content: z.string().min(1, 'Message content cannot be empty'),
+});
 
 export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -20,16 +38,27 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   const [activeSubTab, setActiveSubTab] = useState('dashboard');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newFolderName, setNewFolderName] = useState('');
+  
+  // React Hook Forms
+  const { register: registerTicket, handleSubmit: handleSubmitTicket, reset: resetTicket, formState: { errors: ticketErrors } } = useForm({
+    resolver: zodResolver(ticketSchema),
+    defaultValues: { subject: '', description: '', category: 'Taxation', priority: 'Medium' as const }
+  });
+
+  const { register: registerFolder, handleSubmit: handleSubmitFolder, reset: resetFolder, formState: { errors: folderErrors } } = useForm({
+    resolver: zodResolver(folderSchema),
+    defaultValues: { name: '' }
+  });
+
+  const { register: registerMessage, handleSubmit: handleSubmitMessage, reset: resetMessage, formState: { errors: messageErrors } } = useForm({
+    resolver: zodResolver(messageSchema),
+    defaultValues: { content: '' }
+  });
+
   const [uploadName, setUploadName] = useState('');
   const [uploadCategory, setUploadCategory] = useState('Taxation');
   const [uploadBase64, setUploadBase64] = useState('');
   const [uploadSize, setUploadSize] = useState(0);
-  const [messageInput, setMessageInput] = useState('');
-  const [newTicketSubject, setNewTicketSubject] = useState('');
-  const [newTicketDesc, setNewTicketDesc] = useState('');
-  const [newTicketCategory, setNewTicketCategory] = useState('Taxation');
-  const [newTicketPriority, setNewTicketPriority] = useState('Medium');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,29 +81,6 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
     setUploadName('');
     setUploadBase64('');
     setUploadSize(0);
-  };
-
-  const handleCreateFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFolderName) return;
-    await createFolder(newFolderName, currentFolderId);
-    setNewFolderName('');
-  };
-
-  const handleSendMessageSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim()) return;
-    // Assume default thread 't1' or create one on fly
-    await sendMessage(messageInput, 't1');
-    setMessageInput('');
-  };
-
-  const handleCreateTicketSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTicketSubject.trim()) return;
-    await createTicket(newTicketSubject, newTicketDesc, newTicketCategory, newTicketPriority);
-    setNewTicketSubject('');
-    setNewTicketDesc('');
   };
 
   const [plReport, setPlReport] = useState<any>(null);
@@ -201,19 +207,22 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         {activeSubTab === 'documents' && (
           <div>
             <h2>Document Explorer</h2>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-              <form onSubmit={handleCreateFolder} style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexDirection: 'column' }}>
+              <form onSubmit={handleSubmitFolder(async (data) => {
+                await createFolder(data.name, currentFolderId);
+                resetFolder();
+              })} style={{ display: 'flex', gap: '0.5rem' }}>
                 <input 
                   type="text" 
-                  value={newFolderName}
-                  onChange={e => setNewFolderName(e.target.value)}
+                  {...registerFolder('name')}
                   placeholder="New folder name"
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: folderErrors.name ? '1px solid #ef4444' : '1px solid #ccc' }}
                 />
                 <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px' }}>
                   <FolderPlus size={16} /> Create
                 </button>
               </form>
+              {folderErrors.name && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{folderErrors.name.message}</span>}
             </div>
 
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -293,37 +302,66 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
                   </div>
                 ))}
               </div>
-              <form onSubmit={handleSendMessageSubmit} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <input 
-                  type="text" 
-                  value={messageInput}
-                  onChange={e => setMessageInput(e.target.value)}
-                  placeholder="Type message..." 
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
-                />
-                <button type="submit" style={{ padding: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px' }}>
-                  <Send size={16} />
-                </button>
+              <form onSubmit={handleSubmitMessage(async (data) => {
+                await sendMessage(data.content, 't1');
+                resetMessage();
+              })} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    {...registerMessage('content')}
+                    placeholder="Type message..." 
+                    style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: messageErrors.content ? '1px solid #ef4444' : 'none' }}
+                  />
+                  <button type="submit" style={{ padding: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px' }}>
+                    <Send size={16} />
+                  </button>
+                </div>
+                {messageErrors.content && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{messageErrors.content.message}</span>}
               </form>
             </div>
 
             <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px' }}>
               <h3>Submit Support Ticket</h3>
-              <form onSubmit={handleCreateTicketSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form onSubmit={handleSubmitTicket(async (data) => {
+                await createTicket(data.subject, data.description, data.category, data.priority);
+                resetTicket();
+              })} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input 
                   type="text" 
-                  value={newTicketSubject}
-                  onChange={e => setNewTicketSubject(e.target.value)}
+                  {...registerTicket('subject')}
                   placeholder="Subject"
-                  style={{ padding: '0.5rem', borderRadius: '6px' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: ticketErrors.subject ? '1px solid #ef4444' : 'none' }}
                 />
+                {ticketErrors.subject && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{ticketErrors.subject.message}</span>}
+                
                 <textarea 
-                  value={newTicketDesc}
-                  onChange={e => setNewTicketDesc(e.target.value)}
+                  {...registerTicket('description')}
                   placeholder="Describe your request..."
-                  style={{ padding: '0.5rem', borderRadius: '6px', minHeight: '80px' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', minHeight: '80px', border: ticketErrors.description ? '1px solid #ef4444' : 'none' }}
                 />
-                <button type="submit" style={{ padding: '0.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px' }}>
+                {ticketErrors.description && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{ticketErrors.description.message}</span>}
+                
+                <select 
+                  {...registerTicket('category')}
+                  style={{ padding: '0.5rem', borderRadius: '6px', color: '#1e293b', background: '#fff' }}
+                >
+                  <option value="Taxation">Taxation</option>
+                  <option value="Audit">Audit</option>
+                  <option value="Billing">Billing</option>
+                  <option value="Technical">Technical</option>
+                </select>
+
+                <select 
+                  {...registerTicket('priority')}
+                  style={{ padding: '0.5rem', borderRadius: '6px', color: '#1e293b', background: '#fff' }}
+                >
+                  <option value="Low">Low Priority</option>
+                  <option value="Medium">Medium Priority</option>
+                  <option value="High">High Priority</option>
+                </select>
+
+                <button type="submit" style={{ padding: '0.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                   Submit Ticket
                 </button>
               </form>
