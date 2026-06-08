@@ -22,10 +22,13 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema, createApiKeySchema, createWebhookConfigSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema, createApiKeySchema, createWebhookConfigSchema, onboardProfessionalSchema, createServiceRequestSchema, createQuoteSchema, signContractSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
+import { ProfessionalRepository } from './repositories/professionalRepository.js';
+import { MarketplaceRepository } from './repositories/marketplaceRepository.js';
+import { MarketplaceService } from './services/marketplaceService.js';
 import { LedgerRepository } from './repositories/ledgerRepository.js';
 import { LedgerService } from './services/ledgerService.js';
 import { ExpenseRepository } from './repositories/expenseRepository.js';
@@ -962,6 +965,131 @@ app.get('/api/search', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const results = await SearchRepository.searchAll(tenantId, query);
     res.json(results);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- PROFESSIONAL ONBOARDING & VERIFICATION ---
+app.post('/api/onboarding/professional', requireAuth, validateRequest(onboardProfessionalSchema), async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const { bio, hourlyRateCents, specializations } = req.body;
+  try {
+    const profile = await ProfessionalRepository.upsertProfile({
+      id: userId,
+      bio,
+      hourly_rate_cents: hourlyRateCents,
+      specializations,
+      is_verified: true, // Auto-verify in demo for seamless flow
+      availability_status: 'available'
+    });
+    await logActivity(req, 'Verification', 'Registered professional profile', { userId });
+    res.json(profile);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/marketplace/professionals', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const pros = await ProfessionalRepository.listVerified();
+    res.json(pros);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SERVICE REQUESTS ---
+app.post('/api/marketplace/requests', requireAuth, validateRequest(createServiceRequestSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { title, description, category, budgetCents } = req.body;
+  try {
+    const request = await MarketplaceService.postServiceRequest(tenantId, title, description, category, budgetCents);
+    await logActivity(req, 'Marketplace', 'Posted new service request', { requestId: request.id });
+    res.json(request);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/marketplace/requests', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const requests = await MarketplaceRepository.listRequests();
+    res.json(requests);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- QUOTATIONS ---
+app.post('/api/marketplace/requests/:id/quotes', requireAuth, validateRequest(createQuoteSchema), async (req: AuthenticatedRequest, res) => {
+  const requestId = req.params.id;
+  const proId = req.user?.id || '';
+  const { amountCents, proposal } = req.body;
+  try {
+    const quote = await MarketplaceService.submitQuotation(requestId, proId, amountCents, proposal);
+    await logActivity(req, 'Marketplace', 'Submitted quotation bid', { quoteId: quote.id, requestId });
+    res.json(quote);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/marketplace/requests/:id/quotes', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const requestId = req.params.id;
+  try {
+    const quotes = await MarketplaceRepository.getQuotesForRequest(requestId);
+    res.json(quotes);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/marketplace/quotes/:id/accept', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const quoteId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const contract = await MarketplaceService.acceptQuotation(quoteId, tenantId);
+    await logActivity(req, 'Marketplace', 'Accepted quotation and generated service contract', { quoteId, contractId: contract.id });
+    res.json(contract);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- CONTRACTS ---
+app.get('/api/marketplace/contracts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  const role = req.user?.role || '';
+  try {
+    if (['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(role)) {
+      const contracts = await MarketplaceRepository.listContractsForProfessional(userId);
+      res.json(contracts);
+    } else {
+      const contracts = await MarketplaceRepository.listContractsForTenant(tenantId);
+      res.json(contracts);
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/marketplace/contracts/:id/sign', requireAuth, validateRequest(signContractSchema), async (req: AuthenticatedRequest, res) => {
+  const contractId = req.params.id;
+  const userId = req.user?.id || '';
+  const role = req.user?.role || '';
+  const { signatureText } = req.body;
+  try {
+    const isPro = ['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(role);
+    const contract = await MarketplaceService.signContract(
+      contractId,
+      userId,
+      isPro ? 'professional' : 'client',
+      signatureText
+    );
+    await logActivity(req, 'Marketplace', 'Signed service contract agreement', { contractId, role });
+    res.json(contract);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

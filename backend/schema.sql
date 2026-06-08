@@ -568,5 +568,89 @@ CREATE POLICY webhooks_config_all ON webhooks_config FOR ALL USING (tenant_id = 
 CREATE POLICY api_keys_all ON api_keys FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
 
+-- --- PHASE 7 MARKETPLACE & PROFESSIONAL TABLES ---
+
+-- 1. Professional Profiles
+CREATE TABLE professional_profiles (
+    id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    bio TEXT,
+    hourly_rate_cents INT DEFAULT 0,
+    specializations TEXT[] DEFAULT '{}',
+    is_verified BOOLEAN DEFAULT FALSE,
+    availability_status VARCHAR(50) DEFAULT 'available' CHECK (availability_status IN ('available', 'busy', 'unavailable')),
+    rating_average NUMERIC(3, 2) DEFAULT 5.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Service Requests
+CREATE TABLE service_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    budget_cents INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'closed')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Quotations
+CREATE TABLE quotations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
+    professional_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount_cents INT NOT NULL,
+    proposal TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Contracts
+CREATE TABLE contracts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
+    quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    professional_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount_cents INT NOT NULL,
+    terms TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'signed', 'completed')),
+    client_signature VARCHAR(255),
+    client_signed_at TIMESTAMP WITH TIME ZONE,
+    professional_signature VARCHAR(255),
+    professional_signed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE professional_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contracts ENABLE ROW LEVEL SECURITY;
+
+-- Professional profiles can be read by anyone, managed by owner or admin
+CREATE POLICY professional_profiles_select ON professional_profiles FOR SELECT USING (true);
+CREATE POLICY professional_profiles_all ON professional_profiles FOR ALL USING (id = auth.uid() OR is_admin());
+
+-- Service requests can be read by anyone (so professionals can search), managed by matching tenant or admin
+CREATE POLICY service_requests_select ON service_requests FOR SELECT USING (true);
+CREATE POLICY service_requests_all ON service_requests FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+-- Quotations read by matching professional, client tenant, or admin
+CREATE POLICY quotations_all ON quotations FOR ALL USING (
+  professional_id = auth.uid() OR 
+  EXISTS (
+    SELECT 1 FROM service_requests 
+    WHERE service_requests.id = quotations.request_id 
+    AND (service_requests.tenant_id = user_tenant_id())
+  ) OR is_admin()
+);
+
+-- Contracts read/write by client tenant, professional, or admin
+CREATE POLICY contracts_all ON contracts FOR ALL USING (
+  tenant_id = user_tenant_id() OR professional_id = auth.uid() OR is_admin()
+);
+
+
 
 

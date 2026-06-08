@@ -6,10 +6,11 @@ import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
-  ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen
+  ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen, Briefcase
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
+import MarketplaceDesk from './MarketplaceDesk.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -199,6 +200,13 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
             onClick={() => setActiveSubTab('conversations')}
           >
             <MessageSquare size={18} /> Client Direct Chat
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'marketplace' ? '#fff' : '#9CA3AF', background: activeSubTab === 'marketplace' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('marketplace')}
+          >
+            <Briefcase size={18} /> Marketplace Desk
           </button>
         </nav>
 
@@ -422,6 +430,9 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
               </form>
             </div>
           </div>
+        )}
+        {activeSubTab === 'marketplace' && (
+          <MarketplaceDesk />
         )}
       </main>
     </div>

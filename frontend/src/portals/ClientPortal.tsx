@@ -8,13 +8,14 @@ import {
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
   Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users,
-  BookOpen, Terminal
+  BookOpen, Terminal, Briefcase
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 import VaultProPanel from './VaultProPanel.tsx';
 import DashboardAnalytics from './DashboardAnalytics.tsx';
 import DeveloperSettings from './DeveloperSettings.tsx';
+import MarketplaceHub from './MarketplaceHub.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -269,6 +270,13 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             onClick={() => setActiveSubTab('developer')}
           >
             <Terminal size={18} /> Developer Settings
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'marketplace' ? '#fff' : '#9CA3AF', background: activeSubTab === 'marketplace' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('marketplace')}
+          >
+            <Briefcase size={18} /> Professional Marketplace
           </button>
         </nav>
 
@@ -549,6 +557,9 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         )}
         {activeSubTab === 'developer' && (
           <DeveloperSettings />
+        )}
+        {activeSubTab === 'marketplace' && (
+          <MarketplaceHub />
         )}
       </main>
     </div>

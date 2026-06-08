@@ -173,6 +173,36 @@ export const createWebhookConfigSchema = z.object({
   })
 });
 
+export const onboardProfessionalSchema = z.object({
+  body: z.object({
+    bio: z.string().min(1, 'Professional bio is required'),
+    hourlyRateCents: z.number().int().nonnegative('Hourly rate cannot be negative'),
+    specializations: z.array(z.string()).min(1, 'Select at least one specialization tag')
+  })
+});
+
+export const createServiceRequestSchema = z.object({
+  body: z.object({
+    title: z.string().min(5, 'Title must be at least 5 characters'),
+    description: z.string().min(10, 'Provide a detailed description of the services required'),
+    category: z.string().min(1, 'Category is required'),
+    budgetCents: z.number().int().nonnegative('Budget cannot be negative')
+  })
+});
+
+export const createQuoteSchema = z.object({
+  body: z.object({
+    amountCents: z.number().int().positive('Quote bid amount must be positive'),
+    proposal: z.string().min(10, 'Provide a detailed service proposal')
+  })
+});
+
+export const signContractSchema = z.object({
+  body: z.object({
+    signatureText: z.string().min(2, 'Provide a valid digital signature name')
+  })
+});
+
 
 
 
