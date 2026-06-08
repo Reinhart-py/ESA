@@ -21,7 +21,7 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
@@ -30,6 +30,8 @@ import { LedgerService } from './services/ledgerService.js';
 import { ExpenseRepository } from './repositories/expenseRepository.js';
 import { ComplianceFilingRepository } from './repositories/complianceFilingRepository.js';
 import { ComplianceFilingService } from './services/complianceFilingService.js';
+import { DocumentProRepository } from './repositories/documentProRepository.js';
+import { DocumentProService } from './services/documentProService.js';
 
 dotenv.config();
 
@@ -242,6 +244,95 @@ app.delete('/api/documents/file/:id', requireAuth, async (req: AuthenticatedRequ
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// --- DOCUMENT VAULT PRO: SHARING, SIGNING & ZIP STREAMING ---
+app.post('/api/documents/share', requireAuth, validateRequest(shareDocumentSchema), async (req: AuthenticatedRequest, res) => {
+  const { fileId, expiresInHours } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DocumentProService.generateSecureShare(tenantId, fileId, expiresInHours);
+    await logActivity(req, 'Files', `Generated secure share link for file`, { fileId, shareToken: data.share_token });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/share/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const share = await DocumentProService.validateShareToken(token);
+    const downloadUrl = await StorageService.getDownloadUrl(share.file.storage_key);
+    res.json({
+      share,
+      downloadUrl
+    });
+  } catch (err: any) {
+    res.status(403).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/esign', requireAuth, validateRequest(createESignRequestSchema), async (req: AuthenticatedRequest, res) => {
+  const { fileId, signerEmail } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DocumentProRepository.createESignRequest({
+      tenant_id: tenantId,
+      file_id: fileId,
+      signer_email: signerEmail
+    });
+    await logActivity(req, 'Files', `Created e-sign request for email: ${signerEmail}`, { esignRequestId: data.id, fileId });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/esign', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DocumentProRepository.getESignRequestsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/esign/:id/sign', requireAuth, validateRequest(esignDocumentSchema), async (req: AuthenticatedRequest, res) => {
+  const esignRequestId = req.params.id;
+  const { signatureText } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+  try {
+    const data = await DocumentProService.esignDocument(esignRequestId, tenantId, ipAddress, signatureText);
+    await logActivity(req, 'Files', `Recorded document e-signature cryptographic hash`, { esignRequestId, hash: data.signature_hash });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/bulk-download', requireAuth, validateRequest(bulkDownloadSchema), async (req: AuthenticatedRequest, res) => {
+  const fileIdsQuery = req.query.fileIds as string;
+  const fileIds = fileIdsQuery.split(',');
+  const tenantId = req.user?.tenant_id || '';
+
+  try {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=EAC_Vault_Bulk_${Date.now()}.zip`);
+    
+    const zipStream = await DocumentProService.packageBulkZip(fileIds, tenantId);
+    
+    // Pipe the zip stream directly to the response
+    zipStream.pipe(res);
+    
+    await logActivity(req, 'Files', `Bulk downloaded ${fileIds.length} files as ZIP archive`);
+  } catch (err: any) {
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 

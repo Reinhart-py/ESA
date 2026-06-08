@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
+import VaultProPanel from './VaultProPanel.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -262,67 +263,16 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         {/* Documents */}
         {activeSubTab === 'documents' && (
           <div>
-            <h2>Document Explorer</h2>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexDirection: 'column' }}>
-              <form onSubmit={handleSubmitFolder(async (data) => {
-                await createFolder(data.name, currentFolderId);
-                resetFolder();
-              })} style={{ display: 'flex', gap: '0.5rem' }}>
-                <input 
-                  type="text" 
-                  {...registerFolder('name')}
-                  placeholder="New folder name"
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: folderErrors.name ? '1px solid #ef4444' : '1px solid #ccc' }}
-                />
-                <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px' }}>
-                  <FolderPlus size={16} /> Create
-                </button>
-              </form>
-              {folderErrors.name && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{folderErrors.name.message}</span>}
-            </div>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
-                  <th style={{ padding: '0.5rem' }}>Name</th>
-                  <th>Size</th>
-                  <th>Category</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {folders.map(f => (
-                  <tr key={f.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '0.5rem', cursor: 'pointer', color: '#3b82f6' }} onClick={() => setCurrentFolderId(f.id)}>
-                      📁 {f.name}
-                    </td>
-                    <td>-</td>
-                    <td>Folder</td>
-                    <td>-</td>
-                  </tr>
-                ))}
-                {files.map(file => (
-                  <tr key={file.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '0.5rem' }}>📄 {file.name}</td>
-                    <td>{(file.size_bytes / 1024 / 1024).toFixed(2)} MB</td>
-                    <td>{file.category}</td>
-                    <td>
-                      <button style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => deleteFile(file.id)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#1e293b', borderRadius: '8px' }}>
-              <h3>Upload File</h3>
-              <input type="file" onChange={handleFileChange} />
-              <button onClick={handleUploadSubmit} style={{ marginTop: '1rem', display: 'block', padding: '0.5rem 1rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px' }}>
-                Upload to storage
-              </button>
-            </div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.25rem', color: '#fff' }}>Secure Document Vault Pro</h2>
+            <VaultProPanel 
+              folders={folders}
+              files={files}
+              currentFolderId={currentFolderId}
+              setCurrentFolderId={setCurrentFolderId}
+              createFolder={createFolder}
+              uploadFile={uploadFile}
+              deleteFile={deleteFile}
+            />
           </div>
         )}
 

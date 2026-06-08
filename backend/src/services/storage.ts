@@ -169,5 +169,32 @@ export const StorageService = {
     } else {
       return `/mock-download/${storageKey}`;
     }
+  },
+
+  getFileStreamOrBuffer: async (storageKey: string): Promise<stream.Readable> => {
+    const bucket = process.env.STORAGE_BUCKET_NAME || 'eac-solutions-vault';
+
+    if ((provider === 'cloudflare_r2' || provider === 'aws_s3') && s3Client) {
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: storageKey,
+      });
+      const response = await s3Client.send(command);
+      if (response.Body) {
+        return response.Body as stream.Readable;
+      }
+      throw new Error('S3 body is empty');
+    } else if (provider === 'google_drive' && googleDriveClient) {
+      const response = await googleDriveClient.files.get(
+        { fileId: storageKey, alt: 'media' },
+        { responseType: 'stream' }
+      );
+      return response.data;
+    } else {
+      const s = new stream.Readable();
+      s.push(`EAC Solutions Vault: Mock file contents for ${storageKey}`);
+      s.push(null);
+      return s;
+    }
   }
 };

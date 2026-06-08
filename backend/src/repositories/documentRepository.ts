@@ -78,4 +78,17 @@ export class DocumentRepository {
     if (error) throw error;
     return data;
   }
+
+  static async updateFileStatus(fileId: string, tenantId: string, status: 'Reviewing' | 'Approved' | 'Rejected') {
+    const { data, error } = await supabase
+      .from('files')
+      .update({ status })
+      .eq('id', fileId)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
 }

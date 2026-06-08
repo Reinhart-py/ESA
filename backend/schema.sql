@@ -503,4 +503,40 @@ CREATE POLICY compliance_packs_all ON compliance_packs FOR ALL USING (is_admin()
 -- Filing submissions are segregated by tenant
 CREATE POLICY filing_submissions_all ON filing_submissions FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
+-- 7. Secure Shares (expiring guest access tokens)
+CREATE TABLE secure_shares (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    share_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. E-Sign Requests (cryptographic signatures)
+CREATE TABLE esign_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    signer_email VARCHAR(255) NOT NULL,
+    signature_hash VARCHAR(64), -- SHA-256 hash of signature detail
+    signed_at TIMESTAMP WITH TIME ZONE,
+    ip_address VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Signed')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE secure_shares ENABLE ROW LEVEL SECURITY;
+ALTER TABLE esign_requests ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+-- Secure shares are read-only for public access if token matches, otherwise matching tenant
+CREATE POLICY secure_shares_read ON secure_shares FOR SELECT USING (true); -- Guests can read file if they possess token
+CREATE POLICY secure_shares_all ON secure_shares FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+-- E-sign requests isolated by tenant workspace
+CREATE POLICY esign_requests_all ON esign_requests FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+
 

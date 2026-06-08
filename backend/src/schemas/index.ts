@@ -133,4 +133,31 @@ export const reviewSubmissionSchema = z.object({
   })
 });
 
+export const shareDocumentSchema = z.object({
+  body: z.object({
+    fileId: z.string().uuid('Invalid file ID'),
+    expiresInHours: z.number().positive('Expiry hours must be positive').optional().default(24)
+  })
+});
+
+export const createESignRequestSchema = z.object({
+  body: z.object({
+    fileId: z.string().uuid('Invalid file ID'),
+    signerEmail: z.string().email('Invalid email address')
+  })
+});
+
+export const esignDocumentSchema = z.object({
+  body: z.object({
+    signatureText: z.string().min(1, 'Signature text is required')
+  })
+});
+
+export const bulkDownloadSchema = z.object({
+  query: z.object({
+    fileIds: z.string().min(1, 'At least one file ID is required') // comma-separated query param
+  })
+});
+
+
 
