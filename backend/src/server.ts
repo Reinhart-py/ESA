@@ -7,6 +7,7 @@ import { StorageService } from './services/storage.js';
 import { EmailService } from './services/email.js';
 import { ComplianceEngine } from './services/compliance.js';
 import { ReportingEngine } from './services/reports.js';
+import { TaskService } from './services/taskService.js';
 
 // Repositories
 import { TenantRepository } from './repositories/tenantRepository.js';
@@ -18,6 +19,9 @@ import { MessageRepository } from './repositories/messageRepository.js';
 import { SupportRepository } from './repositories/supportRepository.js';
 import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
+import { SearchRepository } from './repositories/searchRepository.js';
+
+import { BillingService } from './services/billing.js';
 
 dotenv.config();
 
@@ -28,7 +32,9 @@ const requiredEnvVars = [
   'GOOGLE_DRIVE_REFRESH_TOKEN',
   'GOOGLE_DRIVE_CLIENT_ID',
   'GOOGLE_DRIVE_CLIENT_SECRET',
-  'RESEND_API_KEY'
+  'RESEND_API_KEY',
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET'
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -42,6 +48,19 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+
+// Webhook requires raw payload for Stripe signature verification
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sigHeader = req.headers['stripe-signature'];
+  const sig = Array.isArray(sigHeader) ? sigHeader[0] : (sigHeader || '');
+  try {
+    await BillingService.handleWebhookEvent(sig, req.body);
+    res.json({ received: true });
+  } catch (err: any) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
 app.use(express.json());
 
 // Helper to record audit logs via repository pattern
@@ -312,6 +331,55 @@ app.post('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
+// Task Comments Endpoints
+app.get('/api/tasks/:id/comments', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  try {
+    const data = await TaskRepository.getComments(taskId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/tasks/:id/comments', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  const { content } = req.body;
+  const userId = req.user?.id || '';
+  try {
+    const data = await TaskRepository.createComment({
+      task_id: taskId,
+      user_id: userId,
+      content
+    });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Task Dependencies Endpoints
+app.get('/api/tasks/:id/dependencies', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  try {
+    const data = await TaskRepository.getDependencies(taskId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/tasks/:id/dependencies', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  const { dependsOnId } = req.body;
+  try {
+    const data = await TaskService.linkDependency(taskId, dependsOnId);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- MESSAGES / CONVERSATIONS ---
 app.get('/api/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
@@ -368,6 +436,32 @@ app.get('/api/billing/invoices', requireAuth, async (req: AuthenticatedRequest, 
     const tenantId = req.user?.tenant_id || '';
     const data = await BillingRepository.getInvoicesByTenant(tenantId);
     res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/session', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { priceId, successUrl, cancelUrl } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+
+  try {
+    const checkoutUrl = await BillingService.createCheckoutSession(tenantId, priceId, successUrl, cancelUrl);
+    await logActivity(req, 'Billing', 'Created Stripe checkout billing checkout session', { priceId });
+    res.json({ checkoutUrl });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- GLOBAL SEARCH ---
+app.get('/api/search', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const query = (req.query.q as string) || '';
+  const tenantId = req.user?.tenant_id || '';
+
+  try {
+    const results = await SearchRepository.searchAll(tenantId, query);
+    res.json(results);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
