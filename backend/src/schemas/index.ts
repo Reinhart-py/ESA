@@ -59,3 +59,42 @@ export const acceptInviteSchema = z.object({
     fullName: z.string().min(2, 'Name must be at least 2 characters')
   })
 });
+
+export const createAccountSchema = z.object({
+  body: z.object({
+    accountNumber: z.string().min(1, 'Account number is required'),
+    name: z.string().min(1, 'Account name is required'),
+    type: z.enum(['asset', 'liability', 'equity', 'revenue', 'expense']),
+    parentId: z.string().uuid().nullable().optional()
+  })
+});
+
+export const createJournalEntrySchema = z.object({
+  body: z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    description: z.string().min(1, 'Description is required'),
+    lines: z.array(z.object({
+      accountId: z.string().uuid('Invalid account ID'),
+      entryType: z.enum(['debit', 'credit']),
+      amountCents: z.number().int().positive('Amount must be positive')
+    })).min(2, 'At least two transaction lines are required')
+  })
+});
+
+export const createExpenseSchema = z.object({
+  body: z.object({
+    accountId: z.string().uuid('Invalid account ID').nullable().optional(),
+    amountCents: z.number().int().positive('Amount must be positive'),
+    merchant: z.string().min(1, 'Merchant name is required'),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    description: z.string().optional().nullable(),
+    receiptFileId: z.string().uuid('Invalid receipt file ID').nullable().optional()
+  })
+});
+
+export const linkReceiptSchema = z.object({
+  body: z.object({
+    receiptFileId: z.string().uuid('Invalid receipt file ID')
+  })
+});
+

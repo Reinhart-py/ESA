@@ -21,10 +21,13 @@ import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
+import { LedgerRepository } from './repositories/ledgerRepository.js';
+import { LedgerService } from './services/ledgerService.js';
+import { ExpenseRepository } from './repositories/expenseRepository.js';
 
 dotenv.config();
 
@@ -301,6 +304,134 @@ app.post('/api/compliance/calculate', requireAuth, (req: AuthenticatedRequest, r
     const ref = referenceDate ? new Date(referenceDate) : new Date();
     const nextDue = ComplianceEngine.getNextDueDate(type, ref);
     res.json({ type, nextDue: nextDue.toISOString().split('T')[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- DOUBLE-ENTRY LEDGER & FINANCE OS ---
+app.get('/api/finance/accounts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await LedgerRepository.getAccountsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/finance/accounts', requireAuth, requireRoles(['super_admin', 'admin', 'senior_accountant', 'accountant']), validateRequest(createAccountSchema), async (req: AuthenticatedRequest, res) => {
+  const { accountNumber, name, type, parentId } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await LedgerRepository.createAccount({
+      tenant_id: tenantId,
+      account_number: accountNumber,
+      name,
+      type,
+      parent_id: parentId
+    });
+    await logActivity(req, 'Finance', `Created chart of account: ${accountNumber} - ${name}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/finance/journal-entries', requireAuth, requireRoles(['super_admin', 'admin', 'senior_accountant', 'accountant']), validateRequest(createJournalEntrySchema), async (req: AuthenticatedRequest, res) => {
+  const { date, description, lines } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  try {
+    const entryLines = lines.map((l: any) => ({
+      account_id: l.accountId,
+      entry_type: l.entryType,
+      amount_cents: l.amountCents
+    }));
+    
+    const data = await LedgerService.postJournalEntry({
+      tenant_id: tenantId,
+      date,
+      description,
+      created_by: userId
+    }, entryLines);
+
+    await logActivity(req, 'Finance', `Posted journal entry: ${description}`, { entryId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/finance/ledger', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await LedgerRepository.getEntriesByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/finance/balance-sheet', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await LedgerService.getBalanceSheet(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/finance/trial-balance', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await LedgerService.getTrialBalance(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- EXPENSE & RECEIPT MANAGEMENT ---
+app.get('/api/finance/expenses', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ExpenseRepository.getExpensesByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/finance/expenses', requireAuth, validateRequest(createExpenseSchema), async (req: AuthenticatedRequest, res) => {
+  const { accountId, amountCents, merchant, date, description, receiptFileId } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ExpenseRepository.createExpense({
+      tenant_id: tenantId,
+      account_id: accountId,
+      amount_cents: amountCents,
+      merchant,
+      date,
+      description,
+      receipt_file_id: receiptFileId
+    });
+    await logActivity(req, 'Finance', `Recorded expense: ${merchant} - $${(amountCents / 100).toFixed(2)}`, { expenseId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/finance/expenses/:id/receipt', requireAuth, validateRequest(linkReceiptSchema), async (req: AuthenticatedRequest, res) => {
+  const expenseId = req.params.id;
+  const { receiptFileId } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await ExpenseRepository.linkReceipt(expenseId, tenantId, receiptFileId);
+    await logActivity(req, 'Finance', `Linked receipt to expense`, { expenseId, receiptFileId });
+    res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -6,8 +6,9 @@ import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
-  ShieldAlert, TrendingUp, X, MessageSquareText, Link
+  ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen
 } from 'lucide-react';
+import LedgerManagement from './LedgerManagement.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -137,6 +138,13 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
             onClick={() => setActiveSubTab('filings')}
           >
             <CalendarClock size={18} /> Compliance Obligations
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ledger' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('ledger')}
+          >
+            <BookOpen size={18} /> General Ledger
           </button>
 
           <button 
@@ -358,6 +366,10 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
               </tbody>
             </table>
           </div>
+        )}
+
+        {activeSubTab === 'ledger' && (
+          <LedgerManagement />
         )}
 
         {/* Conversations */}

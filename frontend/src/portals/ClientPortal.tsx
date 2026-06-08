@@ -7,8 +7,10 @@ import { apiClient } from '../api/client.ts';
 import { 
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
-  Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users
+  Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users,
+  BookOpen
 } from 'lucide-react';
+import LedgerManagement from './LedgerManagement.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -187,6 +189,13 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             onClick={() => setActiveSubTab('reports')}
           >
             <FileSpreadsheet size={18} /> Financial Reports
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ledger' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('ledger')}
+          >
+            <BookOpen size={18} /> General Ledger
           </button>
 
           <button 
@@ -449,6 +458,10 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
               <p>No report compiled yet.</p>
             )}
           </div>
+        )}
+
+        {activeSubTab === 'ledger' && (
+          <LedgerManagement />
         )}
 
         {/* Billing */}

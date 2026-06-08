@@ -406,3 +406,64 @@ CREATE POLICY company_profile_all ON company_profiles FOR ALL USING (tenant_id =
 CREATE POLICY invitations_all ON invitations FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 CREATE POLICY kyc_all ON kyc_verifications FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
+
+-- --- PHASE 2 DOUBLE-ENTRY ACCOUNTING TABLES ---
+
+-- 1. Chart of Accounts
+CREATE TABLE chart_of_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    account_number VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('asset', 'liability', 'equity', 'revenue', 'expense')),
+    parent_id UUID REFERENCES chart_of_accounts(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, account_number)
+);
+
+-- 2. Ledger Entries (Transactions)
+CREATE TABLE ledger_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    description TEXT NOT NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Journal Lines (Transaction Lines)
+CREATE TABLE journal_lines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    entry_id UUID NOT NULL REFERENCES ledger_entries(id) ON DELETE CASCADE,
+    account_id UUID NOT NULL REFERENCES chart_of_accounts(id) ON DELETE RESTRICT,
+    entry_type VARCHAR(10) NOT NULL CHECK (entry_type IN ('debit', 'credit')),
+    amount_cents INT NOT NULL CHECK (amount_cents > 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Expenses (linking files/receipts to COA)
+CREATE TABLE expenses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    account_id UUID REFERENCES chart_of_accounts(id) ON DELETE SET NULL,
+    amount_cents INT NOT NULL,
+    merchant VARCHAR(255) NOT NULL,
+    date DATE NOT NULL,
+    description TEXT,
+    receipt_file_id UUID REFERENCES files(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ledger_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE journal_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY coa_all ON chart_of_accounts FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY ledger_all ON ledger_entries FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY journal_all ON journal_lines FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY expenses_all ON expenses FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
