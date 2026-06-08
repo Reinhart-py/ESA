@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { requireAuth, requireRoles, AuthenticatedRequest } from './middleware/auth.js';
+import { supabase } from './config/supabase.js';
 // Services & Engines
 import { StorageService } from './services/storage.js';
 import { EmailService } from './services/email.js';
@@ -154,10 +155,30 @@ app.post('/api/auth/invite/accept', validateRequest(acceptInviteSchema), async (
 });
 
 // --- TENANTS & PORTALS ---
-app.get('/api/tenants', requireAuth, requireRoles(['super_admin', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
+app.get('/api/tenants', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const data = await TenantRepository.getAll();
     res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/users/switch-tenant', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { tenantId } = req.body;
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+    const { data, error } = await supabase
+      .from('users')
+      .update({ tenant_id: tenantId })
+      .eq('id', req.user?.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, user: data });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -43,12 +43,38 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   const { 
     folders, files, obligations, messages, tickets, 
     createFolder, uploadFile, deleteFile, sendMessage, createTicket,
-    themeMode, toggleTheme, invoices, subscription, currentUser
+    themeMode, toggleTheme, invoices, subscription, currentUser, syncState
   } = context;
 
   const [activeSubTab, setActiveSubTab] = useState('dashboard');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [activeTenantId, setActiveTenantId] = useState(currentUser?.tenant_id || '');
+
+  const fetchTenants = async () => {
+    try {
+      const res = await apiClient.get('/tenants');
+      setTenants(res.data || []);
+    } catch (err) {
+      console.error('Error fetching tenants list:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTenants();
+  }, []);
+
+  const handleSwitchTenant = async (tenantId: string) => {
+    try {
+      await apiClient.put('/users/switch-tenant', { tenantId });
+      setActiveTenantId(tenantId);
+      await syncState();
+    } catch (err) {
+      console.error('Error switching tenant:', err);
+    }
+  };
   
   // React Hook Forms
   const { register: registerTicket, handleSubmit: handleSubmitTicket, reset: resetTicket, formState: { errors: ticketErrors } } = useForm({
@@ -158,11 +184,26 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-color)' }}>
       {/* Sidebar */}
       <aside style={{ width: '260px', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <div style={{ background: '#008080', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>C</div>
-          <div>
-            <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Client Console</h2>
-            <span style={{ fontSize: '0.75rem', color: '#00A896' }}>{currentUser?.full_name || 'Enterprise Client'}</span>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div style={{ background: '#008080', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>C</div>
+            <div>
+              <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Client Console</h2>
+              <span style={{ fontSize: '0.75rem', color: '#00A896' }}>{currentUser?.full_name || 'Enterprise Client'}</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <label style={{ fontSize: '0.7rem', color: '#9CA3AF', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Company</label>
+            <select
+              value={activeTenantId}
+              onChange={(e) => handleSwitchTenant(e.target.value)}
+              style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
+            >
+              {tenants.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
