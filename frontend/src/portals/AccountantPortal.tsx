@@ -6,11 +6,13 @@ import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
-  ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen, Briefcase
+  ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen, Briefcase,
+  Sparkles
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 import MarketplaceDesk from './MarketplaceDesk.tsx';
+import AICopilotPanel from './AICopilotPanel.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -207,6 +209,13 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
             onClick={() => setActiveSubTab('marketplace')}
           >
             <Briefcase size={18} /> Marketplace Desk
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ai_assistant' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ai_assistant' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('ai_assistant')}
+          >
+            <Sparkles size={18} /> AI Co-pilot
           </button>
         </nav>
 
@@ -433,6 +442,9 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
         )}
         {activeSubTab === 'marketplace' && (
           <MarketplaceDesk />
+        )}
+        {activeSubTab === 'ai_assistant' && (
+          <AICopilotPanel />
         )}
       </main>
     </div>

@@ -29,6 +29,8 @@ import { InviteService } from './services/inviteService.js';
 import { ProfessionalRepository } from './repositories/professionalRepository.js';
 import { MarketplaceRepository } from './repositories/marketplaceRepository.js';
 import { MarketplaceService } from './services/marketplaceService.js';
+import { OcrService } from './services/ocrService.js';
+import crypto from 'crypto';
 import { LedgerRepository } from './repositories/ledgerRepository.js';
 import { LedgerService } from './services/ledgerService.js';
 import { ExpenseRepository } from './repositories/expenseRepository.js';
@@ -38,6 +40,9 @@ import { DocumentProRepository } from './repositories/documentProRepository.js';
 import { DocumentProService } from './services/documentProService.js';
 import { DeveloperRepository } from './repositories/developerRepository.js';
 import { DeveloperService } from './services/developerService.js';
+import { ComplianceSchedulerService } from './services/complianceScheduler.js';
+import { AdminService } from './services/adminService.js';
+import { AiService } from './services/aiService.js';
 
 dotenv.config();
 
@@ -232,7 +237,21 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
 
   try {
     const fileBuffer = Buffer.from(fileData, 'base64');
+    const contentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+    // Duplicate check
+    const duplicate = await DocumentRepository.checkDuplicateHash(tenantId, contentHash);
+    if (duplicate) {
+      return res.status(409).json({
+        error: 'Duplicate file detected',
+        message: `A file named "${duplicate.name}" with the identical content already exists in this workspace.`
+      });
+    }
+
     const storageKey = await StorageService.uploadFile(name, mimeType, fileBuffer, tenantId, category);
+    
+    // OCR & Auto Classification
+    const { ocrText, suggestedCategory } = await OcrService.extractTextAndClassify(name, fileData);
 
     // Save to Database
     const data = await DocumentRepository.createFile({
@@ -240,15 +259,82 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
       folder_id: folderId || null,
       name,
       size_bytes: sizeBytes,
-      category,
+      category: category || suggestedCategory,
       uploaded_by: userId,
       storage_provider: StorageService.getProviderName(),
       storage_key: storageKey,
-      mime_type: mimeType
+      mime_type: mimeType,
+      content_hash: contentHash,
+      ocr_text: ocrText
     });
 
     await logActivity(req, 'Files', `Uploaded file: ${name}`, { fileId: data.id });
     res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/trash', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const files = await DocumentRepository.getDeletedFilesByTenant(tenantId);
+    res.json(files);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/restore', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const file = await DocumentRepository.restoreFile(fileId, tenantId);
+    await logActivity(req, 'Files', `Restored file from trash: ${file.name}`, { fileId });
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/retention', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  const { retentionUntil, isLegalHold } = req.body;
+  try {
+    const file = await DocumentRepository.updateFileRetention(fileId, tenantId, retentionUntil || null, !!isLegalHold);
+    await logActivity(req, 'Files', `Updated retention configuration for file: ${file.name}`, { fileId, retentionUntil, isLegalHold });
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/file/:id/url', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const file = await DocumentRepository.getFileById(fileId, tenantId);
+    const url = await StorageService.getDownloadUrl(file.storage_key);
+    res.json({
+      url,
+      name: file.name,
+      mime_type: file.mime_type,
+      ocr_text: file.ocr_text,
+      is_legal_hold: file.is_legal_hold,
+      retention_until: file.retention_until
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/search-content', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const query = (req.query.q as string) || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const results = await DocumentRepository.searchFilesByOcrText(tenantId, query);
+    res.json(results);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -423,6 +509,62 @@ app.post('/api/compliance/calculate', requireAuth, (req: AuthenticatedRequest, r
     const ref = referenceDate ? new Date(referenceDate) : new Date();
     const nextDue = ComplianceEngine.getNextDueDate(type, ref);
     res.json({ type, nextDue: nextDue.toISOString().split('T')[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/score', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const score = await ComplianceRepository.calculateComplianceScore(tenantId);
+    res.json({ score });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/tenant-country', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { country } = req.body;
+  if (!country) {
+    return res.status(400).json({ error: 'Country code is required' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('tenants')
+      .update({ country })
+      .eq('id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Automatically trigger scheduler sweep for the updated country pack
+    await ComplianceSchedulerService.runGlobalSweep();
+
+    await logActivity(req, 'Compliance', `Updated workspace country pack to: ${country}`);
+    res.json({ success: true, tenant: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/compliance/scheduler/run', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const summary = await ComplianceSchedulerService.runGlobalSweep();
+    await logActivity(req, 'Compliance', 'Manually executed compliance scheduler engine sweep');
+    res.json({ success: true, summary });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/compliance/alerts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const alerts = await ComplianceRepository.getAlertsByTenant(tenantId);
+    res.json(alerts);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -766,6 +908,78 @@ app.get('/api/reports/pl/export', requireAuth, async (req: AuthenticatedRequest,
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=PL_Report_${tenantId}.csv`);
     res.status(200).send(csvData);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SUPER ADMIN OPERATION GATEWAYS ---
+app.get('/api/admin/metrics', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const metrics = await AdminService.getAdminMetrics();
+    res.json(metrics);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/professionals/pending', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const pending = await AdminService.getPendingProfessionals();
+    res.json(pending);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/professionals/:id/verify', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const userId = req.params.id;
+  const { isVerified } = req.body;
+  try {
+    const data = await AdminService.verifyProfessional(userId, !!isVerified);
+    await logActivity(req, 'Admin', `${isVerified ? 'Approved' : 'Revoked'} professional profile credentials`, { userId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/tenants/:id/quota', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.params.id;
+  const { quotaBytes } = req.body;
+  if (quotaBytes === undefined) {
+    return res.status(400).json({ error: 'quotaBytes is required' });
+  }
+  try {
+    const data = await AdminService.updateTenantQuota(tenantId, Number(quotaBytes));
+    await logActivity(req, 'Admin', `Updated custom storage quota for tenant workspace`, { tenantId, quotaBytes });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- AI ASSISTANT & CO-PILOT SERVICES ---
+app.post('/api/ai/chat', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { query } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  if (!query) {
+    return res.status(400).json({ error: 'Query parameter is required' });
+  }
+  try {
+    const reply = await AiService.processChatQuery(tenantId, userId, query);
+    res.json({ reply });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/ai/chat/history', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const history = await AiService.getChatHistory(tenantId);
+    res.json(history);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

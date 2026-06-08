@@ -23,6 +23,8 @@ CREATE TABLE tenants (
     revenue_bracket VARCHAR(100),
     compliance_score INT DEFAULT 100,
     storage_used_bytes BIGINT DEFAULT 0,
+    storage_limit_bytes BIGINT DEFAULT 10737418240, -- 10 GB default
+    country VARCHAR(10) DEFAULT 'US',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -94,6 +96,10 @@ CREATE TABLE files (
     mime_type VARCHAR(255),
     tags TEXT[] DEFAULT '{}',
     is_deleted BOOLEAN DEFAULT FALSE,
+    content_hash VARCHAR(64),
+    retention_until TIMESTAMP WITH TIME ZONE,
+    is_legal_hold BOOLEAN DEFAULT FALSE,
+    ocr_text TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -120,6 +126,29 @@ CREATE TABLE compliance_obligations (
     notes TEXT,
     compliance_score_impact INT DEFAULT 10,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9b. Compliance Templates (recurring scheduling templates)
+CREATE TABLE compliance_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(100) NOT NULL CHECK (type IN ('GST', 'VAT', 'TDS', 'Corporate Tax', 'Payroll Tax', 'Company Return', 'License Renewal', 'Regulatory Filing', 'Audit')),
+    frequency VARCHAR(50) NOT NULL CHECK (frequency IN ('Monthly', 'Quarterly', 'Annually')),
+    country_code VARCHAR(10) NOT NULL,
+    month_offset INT DEFAULT 0,
+    day_offset INT DEFAULT 15,
+    compliance_score_impact INT DEFAULT 10,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9c. Compliance Alerts (deadlines escalations logs)
+CREATE TABLE compliance_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    obligation_id UUID REFERENCES compliance_obligations(id) ON DELETE CASCADE,
+    alert_type VARCHAR(50) NOT NULL CHECK (alert_type IN ('Warning', 'Late', 'Escalation')),
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 10. Compliance Audits
@@ -274,6 +303,8 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compliance_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compliance_alerts ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check if the current user is a platform admin/super-admin
 CREATE OR REPLACE FUNCTION is_admin() 
@@ -306,6 +337,9 @@ CREATE POLICY file_all ON files FOR ALL USING (tenant_id = user_tenant_id() OR i
 
 -- Compliance
 CREATE POLICY compliance_all ON compliance_obligations FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+CREATE POLICY compliance_templates_read ON compliance_templates FOR SELECT USING (true);
+CREATE POLICY compliance_templates_all ON compliance_templates FOR ALL USING (is_admin());
+CREATE POLICY compliance_alerts_all ON compliance_alerts FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
 
 -- Tasks
 CREATE POLICY task_all ON tasks FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
@@ -650,6 +684,28 @@ CREATE POLICY quotations_all ON quotations FOR ALL USING (
 CREATE POLICY contracts_all ON contracts FOR ALL USING (
   tenant_id = user_tenant_id() OR professional_id = auth.uid() OR is_admin()
 );
+
+
+-- --- PHASE 11 AI ASSISTANT TABLES ---
+
+-- 1. AI Chat Logs
+CREATE TABLE ai_chat_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_query TEXT NOT NULL,
+    ai_response TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- RLS Enablement
+ALTER TABLE ai_chat_logs ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Isolated per tenant workspace
+CREATE POLICY ai_chat_logs_all ON ai_chat_logs FOR ALL USING (
+  tenant_id = user_tenant_id() OR is_admin()
+);
+
 
 
 

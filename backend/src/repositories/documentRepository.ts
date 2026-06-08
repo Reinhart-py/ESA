@@ -55,6 +55,10 @@ export class DocumentRepository {
     storage_provider: string;
     storage_key: string;
     mime_type: string;
+    content_hash?: string;
+    retention_until?: string;
+    is_legal_hold?: boolean;
+    ocr_text?: string;
   }) {
     const { data, error } = await supabase
       .from('files')
@@ -67,6 +71,23 @@ export class DocumentRepository {
   }
 
   static async softDeleteFile(fileId: string, tenantId: string) {
+    // Check retention and legal hold before deletion
+    const currentFile = await supabase
+      .from('files')
+      .select('retention_until, is_legal_hold')
+      .eq('id', fileId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (currentFile.data) {
+      if (currentFile.data.is_legal_hold) {
+        throw new Error('This document is flagged under legal hold and cannot be deleted.');
+      }
+      if (currentFile.data.retention_until && new Date(currentFile.data.retention_until) > new Date()) {
+        throw new Error('This document is within its retention period and cannot be deleted.');
+      }
+    }
+
     const { data, error } = await supabase
       .from('files')
       .update({ is_deleted: true })
@@ -90,5 +111,70 @@ export class DocumentRepository {
 
     if (error) throw error;
     return data;
+  }
+
+  static async getDeletedFilesByTenant(tenantId: string) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_deleted', true);
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async restoreFile(fileId: string, tenantId: string) {
+    const { data, error } = await supabase
+      .from('files')
+      .update({ is_deleted: false })
+      .eq('id', fileId)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async updateFileRetention(fileId: string, tenantId: string, retentionUntil: string | null, isLegalHold: boolean) {
+    const { data, error } = await supabase
+      .from('files')
+      .update({
+        retention_until: retentionUntil,
+        is_legal_hold: isLegalHold
+      })
+      .eq('id', fileId)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async checkDuplicateHash(tenantId: string, contentHash: string) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('content_hash', contentHash)
+      .eq('is_deleted', false)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async searchFilesByOcrText(tenantId: string, query: string) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_deleted', false)
+      .ilike('ocr_text', `%${query}%`);
+
+    if (error) throw error;
+    return data || [];
   }
 }

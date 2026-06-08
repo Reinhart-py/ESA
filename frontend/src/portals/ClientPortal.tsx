@@ -8,7 +8,7 @@ import {
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
   Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users,
-  BookOpen, Terminal, Briefcase
+  BookOpen, Terminal, Briefcase, Sparkles
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
@@ -16,6 +16,7 @@ import VaultProPanel from './VaultProPanel.tsx';
 import DashboardAnalytics from './DashboardAnalytics.tsx';
 import DeveloperSettings from './DeveloperSettings.tsx';
 import MarketplaceHub from './MarketplaceHub.tsx';
+import AICopilotPanel from './AICopilotPanel.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -277,6 +278,13 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             onClick={() => setActiveSubTab('marketplace')}
           >
             <Briefcase size={18} /> Professional Marketplace
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ai_assistant' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ai_assistant' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('ai_assistant')}
+          >
+            <Sparkles size={18} /> AI Co-pilot
           </button>
         </nav>
 
@@ -560,6 +568,9 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         )}
         {activeSubTab === 'marketplace' && (
           <MarketplaceHub />
+        )}
+        {activeSubTab === 'ai_assistant' && (
+          <AICopilotPanel />
         )}
       </main>
     </div>
