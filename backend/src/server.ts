@@ -58,12 +58,23 @@ const requiredEnvVars = [
   'STRIPE_WEBHOOK_SECRET'
 ];
 
+const missingVars: string[] = [];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    console.error(`FATAL STARTUP ERROR: Environment variable "${envVar}" is missing.`);
-    process.exit(1);
+    missingVars.push(envVar);
   }
 }
+
+if (missingVars.length > 0) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(`FATAL STARTUP ERROR: Missing required environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+  } else {
+    console.warn(`[DEV WARNING] Missing environment variables: ${missingVars.join(', ')}`);
+    console.warn('[DEV WARNING] API endpoints requiring these services will return errors. Configure .env to enable full functionality.');
+  }
+}
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1066,15 +1077,13 @@ app.post('/api/tasks/:id/dependencies', requireAuth, async (req: AuthenticatedRe
   }
 });
 
-// --- MESSAGES / CONVERSATIONS ---
+// --- MESSAGES / CONVERSATIONS (Legacy) ---
+// Note: Phase 12 exposes /api/messages/threads and /api/messages/threads/:id/messages
 app.get('/api/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const tenantId = req.user?.tenant_id || '';
     const threads = await MessageRepository.getThreadsByTenant(tenantId);
-    const threadIds = threads.map(t => t.id);
-    const messages = await MessageRepository.getMessagesByThreads(threadIds);
-
-    res.json({ threads, messages });
+    res.json({ threads, messages: [] }); // messages now fetched per-thread
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1309,7 +1318,284 @@ app.post('/api/marketplace/contracts/:id/sign', requireAuth, validateRequest(sig
   }
 });
 
+// ============================================================
+// PHASE 12: REAL REPORTING ENGINE
+// ============================================================
+import { ReportingService } from './services/reportingService.js';
+import { NotificationRepository } from './repositories/notificationRepository.js';
+
+// --- REPORTING ROUTES ---
+app.get('/api/reports/pl', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { start_date, end_date } = req.query as { start_date?: string; end_date?: string };
+  try {
+    const now = new Date();
+    const startDate = start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = end_date || now.toISOString().split('T')[0];
+    const report = await ReportingService.generatePLStatement(tenantId, startDate, endDate);
+    await logActivity(req, 'Reporting', 'Generated Profit & Loss Statement', { start_date: startDate, end_date: endDate });
+    res.json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reports/balance-sheet', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { as_of_date } = req.query as { as_of_date?: string };
+  try {
+    const date = as_of_date || new Date().toISOString().split('T')[0];
+    const report = await ReportingService.generateBalanceSheet(tenantId, date);
+    await logActivity(req, 'Reporting', 'Generated Balance Sheet', { as_of_date: date });
+    res.json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reports/cash-flow', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { start_date, end_date } = req.query as { start_date?: string; end_date?: string };
+  try {
+    const now = new Date();
+    const startDate = start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = end_date || now.toISOString().split('T')[0];
+    const report = await ReportingService.generateCashFlowStatement(tenantId, startDate, endDate);
+    await logActivity(req, 'Reporting', 'Generated Cash Flow Statement', { start_date: startDate, end_date: endDate });
+    res.json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reports/pl/csv', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { start_date, end_date } = req.query as { start_date?: string; end_date?: string };
+  try {
+    const now = new Date();
+    const startDate = start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = end_date || now.toISOString().split('T')[0];
+    const report = await ReportingService.generatePLStatement(tenantId, startDate, endDate);
+    const rows = [
+      { label: 'Report Type', value: 'Profit & Loss' },
+      { label: 'Period', value: `${startDate} to ${endDate}` },
+      { label: '', value: '' },
+      { label: '--- REVENUE ---', value: '' },
+      ...report.revenue.map(r => ({ label: r.account_name, value: r.balance_cents })),
+      { label: 'Total Revenue', value: report.total_revenue_cents },
+      { label: '', value: '' },
+      { label: '--- EXPENSES ---', value: '' },
+      ...report.expenses.map(e => ({ label: e.account_name, value: e.balance_cents })),
+      { label: 'Total Expenses', value: report.total_expenses_cents },
+      { label: '', value: '' },
+      { label: 'Gross Profit', value: report.gross_profit_cents },
+      { label: 'Net Income', value: report.net_income_cents }
+    ];
+    const csv = ReportingService.exportToCSV('Profit & Loss', rows);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="pl-report-${startDate}-${endDate}.csv"`);
+    res.send(csv);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reports/history', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const history = await ReportingService.getReportHistory(tenantId);
+    res.json(history);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// PHASE 12: NOTIFICATION SYSTEM
+// ============================================================
+
+app.get('/api/notifications', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const notifications = await NotificationRepository.getByUser(userId, tenantId);
+    res.json(notifications);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/notifications/unread-count', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const count = await NotificationRepository.getUnreadCount(userId, tenantId);
+    res.json({ count });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/notifications/:id/read', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const notificationId = req.params.id;
+  try {
+    const notification = await NotificationRepository.markRead(notificationId, userId);
+    res.json(notification);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/notifications/mark-all-read', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const result = await NotificationRepository.markAllRead(userId, tenantId);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/notifications/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const notificationId = req.params.id;
+  try {
+    const result = await NotificationRepository.delete(notificationId, userId);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// PHASE 12: FULL MESSAGING SYSTEM
+// ============================================================
+
+app.get('/api/messages/threads', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const threads = await MessageRepository.getThreadsForUser(userId, tenantId);
+    res.json(threads);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages/threads', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  const { subject, participant_ids } = req.body;
+  if (!subject || !Array.isArray(participant_ids)) {
+    return res.status(400).json({ error: 'subject and participant_ids are required' });
+  }
+  try {
+    // Always add sender as participant
+    const allParticipants = [...new Set([userId, ...participant_ids])];
+    const thread = await MessageRepository.createThread(tenantId, subject, allParticipants);
+    await logActivity(req, 'Messaging', 'Created new message thread', { threadId: thread.id, subject });
+    res.status(201).json(thread);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/messages/threads/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const threadId = req.params.id;
+  try {
+    const thread = await MessageRepository.getThreadById(threadId, tenantId);
+    res.json(thread);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/messages/threads/:id/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const threadId = req.params.id;
+  const userId = req.user?.id || '';
+  try {
+    const messages = await MessageRepository.getMessagesByThread(threadId);
+    // Mark as read
+    await MessageRepository.markThreadRead(threadId, userId);
+    res.json(messages);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages/threads/:id/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const threadId = req.params.id;
+  const senderId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  const { content, attachment_file_ids } = req.body;
+  if (!content?.trim()) {
+    return res.status(400).json({ error: 'Message content is required' });
+  }
+  try {
+    const message = await MessageRepository.createMessage({
+      thread_id: threadId,
+      sender_id: senderId,
+      content,
+      attachment_file_ids
+    });
+
+    // Mark as read for sender
+    await MessageRepository.markThreadRead(threadId, senderId);
+
+    // Get thread participants to notify others
+    const thread = await MessageRepository.getThreadById(threadId, tenantId);
+    if (thread && thread.participants) {
+      const otherParticipants = thread.participants
+        .map((p: any) => p.user_id)
+        .filter((id: string) => id !== senderId);
+
+      if (otherParticipants.length > 0) {
+        await NotificationRepository.broadcast(
+          tenantId,
+          otherParticipants,
+          'New Message',
+          `${req.user?.email || 'Someone'}: ${content.substring(0, 100)}`,
+          'message',
+          threadId
+        );
+      }
+    }
+
+    await logActivity(req, 'Messaging', 'Sent message in thread', { threadId, messageId: message.id });
+    res.status(201).json(message);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages/threads/:id/participants', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const threadId = req.params.id;
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'user_id is required' });
+  try {
+    const result = await MessageRepository.addParticipant(threadId, user_id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/messages/threads/:id/read', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const threadId = req.params.id;
+  const userId = req.user?.id || '';
+  try {
+    await MessageRepository.markThreadRead(threadId, userId);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- SYSTEM INITIALIZER BOOTSTRAP ---
 app.listen(PORT, () => {
   console.log(`EAC Solutions server running on http://localhost:${PORT}`);
 });
+

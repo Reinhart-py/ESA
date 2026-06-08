@@ -13,6 +13,8 @@ import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 import MarketplaceDesk from './MarketplaceDesk.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
+import ReportingDashboard from './ReportingDashboard.tsx';
+import InternalMessagingHub from './InternalMessagingHub.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -411,33 +413,15 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
           <LedgerManagement />
         )}
 
-        {/* Conversations */}
+        {/* Conversations — Real Messaging Hub */}
         {activeSubTab === 'conversations' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
-            <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', height: '450px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {messages.map(m => (
-                  <div key={m.id} style={{ marginBottom: '1rem' }}>
-                    <strong>{m.sender_id === currentUser?.id ? 'You' : 'Client'}:</strong>
-                    <p style={{ margin: '0.25rem 0 0 0' }}>{m.content}</p>
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={handleSubmitMessage(handleSendChatSubmit)} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    {...registerMessage('content')}
-                    placeholder="Type message..." 
-                    style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: messageErrors.content ? '1px solid #ef4444' : '1px solid #cbd5e1' }}
-                  />
-                  <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                    Send Chat
-                  </button>
-                </div>
-                {messageErrors.content && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{messageErrors.content.message}</span>}
-              </form>
-            </div>
+          <div style={{ height: 'calc(100vh - 100px)' }}>
+            <InternalMessagingHub
+              apiBase="http://localhost:3001"
+              authToken={localStorage.getItem('supabase_token') || undefined}
+              currentUserId={currentUser?.id || ''}
+              currentUserName={currentUser?.full_name || 'Accountant'}
+            />
           </div>
         )}
         {activeSubTab === 'marketplace' && (

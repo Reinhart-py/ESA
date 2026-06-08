@@ -17,6 +17,8 @@ import DashboardAnalytics from './DashboardAnalytics.tsx';
 import DeveloperSettings from './DeveloperSettings.tsx';
 import MarketplaceHub from './MarketplaceHub.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
+import ReportingDashboard from './ReportingDashboard.tsx';
+import InternalMessagingHub from './InternalMessagingHub.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -249,7 +251,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'communication' ? '#fff' : '#9CA3AF', background: activeSubTab === 'communication' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('communication')}
           >
-            <MessageSquare size={18} /> Communication Center
+            <MessageSquare size={18} /> Internal Messaging
           </button>
 
           <button 
@@ -340,118 +342,25 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
         {/* Communication */}
         {activeSubTab === 'communication' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
-            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', height: '400px', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {messages.map(m => (
-                  <div key={m.id} style={{ marginBottom: '1rem' }}>
-                    <strong>{m.sender_id === currentUser?.id ? 'You' : 'Accountant'}:</strong>
-                    <p style={{ margin: '0.25rem 0 0 0' }}>{m.content}</p>
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={handleSubmitMessage(async (data) => {
-                await sendMessage(data.content, 't1');
-                resetMessage();
-              })} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    {...registerMessage('content')}
-                    placeholder="Type message..." 
-                    style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: messageErrors.content ? '1px solid #ef4444' : 'none' }}
-                  />
-                  <button type="submit" style={{ padding: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px' }}>
-                    <Send size={16} />
-                  </button>
-                </div>
-                {messageErrors.content && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{messageErrors.content.message}</span>}
-              </form>
-            </div>
-
-            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px' }}>
-              <h3>Submit Support Ticket</h3>
-              <form onSubmit={handleSubmitTicket(async (data) => {
-                await createTicket(data.subject, data.description, data.category, data.priority);
-                resetTicket();
-              })} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input 
-                  type="text" 
-                  {...registerTicket('subject')}
-                  placeholder="Subject"
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: ticketErrors.subject ? '1px solid #ef4444' : 'none' }}
-                />
-                {ticketErrors.subject && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{ticketErrors.subject.message}</span>}
-                
-                <textarea 
-                  {...registerTicket('description')}
-                  placeholder="Describe your request..."
-                  style={{ padding: '0.5rem', borderRadius: '6px', minHeight: '80px', border: ticketErrors.description ? '1px solid #ef4444' : 'none' }}
-                />
-                {ticketErrors.description && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{ticketErrors.description.message}</span>}
-                
-                <select 
-                  {...registerTicket('category')}
-                  style={{ padding: '0.5rem', borderRadius: '6px', color: '#1e293b', background: '#fff' }}
-                >
-                  <option value="Taxation">Taxation</option>
-                  <option value="Audit">Audit</option>
-                  <option value="Billing">Billing</option>
-                  <option value="Technical">Technical</option>
-                </select>
-
-                <select 
-                  {...registerTicket('priority')}
-                  style={{ padding: '0.5rem', borderRadius: '6px', color: '#1e293b', background: '#fff' }}
-                >
-                  <option value="Low">Low Priority</option>
-                  <option value="Medium">Medium Priority</option>
-                  <option value="High">High Priority</option>
-                </select>
-
-                <button type="submit" style={{ padding: '0.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                  Submit Ticket
-                </button>
-              </form>
-            </div>
+          <div style={{ height: 'calc(100vh - 100px)' }}>
+            <InternalMessagingHub
+              apiBase="http://localhost:3001"
+              authToken={localStorage.getItem('supabase_token') || undefined}
+              currentUserId={currentUser?.id || ''}
+              currentUserName={currentUser?.full_name || 'You'}
+            />
           </div>
         )}
 
-        {/* Reports */}
+        {/* Reports — Real Reporting Dashboard */}
         {activeSubTab === 'reports' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2>Financial Reports</h2>
-              <button 
-                onClick={handleDownloadCSV} 
-                style={{ padding: '0.5rem 1rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                Export CSV Statement
-              </button>
-            </div>
-
-            {loadingReport ? (
-              <p>Compiling report data...</p>
-            ) : plReport ? (
-              <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '8px' }}>
-                <h3>Profit & Loss Forecast</h3>
-                <p>Generated At: {new Date(plReport.generatedAt).toLocaleString()}</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                  <div>Gross Revenue:</div>
-                  <strong>${plReport.revenue.toLocaleString()}</strong>
-                  <div>Operating Expenses:</div>
-                  <strong>${plReport.expenses.toLocaleString()}</strong>
-                  <div>Gross Margin:</div>
-                  <strong>${plReport.grossMargin.toLocaleString()}</strong>
-                  <div>Net income Estimate:</div>
-                  <strong>${plReport.netIncome.toLocaleString()}</strong>
-                </div>
-              </div>
-            ) : (
-              <p>No report compiled yet.</p>
-            )}
-          </div>
+          <ReportingDashboard
+            apiBase="http://localhost:3001"
+            authToken={localStorage.getItem('supabase_token') || undefined}
+          />
         )}
+
+
 
         {activeSubTab === 'ledger' && (
           <LedgerManagement />

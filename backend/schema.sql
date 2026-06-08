@@ -709,4 +709,32 @@ CREATE POLICY ai_chat_logs_all ON ai_chat_logs FOR ALL USING (
 
 
 
+-- --- PHASE 12: REAL REPORTING ENGINE + MESSAGING UPGRADES ---
+
+-- Report History (stores generated financial reports per tenant)
+CREATE TABLE IF NOT EXISTS report_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    report_type VARCHAR(100) NOT NULL CHECK (report_type IN ('profit_loss', 'balance_sheet', 'cash_flow', 'payroll', 'compliance', 'executive')),
+    data JSONB NOT NULL,
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_history_tenant ON report_history(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_report_history_type ON report_history(tenant_id, report_type);
+
+ALTER TABLE report_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY report_history_all ON report_history FOR ALL USING (tenant_id = user_tenant_id() OR is_admin());
+
+-- Message Read Receipts (tracks when each user last read a thread)
+CREATE TABLE IF NOT EXISTS message_read_receipts (
+    thread_id UUID REFERENCES message_threads(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (thread_id, user_id)
+);
+
+ALTER TABLE message_read_receipts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY read_receipts_all ON message_read_receipts FOR ALL USING (user_id = auth.uid() OR is_admin());
+
 

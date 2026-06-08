@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "tsx watch src/server.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.500.0",
@@ -30,6 +30,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.16",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.22.4",
     "typescript": "^5.3.3"
   }
 }
