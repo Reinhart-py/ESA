@@ -20,6 +20,8 @@ import { SupportRepository } from './repositories/supportRepository.js';
 import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
+import { validateRequest } from './middleware/validate.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema } from './schemas/index.js';
 
 import { BillingService } from './services/billing.js';
 
@@ -95,7 +97,7 @@ app.get('/api/status', (req, res) => {
 });
 
 // --- AUTHENTICATION & USERS ---
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', validateRequest(registerSchema), async (req, res) => {
   const { email, fullName, businessName, businessType } = req.body;
   try {
     // 1. Create Tenant via TenantRepository
@@ -153,7 +155,7 @@ app.post('/api/documents/folder', requireAuth, async (req: AuthenticatedRequest,
   }
 });
 
-app.post('/api/documents/upload', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSchema), async (req: AuthenticatedRequest, res) => {
   const { name, sizeBytes, category, mimeType, folderId, fileData } = req.body; // base64 encoded
   const tenantId = req.user?.tenant_id;
   const userId = req.user?.id;
@@ -310,7 +312,7 @@ app.get('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.post('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.post('/api/tasks', requireAuth, validateRequest(createTaskSchema), async (req: AuthenticatedRequest, res) => {
   const { title, description, dueDate, priority, assignedTo } = req.body;
   const tenantId = req.user?.tenant_id || '';
   const userId = req.user?.id || '';
@@ -394,7 +396,7 @@ app.get('/api/messages', requireAuth, async (req: AuthenticatedRequest, res) => 
   }
 });
 
-app.post('/api/messages/send', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.post('/api/messages/send', requireAuth, validateRequest(sendMessageSchema), async (req: AuthenticatedRequest, res) => {
   const { content, threadId } = req.body;
   const userId = req.user?.id || '';
   try {
@@ -403,6 +405,37 @@ app.post('/api/messages/send', requireAuth, async (req: AuthenticatedRequest, re
       sender_id: userId,
       content
     });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SUPPORT TICKETS ---
+app.get('/api/support/tickets', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const data = await SupportRepository.getTicketsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/support/ticket', requireAuth, validateRequest(createTicketSchema), async (req: AuthenticatedRequest, res) => {
+  const { subject, description, category, priority } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  try {
+    const data = await SupportRepository.createTicket({
+      tenant_id: tenantId,
+      subject,
+      description,
+      category,
+      priority,
+      created_by: userId
+    });
+    await logActivity(req, 'Support', `Created support ticket: ${subject}`, { ticketId: data.id });
     res.status(201).json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

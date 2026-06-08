@@ -1,8 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext.tsx';
+import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
-  ShieldAlert, TrendingUp
+  ShieldAlert, TrendingUp, X, MessageSquareText, Link
 } from 'lucide-react';
 
 export default function AccountantPortal({ onLogout }: { onLogout: () => void }) {
@@ -18,6 +19,57 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [taskPriority, setTaskPriority] = useState('Medium');
+
+  // Task details, comments, and dependency state
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [dependencies, setDependencies] = useState<any[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [selectedDepTaskId, setSelectedDepTaskId] = useState('');
+  const [depError, setDepError] = useState('');
+
+  const handleSelectTask = async (task: any) => {
+    setSelectedTask(task);
+    setDepError('');
+    try {
+      const [commentsRes, depsRes] = await Promise.all([
+        apiClient.get(`/tasks/${task.id}/comments`),
+        apiClient.get(`/tasks/${task.id}/dependencies`)
+      ]);
+      setComments(commentsRes.data || []);
+      setDependencies(depsRes.data || []);
+    } catch (err) {
+      console.error('Error fetching task details:', err);
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask || !newCommentText.trim()) return;
+    try {
+      const res = await apiClient.post(`/tasks/${selectedTask.id}/comments`, { content: newCommentText });
+      setComments([...comments, res.data]);
+      setNewCommentText('');
+    } catch (err) {
+      console.error('Error adding comment:', err);
+    }
+  };
+
+  const handleAddDependency = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask || !selectedDepTaskId) return;
+    setDepError('');
+    try {
+      await apiClient.post(`/tasks/${selectedTask.id}/dependencies`, { dependsOnId: selectedDepTaskId });
+      // Reload dependencies
+      const depsRes = await apiClient.get(`/tasks/${selectedTask.id}/dependencies`);
+      setDependencies(depsRes.data || []);
+      setSelectedDepTaskId('');
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Failed to add dependency';
+      setDepError(msg);
+    }
+  };
 
   const handleSendChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,12 +143,26 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: selectedTask ? '1fr 380px' : '1fr 300px', gap: '2rem' }}>
               <div>
                 <h3>Assigned Active Tasks ({tasks.length})</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {tasks.map(t => (
-                    <div key={t.id} style={{ padding: '1rem', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div 
+                      key={t.id} 
+                      onClick={() => handleSelectTask(t)}
+                      style={{ 
+                        padding: '1rem', 
+                        background: selectedTask?.id === t.id ? '#F0F9FF' : '#fff', 
+                        borderRadius: '8px', 
+                        border: selectedTask?.id === t.id ? '2px solid #00A896' : '1px solid #e2e8f0', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out'
+                      }}
+                    >
                       <div>
                         <h4 style={{ margin: 0 }}>{t.title}</h4>
                         <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>{t.description}</p>
@@ -107,27 +173,124 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                 </div>
               </div>
 
-              <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <h3>Assign New Task</h3>
-                <form onSubmit={handleCreateTaskSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <input 
-                    type="text" 
-                    value={taskTitle}
-                    onChange={e => setTaskTitle(e.target.value)}
-                    placeholder="Task Title"
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                  />
-                  <textarea 
-                    value={taskDesc}
-                    onChange={e => setTaskDesc(e.target.value)}
-                    placeholder="Task Description"
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', minHeight: '80px' }}
-                  />
-                  <button type="submit" style={{ padding: '0.5rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                    Create Task
+              {selectedTask ? (
+                <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
+                  <button 
+                    onClick={() => setSelectedTask(null)}
+                    style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
+                  >
+                    <X size={18} />
                   </button>
-                </form>
-              </div>
+
+                  <h3 style={{ margin: 0, paddingRight: '2rem' }}>Task Details</h3>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.5rem 0' }}>{selectedTask.title}</h4>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569' }}>{selectedTask.description || 'No description provided.'}</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#cbd5e1', fontWeight: 'bold' }}>{selectedTask.priority}</span>
+                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#e2e8f0' }}>Due: {selectedTask.due_date}</span>
+                    </div>
+                  </div>
+
+                  <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0' }} />
+
+                  {/* Task Dependencies */}
+                  <div>
+                    <h4 style={{ margin: '0 0 0.75rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Link size={16} /> Dependencies
+                    </h4>
+                    
+                    {dependencies.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        {dependencies.map(d => {
+                          const depTask = tasks.find(t => t.id === d.depends_on_task_id);
+                          return (
+                            <div key={d.id} style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                              🔗 {depTask ? depTask.title : 'Unknown Task'}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>No dependencies linked.</p>
+                    )}
+
+                    <form onSubmit={handleAddDependency} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <select 
+                        value={selectedDepTaskId} 
+                        onChange={e => setSelectedDepTaskId(e.target.value)}
+                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff' }}
+                      >
+                        <option value="">Select task dependency...</option>
+                        {tasks.filter(t => t.id !== selectedTask.id).map(t => (
+                          <option key={t.id} value={t.id}>{t.title}</option>
+                        ))}
+                      </select>
+                      <button type="submit" style={{ padding: '0.4rem', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        Add Dependency
+                      </button>
+                      {depError && <p style={{ margin: 0, color: '#ef4444', fontSize: '0.8rem', fontWeight: 'bold' }}>{depError}</p>}
+                    </form>
+                  </div>
+
+                  <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0' }} />
+
+                  {/* Comments section */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px' }}>
+                    <h4 style={{ margin: '0 0 0.75rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MessageSquareText size={16} /> Comments ({comments.length})
+                    </h4>
+                    
+                    <div style={{ flex: 1, overflowY: 'auto', maxHeight: '180px', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.75rem', paddingRight: '0.25rem' }}>
+                      {comments.length > 0 ? (
+                        comments.map(c => (
+                          <div key={c.id} style={{ fontSize: '0.85rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                            <p style={{ margin: '0 0 0.25rem 0', color: '#475569' }}>{c.content}</p>
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{new Date(c.created_at).toLocaleString()}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>No comments yet.</p>
+                      )}
+                    </div>
+
+                    <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="text" 
+                        value={newCommentText}
+                        onChange={e => setNewCommentText(e.target.value)}
+                        placeholder="Add comment..."
+                        style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      />
+                      <button type="submit" style={{ padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        Post
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', height: 'fit-content' }}>
+                  <h3>Assign New Task</h3>
+                  <form onSubmit={handleCreateTaskSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <input 
+                      type="text" 
+                      value={taskTitle}
+                      onChange={e => setTaskTitle(e.target.value)}
+                      placeholder="Task Title"
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    />
+                    <textarea 
+                      value={taskDesc}
+                      onChange={e => setTaskDesc(e.target.value)}
+                      placeholder="Task Description"
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', minHeight: '80px' }}
+                    />
+                    <button type="submit" style={{ padding: '0.5rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                      Create Task
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         )}
