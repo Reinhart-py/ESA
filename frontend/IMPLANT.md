@@ -385,3 +385,12 @@ Generate all tests.
 Continue until the feature is complete.
 
 Never return partially implemented functionality.
+
+---
+
+## PRODUCTION-HARDENING PASSED MODULES
+
+- [x] **Authentication & Identity**: Multi-Factor Authentication (TOTP schema, native validator engine, setup / enable / disable / check / verify-login endpoints, profile toggles, and login wrapper verification screen).
+- [x] **Tenant Isolation**: Double-checked RLS policies, enforced database query parameters, and hardened `x-impersonate-tenant-id` header validation with database existence checks.
+- [x] **Google Drive Folder Provisioning**: Implemented dynamic tenant folder checks and proactive subfolder setup (`compliance`, `payroll`, `taxation`, `audits`, `reports`, `documents`) on onboarding client creation.
+
