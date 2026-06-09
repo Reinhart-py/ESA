@@ -5,7 +5,7 @@ import {
   FolderPlus, Trash2, Share2, PenTool, CheckSquare, Square, 
   Download, Link2, Copy, Check, X, ShieldCheck, Mail, Eye,
   Search, Archive, Calendar, AlertTriangle, FileText, CheckCircle,
-  FileCode, Scale, RefreshCw, FolderOpen
+  FileCode, Scale, RefreshCw, FolderOpen, History, BarChart2
 } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog.tsx';
 import EmptyState from '../components/ui/EmptyState.tsx';
@@ -25,6 +25,8 @@ interface FileItem {
   is_legal_hold?: boolean;
   retention_until?: string;
   ocr_text?: string;
+  assigned_reviewer_id?: string;
+  rejection_reason?: string;
 }
 
 interface VaultProProps {
@@ -50,7 +52,22 @@ export default function VaultProPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'files' | 'trash' | 'ocr_search'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'trash' | 'ocr_search' | 'maintenance' | 'analytics'>('files');
+
+  // Sync & Repair states
+  const [reconcileResults, setReconcileResults] = useState<any>(null);
+  const [repairResults, setRepairResults] = useState<any>(null);
+  const [loadingReconcile, setLoadingReconcile] = useState(false);
+  const [loadingRepair, setLoadingRepair] = useState(false);
+
+  // Analytics states
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Version History states
+  const [showVersionsModal, setShowVersionsModal] = useState(false);
+  const [fileVersions, setFileVersions] = useState<any[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
 
   // Checkbox selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -72,6 +89,26 @@ export default function VaultProPanel({
   // List of active E-sign requests
   const [esignRequests, setEsignRequests] = useState<any[]>([]);
   const [loadingSign, setLoadingSign] = useState(false);
+
+  // Workflow states
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [tenantUsers, setTenantUsers] = useState<any[]>([]);
+
+  // Advanced Search & Saved Search states
+  const [searchFilters, setSearchFilters] = useState({
+    category: '',
+    status: '',
+    minSize: '',
+    maxSize: '',
+    startDate: '',
+    endDate: ''
+  });
+  const [savedSearches, setSavedSearches] = useState<any[]>([]);
+  const [searchAnalytics, setSearchAnalytics] = useState<any[]>([]);
+  const [newSearchSaveName, setNewSearchSaveName] = useState('');
+  const [searchTasksResults, setSearchTasksResults] = useState<any[]>([]);
+  const [searchObligationsResults, setSearchObligationsResults] = useState<any[]>([]);
 
   // File upload state
   const [uploadName, setUploadName] = useState('');
@@ -144,6 +181,13 @@ export default function VaultProPanel({
   useEffect(() => {
     fetchESignRequests();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'ocr_search') {
+      fetchSavedSearches();
+      fetchSearchAnalytics();
+    }
+  }, [activeTab]);
 
   const toggleSelectFile = (id: string) => {
     setSelectedIds(prev => 
@@ -367,18 +411,229 @@ export default function VaultProPanel({
     }
   };
 
-  // Full-Text OCR Search
+  // Full-Text OCR Search & Advanced Queries
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
     setSearchLoading(true);
     try {
-      const res = await apiClient.get(`/documents/search-content?q=${encodeURIComponent(searchQuery)}`);
-      setSearchResults(res.data || []);
+      let url = `/search?q=${encodeURIComponent(searchQuery)}`;
+      if (searchFilters.category) url += `&category=${searchFilters.category}`;
+      if (searchFilters.status) url += `&status=${searchFilters.status}`;
+      if (searchFilters.minSize) url += `&minSize=${Number(searchFilters.minSize) * 1024}`;
+      if (searchFilters.maxSize) url += `&maxSize=${Number(searchFilters.maxSize) * 1024}`;
+      if (searchFilters.startDate) url += `&startDate=${searchFilters.startDate}`;
+      if (searchFilters.endDate) url += `&endDate=${searchFilters.endDate}`;
+
+      const res = await apiClient.get(url);
+      setSearchResults(res.data.files || []);
+      setSearchTasksResults(res.data.tasks || []);
+      setSearchObligationsResults(res.data.obligations || []);
+
+      fetchSearchAnalytics();
     } catch (err) {
-      console.error('Error searching OCR text:', err);
+      console.error('Error executing advanced search:', err);
+      addToast('error', 'Search Failed', 'Could not execute search. Verify connection.');
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  const fetchSavedSearches = async () => {
+    try {
+      const res = await apiClient.get('/search/saved');
+      setSavedSearches(res.data || []);
+    } catch (err) {
+      console.error('Error fetching saved searches:', err);
+    }
+  };
+
+  const fetchSearchAnalytics = async () => {
+    try {
+      const res = await apiClient.get('/search/analytics');
+      setSearchAnalytics(res.data || []);
+    } catch (err) {
+      console.error('Error fetching search analytics:', err);
+    }
+  };
+
+  const handleSaveSearch = async () => {
+    if (!newSearchSaveName.trim() || !searchQuery.trim()) {
+      addToast('warning', 'Validation Error', 'Provide a name for the query and ensure query terms are specified.');
+      return;
+    }
+    try {
+      await apiClient.post('/search/saved', {
+        name: newSearchSaveName,
+        query: searchQuery,
+        filters: searchFilters
+      });
+      addToast('success', 'Search Saved', `"${newSearchSaveName}" added to saved queries.`);
+      setNewSearchSaveName('');
+      fetchSavedSearches();
+    } catch (err) {
+      console.error('Error saving search query:', err);
+      addToast('error', 'Save Failed', 'Could not save search query.');
+    }
+  };
+
+  const handleApplySavedSearch = (saved: any) => {
+    setSearchQuery(saved.query);
+    if (saved.filters) {
+      setSearchFilters({
+        category: saved.filters.category || '',
+        status: saved.filters.status || '',
+        minSize: saved.filters.minSize ? String(saved.filters.minSize / 1024) : '',
+        maxSize: saved.filters.maxSize ? String(saved.filters.maxSize / 1024) : '',
+        startDate: saved.filters.startDate || '',
+        endDate: saved.filters.endDate || ''
+      });
+    }
+    setTimeout(() => {
+      const btn = document.getElementById('search-btn-trigger');
+      if (btn) btn.click();
+    }, 100);
+  };
+
+  const runFolderRepair = async () => {
+    setLoadingRepair(true);
+    setRepairResults(null);
+    try {
+      const res = await apiClient.post('/documents/repair');
+      setRepairResults(res.data);
+      addToast('success', 'Repair Completed', 'Google Drive folder hierarchy repaired successfully.');
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error running folder repair:', err);
+      addToast('error', 'Repair Failed', err.response?.data?.error || 'Failed to complete repair routine.');
+    } finally {
+      setLoadingRepair(false);
+    }
+  };
+
+  const runSyncReconciliation = async () => {
+    setLoadingReconcile(true);
+    setReconcileResults(null);
+    try {
+      const res = await apiClient.post('/documents/reconcile');
+      setReconcileResults(res.data);
+      addToast('success', 'Reconciliation Completed', 'Database & storage synchronization verified.');
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error running sync reconciliation:', err);
+      addToast('error', 'Reconciliation Failed', err.response?.data?.error || 'Failed to complete sync reconciliation.');
+    } finally {
+      setLoadingReconcile(false);
+    }
+  };
+
+  const handleOpenVersions = async (file: FileItem) => {
+    setActiveFile(file);
+    setShowVersionsModal(true);
+    setLoadingVersions(true);
+    setFileVersions([]);
+    try {
+      const res = await apiClient.get(`/documents/file/${file.id}/versions`);
+      setFileVersions(res.data || []);
+    } catch (err) {
+      console.error('Error fetching file versions:', err);
+      addToast('error', 'Error', 'Failed to retrieve version history.');
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const handleRestoreVersion = async (versionId: string) => {
+    if (!activeFile) return;
+    try {
+      await apiClient.post(`/documents/file/${activeFile.id}/version/${versionId}/restore`);
+      addToast('success', 'Version Restored', 'The selected version has been restored to active vault.');
+      setShowVersionsModal(false);
+      setActiveFile(null);
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error restoring version:', err);
+      addToast('error', 'Restore Failed', err.response?.data?.error || 'Failed to restore document version.');
+    }
+  };
+
+  const fetchStorageAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const res = await apiClient.get('/documents/analytics');
+      setAnalyticsData(res.data);
+    } catch (err) {
+      console.error('Error fetching storage analytics:', err);
+      addToast('error', 'Analytics Error', 'Failed to retrieve storage insights.');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res = await apiClient.get('/users');
+      setTenantUsers(res.data || []);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleApprove = async (fileId: string) => {
+    try {
+      await apiClient.post(`/documents/file/${fileId}/approve`);
+      addToast('success', 'Document Approved', 'Document has been approved successfully.');
+      setPreviewFile(null);
+      setPreviewData(null);
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error approving document:', err);
+      addToast('error', 'Error', err.response?.data?.error || 'Failed to approve document.');
+    }
+  };
+
+  const handleReject = async (fileId: string) => {
+    if (!rejectionReason.trim()) {
+      addToast('warning', 'Validation Error', 'Please specify a rejection reason.');
+      return;
+    }
+    try {
+      await apiClient.post(`/documents/file/${fileId}/reject`, { reason: rejectionReason });
+      addToast('success', 'Document Rejected', 'Document has been rejected.');
+      setPreviewFile(null);
+      setPreviewData(null);
+      setRejectionReason('');
+      setShowRejectForm(false);
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error rejecting document:', err);
+      addToast('error', 'Error', err.response?.data?.error || 'Failed to reject document.');
+    }
+  };
+
+  const handleAssignReviewer = async (fileId: string, assigneeId: string) => {
+    try {
+      await apiClient.post(`/documents/file/${fileId}/assign-review`, { assigneeId });
+      addToast('success', 'Reviewer Assigned', 'Document reviewer updated successfully.');
+      if (context && context.syncState) {
+        await context.syncState();
+      }
+    } catch (err: any) {
+      console.error('Error assigning reviewer:', err);
+      addToast('error', 'Error', err.response?.data?.error || 'Failed to assign reviewer.');
     }
   };
 
@@ -440,6 +695,42 @@ export default function VaultProPanel({
           }}
         >
           <Search size={16} /> AI OCR Content Search
+        </button>
+        <button
+          onClick={() => setActiveTab('maintenance')}
+          style={{
+            padding: '0.5rem 1.25rem',
+            background: activeTab === 'maintenance' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+            color: activeTab === 'maintenance' ? '#f59e0b' : '#94a3b8',
+            border: activeTab === 'maintenance' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid transparent',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s'
+          }}
+        >
+          <RefreshCw size={16} /> Drive Sync & Repairs
+        </button>
+        <button
+          onClick={() => { setActiveTab('analytics'); fetchStorageAnalytics(); }}
+          style={{
+            padding: '0.5rem 1.25rem',
+            background: activeTab === 'analytics' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            color: activeTab === 'analytics' ? '#8b5cf6' : '#94a3b8',
+            border: activeTab === 'analytics' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s'
+          }}
+        >
+          <BarChart2 size={16} /> Storage Insights
         </button>
       </div>
 
@@ -620,6 +911,14 @@ export default function VaultProPanel({
                         </button>
 
                         <button 
+                          onClick={() => handleOpenVersions(file)}
+                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#8b5cf6', cursor: 'pointer' }}
+                          title="Version History"
+                        >
+                          <History size={14} />
+                        </button>
+
+                        <button 
                           onClick={() => setDeleteConfirmId(file.id)}
                           style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
                           title="Delete file"
@@ -786,57 +1085,486 @@ export default function VaultProPanel({
 
       {/* RENDER OCR AI SEARCH TAB */}
       {activeTab === 'ocr_search' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>AI OCR Full-Text Content Search</h3>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Queries the digitizing service inside EAC solutions, returning documents whose OCR indexes contain your exact query term.
-          </p>
+        <div style={{ display: 'flex', gap: '1.5rem', width: '100%', flexDirection: 'row', flexWrap: 'wrap' }}>
+          {/* Main Search Column */}
+          <div style={{ flex: '3 1 600px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Search size={20} style={{ color: '#10b981' }} /> AI OCR Advanced Search Engine
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Search across all uploaded files, full-text digitized OCR indexes, client tasks, and compliance obligations.
+              </p>
 
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <input 
-              type="text" 
-              placeholder="Search terms: 'invoices', 'receipts', 'irs', etc..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
-            />
-            <button 
-              type="submit" 
-              style={{ padding: '0.6rem 1.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-            >
-              <Search size={16} /> Search Content
-            </button>
-          </form>
+              <form onSubmit={handleSearchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Search Bar */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter keywords (e.g., 'invoice', 'payroll', 'irs')..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.95rem' }}
+                  />
+                  <button 
+                    id="search-btn-trigger"
+                    type="submit" 
+                    style={{ padding: '0.75rem 2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', transition: 'background-color 0.2s' }}
+                  >
+                    <Search size={18} /> Search
+                  </button>
+                </div>
 
-          {searchLoading ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Analyzing digitizing system indexes...</div>
-          ) : searchResults.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-              No document indices match the term. Try searching for general terms or words in uploaded receipts.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h4 style={{ margin: 0, color: '#fff' }}>Matching Digitized Documents ({searchResults.length})</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {searchResults.map(result => (
-                  <div key={result.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: '#cbd5e1' }}>📄 {result.name}</div>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.25rem' }}>Category: {result.category} | Size: {(result.size_bytes / 1024).toFixed(1)} KB</div>
-                      {result.ocr_text && (
-                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '4px', borderLeft: '3px solid #10b981' }}>
-                          Snippet: {result.ocr_text.length > 150 ? result.ocr_text.slice(0, 150) + '...' : result.ocr_text}
-                        </div>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => handleOpenPreview(result)}
-                      style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                {/* Filters Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Category</label>
+                    <select
+                      value={searchFilters.category}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, category: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
                     >
-                      Inspect Indexes
-                    </button>
+                      <option value="">All Categories</option>
+                      <option value="General">General</option>
+                      <option value="Taxation">Taxation</option>
+                      <option value="Audit">Audit</option>
+                      <option value="Filing Proof">Filing Proof</option>
+                    </select>
                   </div>
-                ))}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Status</label>
+                    <select
+                      value={searchFilters.status}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, status: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="Reviewing">Reviewing</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Min Size (KB)</label>
+                    <input
+                      type="number"
+                      placeholder="Min KB"
+                      value={searchFilters.minSize}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, minSize: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Max Size (KB)</label>
+                    <input
+                      type="number"
+                      placeholder="Max KB"
+                      value={searchFilters.maxSize}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, maxSize: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Start Date</label>
+                    <input
+                      type="date"
+                      value={searchFilters.startDate}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>End Date</label>
+                    <input
+                      type="date"
+                      value={searchFilters.endDate}
+                      onChange={e => setSearchFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Results sections */}
+            {searchLoading ? (
+              <div style={{ background: '#1e293b', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: '#94a3b8' }}>
+                <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 1rem', display: 'block', color: '#10b981' }} />
+                Analyzing indexes and ranking relevant documents...
+              </div>
+            ) : (searchResults.length === 0 && searchTasksResults.length === 0 && searchObligationsResults.length === 0) ? (
+              <div style={{ background: '#1e293b', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: '#64748b' }}>
+                No records found. Try adjusting filters or searching for terms like "invoice", "payroll", or "compliance".
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* 1. Digitized Files */}
+                {searchResults.length > 0 && (
+                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FileText size={18} style={{ color: '#3b82f6' }} /> Digitized Vault Documents ({searchResults.length})
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {searchResults.map((result: any) => (
+                        <div key={result.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>📄 {result.name}</span>
+                              <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: result.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: result.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+                                Relevance: {result.relevanceScore}%
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                              Category: {result.category} | Size: {(result.size_bytes / 1024).toFixed(1)} KB | Status: {result.status || 'Reviewing'}
+                            </div>
+                            {result.ocr_text && (
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '4px', borderLeft: '3px solid #10b981' }}>
+                                Snippet: {result.ocr_text.length > 150 ? result.ocr_text.slice(0, 150) + '...' : result.ocr_text}
+                              </div>
+                            )}
+                          </div>
+                          <button 
+                            onClick={() => handleOpenPreview(result)}
+                            style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                          >
+                            Inspect Indexes
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Tasks */}
+                {searchTasksResults.length > 0 && (
+                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <CheckSquare size={18} style={{ color: '#a855f7' }} /> Client Tasks & Workflow Requests ({searchTasksResults.length})
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {searchTasksResults.map((task: any) => (
+                        <div key={task.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>🔧 {task.title}</span>
+                              <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: task.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: task.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+                                Relevance: {task.relevanceScore}%
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                              Status: {task.status || 'Pending'} | Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}
+                            </div>
+                            {task.description && (
+                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#cbd5e1' }}>{task.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Compliance Obligations */}
+                {searchObligationsResults.length > 0 && (
+                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Scale size={18} style={{ color: '#eab308' }} /> Compliance Obligations & Deadlines ({searchObligationsResults.length})
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {searchObligationsResults.map((ob: any) => (
+                        <div key={ob.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>⚖️ {ob.title}</span>
+                              <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: ob.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: ob.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+                                Relevance: {ob.relevanceScore}%
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                              Frequency: {ob.frequency} | Due: {ob.due_date ? new Date(ob.due_date).toLocaleDateString() : 'N/A'}
+                            </div>
+                            {ob.notes && (
+                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#cbd5e1' }}>{ob.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar Column */}
+          <div style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Save Query Card */}
+            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem' }}>Save Search Query</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <input 
+                  type="text" 
+                  placeholder="Query nickname (e.g. Q3 Audits)..."
+                  value={newSearchSaveName}
+                  onChange={e => setNewSearchSaveName(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                />
+                <button 
+                  onClick={handleSaveSearch}
+                  disabled={!searchQuery.trim()}
+                  style={{ width: '100%', padding: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: searchQuery.trim() ? 1 : 0.6 }}
+                >
+                  Save Active Search
+                </button>
+              </div>
+            </div>
+
+            {/* Saved Queries List */}
+            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <History size={16} style={{ color: '#3b82f6' }} /> Saved Searches
+              </h4>
+              {savedSearches.length === 0 ? (
+                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>No saved searches found.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {savedSearches.map(saved => (
+                    <button
+                      key={saved.id}
+                      onClick={() => handleApplySavedSearch(saved)}
+                      style={{ width: '100%', textAlign: 'left', background: '#0f172a', padding: '0.6rem 0.75rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.8rem', transition: 'border-color 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#fff' }}>{saved.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Query: "{saved.query}"
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Top Searches / Analytics Card */}
+            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <BarChart2 size={16} style={{ color: '#10b981' }} /> Top Searches
+              </h4>
+              {searchAnalytics.length === 0 ? (
+                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>No analytics data available yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {searchAnalytics.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.02)' }}>
+                      <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>"{item.query}"</span>
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                        {item.count} searches
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RENDER DRIVE SYNC & MAINTENANCE TAB */}
+      {activeTab === 'maintenance' && (
+        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <RefreshCw size={20} style={{ color: '#f59e0b' }} /> Google Drive Sync & Folder Repairs
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+              Verify integrity of physical Google Drive folders and reconcile file metadata records against the database ledger.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            {/* Folder repair */}
+            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Folder Hierarchy Repair Routine</h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                  Scans the Google Drive shared space to ensure the tenant root folder and all specific category subdirectories (compliance, payroll, etc.) exist. Missing directories are auto-provisioned.
+                </p>
+              </div>
+              <div>
+                <button
+                  onClick={runFolderRepair}
+                  disabled={loadingRepair}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    background: '#f59e0b',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    opacity: loadingRepair ? 0.7 : 1
+                  }}
+                >
+                  {loadingRepair ? 'Verifying & Repairing Directories...' : 'Execute Folder Repairs'}
+                </button>
+
+                {repairResults && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: '6px', fontSize: '0.8rem', color: '#fca5a5' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#fff' }}>Status: {repairResults.status}</div>
+                    <div>{repairResults.details}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sync reconciliation */}
+            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>File Sync & Reconciliation Run</h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                  Performs a checksum validation of database files against actual cloud storage files. Automatically recovers orphaned storage uploads and corrects size/metadata anomalies.
+                </p>
+              </div>
+              <div>
+                <button
+                  onClick={runSyncReconciliation}
+                  disabled={loadingReconcile}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    opacity: loadingReconcile ? 0.7 : 1
+                  }}
+                >
+                  {loadingReconcile ? 'Scanning & Reconciling Files...' : 'Run Sync Reconciliation'}
+                </button>
+
+                {reconcileResults && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '6px', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#fff' }}>Status: {reconcileResults.status}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', margin: '0.5rem 0' }}>
+                      <div>DB Files: {reconcileResults.totalDbFiles}</div>
+                      <div>Cloud Files: {reconcileResults.totalStorageFiles}</div>
+                      <div>Missing: {reconcileResults.missingCount}</div>
+                      <div>Orphans Registered: {reconcileResults.orphansCount}</div>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                      {reconcileResults.details}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RENDER DRIVE STORAGE ANALYTICS TAB */}
+      {activeTab === 'analytics' && (
+        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BarChart2 size={20} style={{ color: '#8b5cf6' }} /> Drive Storage Insights & Forecasting
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+                Real-time metrics tracking storage consumption, category distribution, historical file growth, and next-month forecasting.
+              </p>
+            </div>
+            <button 
+              onClick={fetchStorageAnalytics}
+              style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+            >
+              Refresh Stats
+            </button>
+          </div>
+
+          {loadingAnalytics ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Gathering workspace storage diagnostics...</div>
+          ) : !analyticsData ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>No analytics records loaded. Click Refresh to query database ledger.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Metric Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Storage Consumed</div>
+                  <div style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                    {(analyticsData.totalSizeBytes / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Across all active directories</div>
+                </div>
+
+                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total File Count</div>
+                  <div style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                    {analyticsData.totalFilesCount} Files
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Indexed in compliance ledger</div>
+                </div>
+
+                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Forecasted Usage (Next Month)</div>
+                  <div style={{ color: '#8b5cf6', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                    {(analyticsData.forecasting.predictedNextMonthSizeBytes / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                  <div style={{ color: '#10b981', fontSize: '0.75rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    ⚡ Status: {analyticsData.forecasting.forecastStatus}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+                {/* Category distribution */}
+                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>Distribution by Category</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {Object.keys(analyticsData.categories).length === 0 ? (
+                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No file categories classified yet.</div>
+                    ) : (
+                      Object.entries(analyticsData.categories).map(([category, stats]: [string, any]) => {
+                        const percent = analyticsData.totalSizeBytes > 0 ? (stats.size / analyticsData.totalSizeBytes) * 100 : 0;
+                        return (
+                          <div key={category}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '0.25rem' }}>
+                              <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{category} ({stats.count} files)</span>
+                              <span>{(stats.size / 1024 / 1024).toFixed(2)} MB ({percent.toFixed(1)}%)</span>
+                            </div>
+                            <div style={{ width: '100%', height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${percent}%`, height: '100%', background: '#8b5cf6', borderRadius: '4px' }} />
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Growth over time */}
+                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>Storage Growth History</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {analyticsData.growth.length === 0 ? (
+                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No historical growth data found.</div>
+                    ) : (
+                      analyticsData.growth.slice(-6).map((m: any) => (
+                        <div key={m.month} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#cbd5e1', background: '#1e293b', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                          <span>📅 Month: {m.month}</span>
+                          <span style={{ color: '#10b981', fontWeight: 'bold' }}>+{(m.addedBytes / 1024 / 1024).toFixed(2)} MB added</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -947,46 +1675,189 @@ export default function VaultProPanel({
               </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', background: '#0f172a', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {previewLoading ? (
-                <div style={{ color: '#94a3b8' }}>Acquiring storage authorization tokens...</div>
-              ) : previewData ? (
-                previewTab === 'document' ? (
-                  // Document visual preview
-                  previewData.mime_type?.startsWith('image/') || 
-                  previewData.name?.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i) ? (
-                    <img 
-                      src={previewData.url.startsWith('/') ? `http://localhost:5000${previewData.url}` : previewData.url} 
-                      alt={previewData.name}
-                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                    />
+            <div style={{ flex: 1, display: 'flex', gap: '1.25rem', overflow: 'hidden', marginTop: '0.5rem' }}>
+              
+              {/* Left Side: Document Preview or OCR */}
+              <div style={{ flex: 2, display: 'flex', flexDirection: 'column', background: '#0f172a', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', overflowY: 'auto' }}>
+                {previewLoading ? (
+                  <div style={{ color: '#94a3b8', margin: 'auto' }}>Acquiring storage authorization tokens...</div>
+                ) : previewData ? (
+                  previewTab === 'document' ? (
+                    // Document visual preview
+                    previewData.mime_type?.startsWith('image/') || 
+                    previewData.name?.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i) ? (
+                      <img 
+                        src={previewData.url.startsWith('/') ? `http://localhost:5000${previewData.url}` : previewData.url} 
+                        alt={previewData.name}
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', margin: 'auto' }}
+                      />
+                    ) : (
+                      <div style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem', margin: 'auto' }}>
+                        <FileText size={48} style={{ margin: '0 auto 1rem', display: 'block', color: '#3b82f6' }} />
+                        <p style={{ margin: '0 0 1rem 0' }}>Inline preview is not supported for file format: <strong>{previewData.mime_type || 'Unknown'}</strong></p>
+                        <a 
+                          href={previewData.url.startsWith('/') ? `http://localhost:5000${previewData.url}` : previewData.url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold' }}
+                        >
+                          Download & Open File
+                        </a>
+                      </div>
+                    )
                   ) : (
-                    <div style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem' }}>
-                      <FileText size={48} style={{ margin: '0 auto 1rem', display: 'block', color: '#3b82f6' }} />
-                      <p style={{ margin: '0 0 1rem 0' }}>Inline preview is not supported for file format: <strong>{previewData.mime_type || 'Unknown'}</strong></p>
-                      <a 
-                        href={previewData.url.startsWith('/') ? `http://localhost:5000${previewData.url}` : previewData.url} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold' }}
-                      >
-                        Download & Open File
-                      </a>
+                    // OCR text viewer
+                    <div style={{ width: '100%', height: '100%', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.8rem', color: '#10b981', marginBottom: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                        ⚡ Extracted by EAC Solutions Document Intelligence (OCR) Engine
+                      </div>
+                      <pre style={{ flex: 1, overflow: 'auto', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '6px', color: '#34d399', fontSize: '0.85rem', fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
+                        {previewData.ocr_text || 'No machine-readable OCR text extracted for this document.'}
+                      </pre>
                     </div>
                   )
                 ) : (
-                  // OCR text viewer
-                  <div style={{ width: '100%', height: '100%', textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#10b981', marginBottom: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>
-                      ⚡ Extracted by EAC Solutions Document Intelligence (OCR) Engine
-                    </div>
-                    <pre style={{ flex: 1, overflow: 'auto', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '6px', color: '#34d399', fontSize: '0.85rem', fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
-                      {previewData.ocr_text || 'No machine-readable OCR text extracted for this document.'}
-                    </pre>
-                  </div>
-                )
+                  <div style={{ color: '#ef4444', margin: 'auto' }}>Unable to retrieve preview key.</div>
+                )}
+              </div>
+
+              {/* Right Side: Workflow review, approval and assignment */}
+              <div style={{ flex: 1, background: '#1e293b', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
+                 <div>
+                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Workflow Status</h4>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                     <span style={{
+                       fontSize: '0.8rem',
+                       padding: '0.25rem 0.5rem',
+                       borderRadius: '4px',
+                       fontWeight: 'bold',
+                       background: previewFile.status === 'Approved' ? 'rgba(16, 185, 129, 0.15)' : previewFile.status === 'Rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                       color: previewFile.status === 'Approved' ? '#10b981' : previewFile.status === 'Rejected' ? '#ef4444' : '#f59e0b'
+                     }}>
+                       {previewFile.status || 'Reviewing'}
+                     </span>
+                   </div>
+                 </div>
+
+                 {/* Assign Reviewer */}
+                 <div>
+                   <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Assigned Reviewer</label>
+                   <select 
+                     value={previewFile.assigned_reviewer_id || ''} 
+                     onChange={e => handleAssignReviewer(previewFile.id, e.target.value)}
+                     style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                   >
+                     <option value="">Unassigned</option>
+                     {tenantUsers.map(u => (
+                       <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
+                     ))}
+                   </select>
+                 </div>
+
+                 {/* Actions */}
+                 {previewFile.status !== 'Approved' && (
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                     <h4 style={{ margin: 0, color: '#fff', fontSize: '0.9rem' }}>Workflow Actions</h4>
+                     <button
+                       onClick={() => handleApprove(previewFile.id)}
+                       style={{ width: '100%', padding: '0.6rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                     >
+                       Approve Document
+                     </button>
+
+                     {!showRejectForm ? (
+                       <button
+                         onClick={() => setShowRejectForm(true)}
+                         style={{ width: '100%', padding: '0.6rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                       >
+                         Reject Document
+                       </button>
+                     ) : (
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                         <textarea
+                           placeholder="Specify rejection reason..."
+                           value={rejectionReason}
+                           onChange={e => setRejectionReason(e.target.value)}
+                           style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.8rem', resize: 'vertical' }}
+                         />
+                         <div style={{ display: 'flex', gap: '0.5rem' }}>
+                           <button
+                             onClick={() => handleReject(previewFile.id)}
+                             style={{ flex: 1, padding: '0.4rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                           >
+                             Submit Reject
+                           </button>
+                           <button
+                             onClick={() => setShowRejectForm(false)}
+                             style={{ flex: 1, padding: '0.4rem', background: '#475569', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                           >
+                             Cancel
+                           </button>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+
+                 {previewFile.status === 'Rejected' && previewFile.rejection_reason && (
+                   <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '0.75rem', borderRadius: '6px' }}>
+                     <h5 style={{ margin: '0 0 0.25rem 0', color: '#fca5a5' }}>Rejection Reason</h5>
+                     <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1' }}>{previewFile.rejection_reason}</p>
+                   </div>
+                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VERSION HISTORY MODAL */}
+      {showVersionsModal && activeFile && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+            <button 
+              onClick={() => { setShowVersionsModal(false); setActiveFile(null); }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+
+            <h3 style={{ color: '#fff', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <History size={20} style={{ color: '#8b5cf6' }} /> Version History
+            </h3>
+            <p style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Archived version records for: <strong>{activeFile.name}</strong></p>
+
+            <div style={{ marginTop: '1.5rem', maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {loadingVersions ? (
+                <div style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>Loading archived file history...</div>
+              ) : fileVersions.length === 0 ? (
+                <div style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>No previous versions archived for this document.</div>
               ) : (
-                <div style={{ color: '#ef4444' }}>Unable to retrieve preview key.</div>
+                fileVersions.map(v => (
+                  <div key={v.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ color: '#fff', fontWeight: 'bold' }}>Version v{v.version}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                        Size: {(v.size_bytes / 1024).toFixed(1)} KB | Uploaded: {new Date(v.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreVersion(v.id)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        background: '#8b5cf6',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Restore v{v.version}
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>

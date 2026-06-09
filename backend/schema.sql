@@ -749,5 +749,19 @@ CREATE TABLE IF NOT EXISTS user_mfa (
 ALTER TABLE user_mfa ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_mfa_all ON user_mfa FOR ALL USING (user_id = auth.uid() OR is_admin());
 
+-- 9. Saved Searches
+CREATE TABLE IF NOT EXISTS saved_searches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    query TEXT NOT NULL,
+    filters JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY saved_searches_all ON saved_searches FOR ALL USING (tenant_id = (SELECT tenant_id FROM users WHERE id = auth.uid()) OR is_admin());
+
 
 

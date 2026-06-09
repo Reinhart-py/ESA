@@ -217,5 +217,44 @@ export class DocumentRepository {
     if (error) throw error;
     return data;
   }
+
+  static async getFileVersions(fileId: string) {
+    const { data, error } = await supabase
+      .from('file_versions')
+      .select('*')
+      .eq('file_id', fileId)
+      .order('version', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async getVersionById(versionId: string) {
+    const { data, error } = await supabase
+      .from('file_versions')
+      .select('*')
+      .eq('id', versionId)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async deleteVersion(versionId: string) {
+    const { error } = await supabase
+      .from('file_versions')
+      .delete()
+      .eq('id', versionId);
+    if (error) throw error;
+    return true;
+  }
+
+  static async getStorageAnalytics(tenantId: string) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('size_bytes, category, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('is_deleted', false);
+    if (error) throw error;
+    return data || [];
+  }
 }
 

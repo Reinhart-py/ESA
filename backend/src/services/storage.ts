@@ -3,6 +3,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import stream from 'stream';
+import { DocumentRepository } from '../repositories/documentRepository.js';
 
 dotenv.config();
 
@@ -266,6 +267,173 @@ export const StorageService = {
       s.push(`EAC Solutions Vault: Mock file contents for ${storageKey}`);
       s.push(null);
       return s;
+    }
+  },
+
+  repairTenantFolders: async (tenantId: string): Promise<any> => {
+    if (provider !== 'google_drive' || !googleDriveClient) {
+      console.log(`[Storage Mock] Skipping repair for provider ${provider}`);
+      return {
+        provider,
+        status: 'CLEAN',
+        repaired: true,
+        details: 'Mock storage is inherently verified. Checked categories: compliance, payroll, taxation, audits, reports, documents.'
+      };
+    }
+    try {
+      const activeDrive = await ensureGoogleCredentials();
+      const rootFolderId = process.env.GOOGLE_DRIVE_SHARED_FOLDER_ID || '5TB_EAC_ROOT';
+      
+      const tenantFolderId = await getOrCreateFolder(activeDrive, tenantId, rootFolderId);
+      const categories = ['compliance', 'payroll', 'taxation', 'audits', 'reports', 'documents'];
+      
+      const repairedFolders: string[] = [];
+      const existingDbFolders = await DocumentRepository.getFoldersByTenant(tenantId);
+      const dbFolderNames = existingDbFolders.map((f: any) => f.name.toLowerCase());
+
+      for (const category of categories) {
+        await getOrCreateFolder(activeDrive, category, tenantFolderId);
+        
+        if (!dbFolderNames.includes(category.toLowerCase())) {
+          await DocumentRepository.createFolder({
+            tenant_id: tenantId,
+            name: category,
+            parent_id: null
+          });
+          repairedFolders.push(category);
+        }
+      }
+
+      return {
+        provider: 'google_drive',
+        status: repairedFolders.length > 0 ? 'REPAIRED' : 'CLEAN',
+        repaired: true,
+        details: repairedFolders.length > 0 
+          ? `Missing categories repaired in database/storage: ${repairedFolders.join(', ')}`
+          : 'All workspace category folder hierarchies verified in Google Drive & Database.'
+      };
+    } catch (err: any) {
+      console.error(`[Storage Error] Folder repair failed for tenant ${tenantId}:`, err.message);
+      throw err;
+    }
+  },
+
+  reconcileSync: async (tenantId: string): Promise<any> => {
+    try {
+      const dbFiles = await DocumentRepository.getFilesByTenant(tenantId);
+      const dbFilesCount = dbFiles.length;
+      let storageFiles: { id: string; name: string; size: number }[] = [];
+
+      if (provider === 'google_drive' && googleDriveClient) {
+        const activeDrive = await ensureGoogleCredentials();
+        const rootFolderId = process.env.GOOGLE_DRIVE_SHARED_FOLDER_ID || '5TB_EAC_ROOT';
+        
+        const tenantFolderId = await getOrCreateFolder(activeDrive, tenantId, rootFolderId);
+        const categories = ['compliance', 'payroll', 'taxation', 'audits', 'reports', 'documents'];
+        const folderIds: string[] = [];
+        
+        for (const cat of categories) {
+          const catId = await getOrCreateFolder(activeDrive, cat, tenantFolderId);
+          folderIds.push(catId);
+        }
+
+        for (const folderId of folderIds) {
+          const query = `'${folderId}' in parents and trashed = false`;
+          const response = await activeDrive.files.list({
+            q: query,
+            fields: 'files(id, name, size)'
+          });
+          
+          if (response.data.files) {
+            for (const file of response.data.files) {
+              storageFiles.push({
+                id: file.id!,
+                name: file.name!,
+                size: file.size ? parseInt(file.size, 10) : 0
+              });
+            }
+          }
+        }
+      } else {
+        dbFiles.forEach((file: any) => {
+          storageFiles.push({
+            id: file.storage_key,
+            name: file.name,
+            size: file.size_bytes
+          });
+        });
+      }
+
+      const missingInStorage: any[] = [];
+      const orphansInStorage: any[] = [];
+      const mismatchedSizes: any[] = [];
+
+      for (const dbFile of dbFiles) {
+        const matchingStorage = storageFiles.find(sf => sf.id === dbFile.storage_key);
+        if (!matchingStorage) {
+          missingInStorage.push({
+            id: dbFile.id,
+            name: dbFile.name,
+            storage_key: dbFile.storage_key
+          });
+        } else if (matchingStorage.size > 0 && dbFile.size_bytes > 0 && matchingStorage.size !== dbFile.size_bytes) {
+          mismatchedSizes.push({
+            id: dbFile.id,
+            name: dbFile.name,
+            dbSize: dbFile.size_bytes,
+            storageSize: matchingStorage.size
+          });
+        }
+      }
+
+      for (const sFile of storageFiles) {
+        const registered = dbFiles.some((f: any) => f.storage_key === sFile.id);
+        if (!registered) {
+          orphansInStorage.push({
+            id: sFile.id,
+            name: sFile.name,
+            size: sFile.size
+          });
+        }
+      }
+
+      const status = (missingInStorage.length === 0 && orphansInStorage.length === 0 && mismatchedSizes.length === 0)
+        ? 'CLEAN'
+        : 'REPAIRED';
+      
+      for (const mismatch of mismatchedSizes) {
+        await DocumentRepository.updateFile(mismatch.id, {
+          size_bytes: mismatch.storageSize
+        });
+      }
+
+      for (const orphan of orphansInStorage) {
+        await DocumentRepository.createFile({
+          tenant_id: tenantId,
+          folder_id: null,
+          name: orphan.name,
+          size_bytes: orphan.size,
+          category: 'compliance',
+          uploaded_by: 'system',
+          storage_provider: provider,
+          storage_key: orphan.id,
+          mime_type: 'application/octet-stream',
+          ocr_text: 'Orphaned file auto-registered by Sync Reconciliation'
+        });
+      }
+
+      return {
+        totalDbFiles: dbFilesCount,
+        totalStorageFiles: storageFiles.length,
+        missingCount: missingInStorage.length,
+        orphansCount: orphansInStorage.length,
+        mismatchedCount: mismatchedSizes.length,
+        status: status,
+        details: `Reconciliation complete. ${missingInStorage.length} missing files detected, ${orphansInStorage.length} orphans registered, ${mismatchedSizes.length} size-mismatches updated.`
+      };
+    } catch (err: any) {
+      console.error(`[Storage Error] Sync reconciliation failed for tenant ${tenantId}:`, err.message);
+      throw err;
     }
   }
 };

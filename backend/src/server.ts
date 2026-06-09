@@ -11,6 +11,7 @@ import { EmailService } from './services/email.js';
 import { ComplianceEngine } from './services/compliance.js';
 import { ReportingEngine } from './services/reports.js';
 import { TaskService } from './services/taskService.js';
+import { WorkflowService } from './services/workflowService.js';
 
 // Repositories
 import { TenantRepository } from './repositories/tenantRepository.js';
@@ -556,6 +557,34 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
   }
 });
 
+app.post('/api/documents/repair', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  if (!tenantId) {
+    return res.status(400).json({ error: 'Tenant context required' });
+  }
+  try {
+    const result = await StorageService.repairTenantFolders(tenantId);
+    await logActivity(req, 'Files', 'Executed Workspace Folder Repair Routine', { result });
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/reconcile', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  if (!tenantId) {
+    return res.status(400).json({ error: 'Tenant context required' });
+  }
+  try {
+    const result = await StorageService.reconcileSync(tenantId);
+    await logActivity(req, 'Files', 'Executed Workspace Sync Reconciliation Run', { result });
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/documents/trash', requireAuth, async (req: AuthenticatedRequest, res) => {
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -578,6 +607,221 @@ app.post('/api/documents/file/:id/restore', requireAuth, async (req: Authenticat
   }
 });
 
+app.get('/api/documents/analytics', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  if (!tenantId) {
+    return res.status(400).json({ error: 'Tenant context required' });
+  }
+
+  try {
+    const rawFiles = await DocumentRepository.getStorageAnalytics(tenantId);
+    
+    let totalSize = 0;
+    const totalCount = rawFiles.length;
+    const categoryMap: Record<string, { size: number; count: number }> = {};
+    const monthlyMap: Record<string, number> = {};
+
+    rawFiles.forEach((file: any) => {
+      const size = Number(file.size_bytes || 0);
+      const cat = file.category || 'general';
+      totalSize += size;
+
+      if (!categoryMap[cat]) {
+        categoryMap[cat] = { size: 0, count: 0 };
+      }
+      categoryMap[cat].size += size;
+      categoryMap[cat].count += 1;
+
+      if (file.created_at) {
+        const date = new Date(file.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyMap[monthKey] = (monthlyMap[monthKey] || 0) + size;
+      }
+    });
+
+    const sortedMonths = Object.keys(monthlyMap).sort();
+    const monthlyGrowth = sortedMonths.map(month => ({
+      month,
+      addedBytes: monthlyMap[month]
+    }));
+
+    let predictedNextMonthSize = totalSize;
+    if (monthlyGrowth.length > 0) {
+      const totalGrowthVal = monthlyGrowth.reduce((acc, m) => acc + m.addedBytes, 0);
+      const averageMonthlyGrowth = totalGrowthVal / monthlyGrowth.length;
+      predictedNextMonthSize = totalSize + averageMonthlyGrowth;
+    }
+
+    res.json({
+      totalSizeBytes: totalSize,
+      totalFilesCount: totalCount,
+      categories: categoryMap,
+      growth: monthlyGrowth,
+      forecasting: {
+        predictedNextMonthSizeBytes: Math.round(predictedNextMonthSize),
+        forecastStatus: 'STABLE'
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/search', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  const query = (req.query.q as string) || '';
+  const category = req.query.category as string;
+  const status = req.query.status as string;
+  const minSize = req.query.minSize ? Number(req.query.minSize) : undefined;
+  const maxSize = req.query.maxSize ? Number(req.query.maxSize) : undefined;
+  const startDate = req.query.startDate as string;
+  const endDate = req.query.endDate as string;
+
+  if (!tenantId) {
+    return res.status(400).json({ error: 'Tenant context required' });
+  }
+
+  try {
+    const results = await SearchRepository.searchAll(tenantId, query, {
+      category,
+      status,
+      minSize,
+      maxSize,
+      startDate,
+      endDate
+    });
+
+    await logActivity(req, 'Search', `Searched query: "${query}"`, { query, category, resultsCount: results.files.length + results.tasks.length + results.obligations.length });
+    res.json(results);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/search/saved', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  const userId = req.user?.id;
+  const { name, query, filters } = req.body;
+
+  if (!tenantId || !userId) {
+    return res.status(400).json({ error: 'Context tenant_id and user_id are required' });
+  }
+  if (!name || !query) {
+    return res.status(400).json({ error: 'Name and query are required' });
+  }
+
+  try {
+    const saved = await SearchRepository.createSavedSearch({
+      tenant_id: tenantId,
+      user_id: userId,
+      name,
+      query,
+      filters: filters || {}
+    });
+    await logActivity(req, 'Search', `Saved search query: "${name}"`, { name, query });
+    res.status(201).json(saved);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/search/saved', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id;
+  const userId = req.user?.id;
+
+  if (!tenantId || !userId) {
+    return res.status(400).json({ error: 'Context tenant_id and user_id are required' });
+  }
+
+  try {
+    const list = await SearchRepository.getSavedSearches(tenantId, userId);
+    res.json(list);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/search/analytics', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { data: logs, error } = await supabase
+      .from('audit_logs')
+      .select('details')
+      .eq('tenant_id', tenantId)
+      .eq('category', 'Search');
+
+    if (error) throw error;
+
+    const queryFrequencies: Record<string, number> = {};
+    (logs || []).forEach((log: any) => {
+      const q = log.details?.query;
+      if (q) {
+        queryFrequencies[q] = (queryFrequencies[q] || 0) + 1;
+      }
+    });
+
+    const sortedQueries = Object.entries(queryFrequencies)
+      .map(([query, count]) => ({ query, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    res.json(sortedQueries);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/file/:id/versions', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  try {
+    const versions = await DocumentRepository.getFileVersions(fileId);
+    res.json(versions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/version/:versionId/restore', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const versionId = req.params.versionId;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+
+  try {
+    const currentFile = await DocumentRepository.getFileById(fileId, tenantId);
+    if (!currentFile) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const targetVersion = await DocumentRepository.getVersionById(versionId);
+    if (!targetVersion || targetVersion.file_id !== fileId) {
+      return res.status(404).json({ error: 'Version not found or mismatch' });
+    }
+
+    await DocumentRepository.createVersion({
+      file_id: currentFile.id,
+      version: currentFile.version || 1,
+      size_bytes: currentFile.size_bytes,
+      storage_key: currentFile.storage_key,
+      uploaded_by: currentFile.uploaded_by
+    });
+
+    const updatedFile = await DocumentRepository.updateFile(fileId, {
+      storage_key: targetVersion.storage_key,
+      size_bytes: targetVersion.size_bytes,
+      version: targetVersion.version,
+      uploaded_by: userId
+    });
+
+    await DocumentRepository.deleteVersion(versionId);
+
+    await logActivity(req, 'Files', `Restored previous version (v${targetVersion.version}) for file: ${currentFile.name}`, { fileId, versionId });
+    res.json(updatedFile);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/documents/file/:id/retention', requireAuth, async (req: AuthenticatedRequest, res) => {
   const fileId = req.params.id;
   const tenantId = req.user?.tenant_id || '';
@@ -586,6 +830,76 @@ app.post('/api/documents/file/:id/retention', requireAuth, async (req: Authentic
     const file = await DocumentRepository.updateFileRetention(fileId, tenantId, retentionUntil || null, !!isLegalHold);
     await logActivity(req, 'Files', `Updated retention configuration for file: ${file.name}`, { fileId, retentionUntil, isLegalHold });
     res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/approve', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner', 'accountant']), async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  const identity = req.user?.email || 'Unknown User';
+
+  try {
+    const file = await WorkflowService.approveDocument(fileId, tenantId, userId, identity);
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/reject', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner', 'accountant']), async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  const identity = req.user?.email || 'Unknown User';
+  const { reason } = req.body;
+
+  if (!reason) {
+    return res.status(400).json({ error: 'Rejection reason is required' });
+  }
+
+  try {
+    const file = await WorkflowService.rejectDocument(fileId, tenantId, userId, identity, reason);
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/file/:id/assign-review', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner', 'accountant']), async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  const identity = req.user?.email || 'Unknown User';
+  const { assigneeId } = req.body;
+
+  if (!assigneeId) {
+    return res.status(400).json({ error: 'Assignee user ID is required' });
+  }
+
+  try {
+    const file = await WorkflowService.assignReviewer(fileId, tenantId, assigneeId, userId, identity);
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/workflows/escalate-pending', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await WorkflowService.runEscalationRoutine();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/workflows/check-expirations', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await WorkflowService.runExpirationRoutine();
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
