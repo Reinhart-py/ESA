@@ -162,11 +162,13 @@ app.get('/api/status', (req, res) => {
 app.post('/api/auth/register', validateRequest(registerSchema), async (req, res) => {
   const { email, fullName, businessName, businessType } = req.body;
   try {
-    // 1. Create Tenant via TenantRepository
     const tenant = await TenantRepository.create({ name: businessName, business_type: businessType });
+    
+    // Provision tenant workspace folders in the storage provider
+    StorageService.provisionTenantFolders(tenant.id).catch((err) => {
+      console.error('[Storage Onboarding] Folder provisioning failed:', err.message);
+    });
 
-    // 2. Create profile map in public.users via UserRepository
-    // Note: auth account itself is created by client SDK directly before profile sync
     res.status(201).json({ success: true, tenant, message: 'Tenant space generated successfully' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

@@ -113,9 +113,29 @@ async function getOrCreateFolder(drive: any, folderName: string, parentId: strin
     return newFolder.data.id!;
   }
 }
-
 export const StorageService = {
   getProviderName: () => provider,
+
+  provisionTenantFolders: async (tenantId: string): Promise<void> => {
+    if (provider !== 'google_drive' || !googleDriveClient) {
+      console.log(`[Storage Mock] Skipping provisioning for provider ${provider}`);
+      return;
+    }
+    try {
+      const activeDrive = await ensureGoogleCredentials();
+      const rootFolderId = process.env.GOOGLE_DRIVE_SHARED_FOLDER_ID || '5TB_EAC_ROOT';
+      
+      const tenantFolderId = await getOrCreateFolder(activeDrive, tenantId, rootFolderId);
+      const categories = ['compliance', 'payroll', 'taxation', 'audits', 'reports', 'documents'];
+      
+      await Promise.all(
+        categories.map(category => getOrCreateFolder(activeDrive, category, tenantFolderId))
+      );
+      console.log(`[Storage] Provisioned Google Drive folder hierarchy for tenant ${tenantId}`);
+    } catch (err: any) {
+      console.error(`[Storage Error] Failed to provision folder structure for tenant ${tenantId}:`, err.message);
+    }
+  },
 
   uploadFile: async (
     fileName: string,
