@@ -436,17 +436,88 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
                 <div style={{ background: '#0f172a', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>WORKSPACE TIER STATUS:</span>
                   <span style={{ 
-                    fontSize: '0.8rem', 
-                    fontWeight: 'bold', 
-                    padding: '0.25rem 0.65rem', 
-                    borderRadius: '4px',
-                    background: subscription.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                    color: subscription.status === 'active' ? '#34d399' : '#fbbf24'
+                     fontSize: '0.8rem', 
+                     fontWeight: 'bold', 
+                     padding: '0.25rem 0.65rem', 
+                     borderRadius: '4px',
+                     background: subscription.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                     color: subscription.status === 'active' ? '#34d399' : '#fbbf24'
                   }}>
                     {subscription.status.toUpperCase()}
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* Plan cards */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>Available Subscription Options</h3>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Regional taxes (GST/VAT) calculated at checkout</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {plans.map(p => {
+                  const isCurrent = !!(subscription && subscription.plan_id === p.id);
+                  const isPro = p.code === 'pro';
+                  const featureList = JSON.parse(p.features || '{"list":[]}').list as string[];
+
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        background: '#1e293b',
+                        padding: '2rem',
+                        borderRadius: '12px',
+                        border: isCurrent ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        position: 'relative'
+                      }}
+                    >
+                      {isPro && (
+                        <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: '#10b981', color: '#fff', fontSize: '0.65rem', padding: '0.25rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                          RECOMMENDED
+                        </span>
+                      )}
+
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{p.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
+                          <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff' }}>${(p.price_cents / 100).toFixed(0)}</span>
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>/mo</span>
+                        </div>
+
+                        <ul style={{ paddingLeft: '1.2rem', margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.85rem' }}>
+                          {featureList.map((f, idx) => (
+                            <li key={idx} style={{ position: 'relative' }}>
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <button
+                        onClick={() => handleSubscribePlan(p.code)}
+                        disabled={billingLoading || isCurrent}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          background: isCurrent ? 'rgba(16,185,129,0.1)' : (isPro ? '#10b981' : '#1e293b'),
+                          color: isCurrent ? '#10b981' : '#fff',
+                          border: isCurrent ? '1px solid #10b981' : 'none',
+                          borderRadius: '8px',
+                          fontWeight: 'bold',
+                          cursor: billingLoading || isCurrent ? 'default' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {isCurrent ? 'Current Plan Standing' : (billingLoading ? 'Processing Checkout...' : 'Activate Plan Tier')}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Current subscription summary */}

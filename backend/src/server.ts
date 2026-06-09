@@ -108,12 +108,13 @@ app.use(cors({
   credentials: true
 }));
 
-// Webhook requires raw payload for Stripe signature verification
-app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sigHeader = req.headers['stripe-signature'];
+// Webhook requires raw payload for signature verification across gateways
+app.post('/api/billing/webhook/:provider', express.raw({ type: 'application/json' }), async (req, res) => {
+  const provider = req.params.provider as 'stripe' | 'razorpay' | 'paddle';
+  const sigHeader = req.headers['stripe-signature'] || req.headers['x-razorpay-signature'] || req.headers['x-signature'];
   const sig = Array.isArray(sigHeader) ? sigHeader[0] : (sigHeader || '');
   try {
-    await BillingService.handleWebhookEvent(sig, req.body);
+    await BillingService.handleWebhookEvent(provider, sig, req.body);
     res.json({ received: true });
   } catch (err: any) {
     res.status(400).send(`Webhook Error: ${err.message}`);
@@ -1093,6 +1094,7 @@ app.post('/api/tasks', requireAuth, validateRequest(createTaskSchema), async (re
       assigned_to: assignedTo,
       created_by: userId
     });
+    await logActivity(req, 'Tasks', `Created workspace task: ${title}`, { taskId: data.id });
     res.status(201).json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1106,6 +1108,7 @@ app.patch('/api/tasks/:id', requireAuth, async (req: AuthenticatedRequest, res) 
 
   try {
     const data = await TaskRepository.updateTask(taskId, tenantId, updates);
+    await logActivity(req, 'Tasks', `Updated workspace task details`, { taskId, updates });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1118,6 +1121,7 @@ app.delete('/api/tasks/:id', requireAuth, async (req: AuthenticatedRequest, res)
 
   try {
     await TaskRepository.deleteTask(taskId, tenantId);
+    await logActivity(req, 'Tasks', `Deleted workspace task`, { taskId });
     res.status(204).end();
   } catch (err: any) {
     res.status(500).json({ error: err.message });
