@@ -66,7 +66,17 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 
     let tenantId = profile.tenant_id;
     if ((profile.role === 'super_admin' || profile.role === 'admin' || profile.role === 'senior_accountant') && req.headers['x-impersonate-tenant-id']) {
-      tenantId = req.headers['x-impersonate-tenant-id'] as string;
+      const targetTenantId = req.headers['x-impersonate-tenant-id'] as string;
+      const { data: tenantExists, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('id', targetTenantId)
+        .maybeSingle();
+
+      if (tenantErr || !tenantExists) {
+        return res.status(400).json({ error: 'Impersonation error: Target tenant does not exist' });
+      }
+      tenantId = targetTenantId;
     }
 
     req.user = {
