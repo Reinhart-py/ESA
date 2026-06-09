@@ -24,50 +24,50 @@
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-width: 260px;
 
-  /* --- LIGHT THEME (Clean White & Green Palette) --- */
+  /* --- LIGHT THEME (Classic Navy & Gold Palette) --- */
   --bg-color: #FFFFFF;
-  --surface-color: #F8F9FA;
+  --surface-color: #F8F9FB;
   --card-bg: #FFFFFF;
-  --card-border: #E5E7EB;
+  --card-border: #E2E8F0;
   
   /* Palette Colors */
-  --primary-color: #062D60;       /* Deep Navy */
-  --accent-color: #10B981;        /* Vibrant Emerald Green */
-  --accent-color-hover: #059669;
-  --text-primary: #111827;        /* Ultra dark gray for high visibility */
-  --text-sec: #4B5563;            /* Clear secondary gray */
-  --text-muted: #6B7280;
+  --primary-color: #0A1D37;       /* Deep Royal Navy */
+  --accent-color: #B58A2B;        /* Premium Brushed Gold (with high contrast ratio) */
+  --accent-color-hover: #9E741D;
+  --text-primary: #0F172A;        /* Slate 900 */
+  --text-sec: #475569;            /* Slate 600 */
+  --text-muted: #64748B;          /* Slate 500 */
   
   /* Status Colors */
-  --color-success: #10B981;
-  --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-warning: #F59E0B;
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-danger: #EF4444;
-  --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-info: #2563EB;
-  --color-info-bg: rgba(37, 99, 235, 0.1);
+  --color-success: #059669;
+  --color-success-bg: rgba(5, 150, 105, 0.15);
+  --color-warning: #D97706;
+  --color-warning-bg: rgba(217, 119, 6, 0.15);
+  --color-danger: #DC2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.15);
+  --color-info: #1D4ED8;
+  --color-info-bg: rgba(29, 78, 216, 0.15);
 
   /* Shadow & Blur */
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-card: 0 4px 20px rgba(10, 29, 55, 0.04), 0 2px 4px rgba(10, 29, 55, 0.02);
   --glass-blur: none;
   --shiny-edge: none;
 }
 
-/* --- DARK THEME (Premium Cyber Slate & Neon Theme) --- */
+/* --- DARK THEME (Premium Dark Slate & Gold Theme) --- */
 [data-theme='dark'] {
-  --bg-color: #0B0F19;            /* Pitch Slate */
-  --surface-color: #111827;       /* Darker container gray */
-  --card-bg: #1F2937;             /* Sleek slate card */
-  --card-border: rgba(52, 211, 153, 0.15); /* Emerald container line */
+  --bg-color: #0B0F17;            /* Pitch Slate */
+  --surface-color: #151D2A;       /* Darker Navy Slate */
+  --card-bg: #1E293B;             /* Slate 800 */
+  --card-border: rgba(197, 155, 39, 0.2); /* Soft Gold highlight */
   
   /* Palette Colors */
-  --primary-color: #10B981;       /* Green becomes primary highlight in dark mode */
-  --accent-color: #34D399;        /* Bright Mint Accent */
-  --accent-color-hover: #6EE7B7;
-  --text-primary: #F9FAFB;        /* Pure bright white for extreme contrast */
-  --text-sec: #9CA3AF;            /* Crisp silver gray */
-  --text-muted: #6B7280;
+  --primary-color: #B58A2B;       /* Gold becomes primary highlight in dark mode */
+  --accent-color: #E2B857;        /* Warm Light Gold */
+  --accent-color-hover: #F8D882;
+  --text-primary: #F8FAFC;        /* Slate 50 */
+  --text-sec: #CBD5E1;            /* Slate 300 */
+  --text-muted: #94A3B8;          /* Slate 400 */
 
   /* Status Colors */
   --color-success: #34D399;
@@ -82,7 +82,7 @@
   /* Shadow & Blur */
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
   --glass-blur: blur(8px);
-  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 8px rgba(52, 211, 153, 0.1);
+  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 8px rgba(197, 155, 39, 0.1);
 }
 
 /* Base Styles */

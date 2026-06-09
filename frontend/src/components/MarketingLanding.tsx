@@ -346,7 +346,7 @@ export default function MarketingLanding({
         <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              background: '#062D60',
+              background: 'var(--primary-color)',
               width: 36,
               height: 36,
               borderRadius: 8,
@@ -356,23 +356,23 @@ export default function MarketingLanding({
             }}>
               <Shield size={20} color="#fff" />
             </div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.025em', color: themeMode === 'light' ? '#062D60' : '#10B981' }}>EAC Solutions</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--primary-color)' }}>EAC Solutions</span>
           </div>
 
           <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem', fontWeight: 600 }}>
-            <a href="#features" style={{ color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">Features</a>
-            <a href="#pricing" style={{ color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">Pricing</a>
-            <a href="#faqs" style={{ color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">FAQs</a>
+            <a href="#features" style={{ color: 'var(--text-sec)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">Features</a>
+            <a href="#pricing" style={{ color: 'var(--text-sec)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">Pricing</a>
+            <a href="#faqs" style={{ color: 'var(--text-sec)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-target">FAQs</a>
             <button 
               onClick={() => setActiveModalTopic('how-it-works')} 
-              style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', transition: 'color 0.2s' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'var(--text-sec)', transition: 'color 0.2s' }}
               className="hover-target"
             >
               How It Works
             </button>
             <button 
               onClick={() => setActiveModalTopic('reviews')} 
-              style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', transition: 'color 0.2s' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'var(--text-sec)', transition: 'color 0.2s' }}
               className="hover-target"
             >
               Reviews
@@ -386,7 +386,7 @@ export default function MarketingLanding({
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: themeMode === 'light' ? '#4B5563' : '#34D399',
+                color: 'var(--accent-color)',
                 cursor: 'pointer',
                 padding: '0.5rem',
                 borderRadius: '50%',
@@ -404,8 +404,8 @@ export default function MarketingLanding({
               style={{
                 padding: '0.5rem 1.25rem',
                 background: 'transparent',
-                color: themeMode === 'light' ? '#4B5563' : '#9CA3AF',
-                border: `1px solid ${themeMode === 'light' ? '#D1D5DB' : 'rgba(52, 211, 153, 0.3)'}`,
+                color: 'var(--text-sec)',
+                border: '1px solid var(--card-border)',
                 borderRadius: 8,
                 cursor: 'pointer',
                 fontSize: '0.9rem',
@@ -419,7 +419,7 @@ export default function MarketingLanding({
               onClick={() => handleOpenAuth(true)}
               style={{
                 padding: '0.5rem 1.25rem',
-                background: '#10B981',
+                background: 'var(--accent-color)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -437,11 +437,10 @@ export default function MarketingLanding({
 
       {/* Hero Section */}
       <section style={{
-        background: themeMode === 'light' ? '#062D60' : '#0B0F19',
+        background: themeMode === 'light' ? 'var(--primary-color)' : 'var(--bg-color)',
         color: '#FFFFFF',
         padding: '6rem 2rem 7rem 2rem',
-        textAlign: 'center',
-        borderBottom: themeMode === 'dark' ? '1px solid rgba(52, 211, 153, 0.15)' : 'none',
+        borderBottom: themeMode === 'dark' ? '1px solid var(--card-border)' : 'none',
         position: 'relative'
       }}>
         {/* Subtle grid pattern background */}
@@ -464,12 +463,12 @@ export default function MarketingLanding({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.4rem 1.2rem',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
+              background: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success)',
               borderRadius: 99,
               fontSize: '0.8rem',
               fontWeight: 700,
-              color: '#34D399',
+              color: 'var(--color-success)',
               marginBottom: '1.5rem'
             }}>
               <Sparkles size={14} /> Humanized Precision in Accounting
@@ -486,7 +485,7 @@ export default function MarketingLanding({
             </h1>
             <p style={{
               fontSize: '1.25rem',
-              color: themeMode === 'light' ? '#93C5FD' : '#9CA3AF',
+              color: themeMode === 'light' ? '#CBD5E1' : 'var(--text-muted)',
               lineHeight: 1.6,
               marginBottom: '2.5rem',
               maxWidth: '700px',
@@ -503,14 +502,14 @@ export default function MarketingLanding({
                 }}
                 style={{
                   padding: '0.9rem 2.5rem',
-                  background: '#10B981',
+                  background: 'var(--accent-color)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
                   cursor: 'pointer',
                   fontSize: '1.05rem',
                   fontWeight: 700,
-                  boxShadow: '0 10px 20px rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 10px 20px rgba(181, 138, 43, 0.2)',
                   transition: 'transform 0.2s, background-color 0.2s'
                 }}
               >
@@ -537,28 +536,28 @@ export default function MarketingLanding({
           {/* Interactive Floating Chat Bubble Demo */}
           <div style={{ marginTop: '5rem', width: '100%', maxWidth: '1000px', position: 'relative' }}>
             <div style={{
-              background: themeMode === 'light' ? '#FFFFFF' : '#111827',
+              background: 'var(--card-bg)',
               borderRadius: 16,
               padding: '1.5rem',
-              boxShadow: themeMode === 'light' ? '0 30px 60px rgba(0,0,0,0.1)' : '0 30px 60px rgba(0,0,0,0.5)',
-              border: `1px solid ${themeMode === 'light' ? '#E5E7EB' : 'rgba(52, 211, 153, 0.15)'}`,
+              boxShadow: 'var(--shadow-card)',
+              border: '1px solid var(--card-border)',
               textAlign: 'left'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: `1px solid ${themeMode === 'light' ? '#F3F4F6' : 'rgba(255,255,255,0.05)'}`, paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#10B981' }} />
-                  <span style={{ fontWeight: 700, color: themeMode === 'light' ? '#062D60' : '#34D399' }}>Live Portal Demo Overview</span>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--color-success)' }} />
+                  <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>Live Portal Demo Overview</span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: themeMode === 'light' ? '#6B7280' : '#9CA3AF' }}>Status: Ready for Onboarding</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-sec)' }}>Status: Ready for Onboarding</span>
               </div>
-              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: themeMode === 'light' ? '#F9FAFB' : '#0B0F19', borderRadius: 12, border: `1px dashed ${themeMode === 'light' ? '#D1D5DB' : 'rgba(52, 211, 153, 0.15)'}` }}>
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-color)', borderRadius: 12, border: '1px dashed var(--card-border)' }}>
                 <div style={{ textAlign: 'center', maxWidth: '400px', padding: '2rem' }}>
-                  <Award size={48} color="#10B981" style={{ margin: '0 auto 1rem auto' }} />
-                  <h4 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem', color: themeMode === 'light' ? '#062D60' : '#FFF' }}>Experience Managed Precision</h4>
-                  <p style={{ fontSize: '0.875rem', color: themeMode === 'light' ? '#4B5563' : '#9CA3AF', marginBottom: '1.5rem' }}>See real dashboard mockups and check write-off calculators by clicking the interactives below.</p>
+                  <Award size={48} color="var(--accent-color)" style={{ margin: '0 auto 1rem auto' }} />
+                  <h4 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Experience Managed Precision</h4>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-sec)', marginBottom: '1.5rem' }}>See real dashboard mockups and check write-off calculators by clicking the interactives below.</p>
                   <button 
                     onClick={() => setSelectedFeature('reporting')}
-                    style={{ background: '#062D60', color: '#FFF', border: 'none', padding: '0.6rem 1.2rem', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: 'var(--primary-color)', color: '#FFF', border: 'none', padding: '0.6rem 1.2rem', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
                   >
                     Open Feature Previews
                   </button>
@@ -573,25 +572,25 @@ export default function MarketingLanding({
                 position: 'absolute',
                 top: '-2.5rem',
                 right: '2rem',
-                background: '#FFFFFF',
+                background: 'var(--card-bg)',
                 padding: '1rem',
                 borderRadius: '12px',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                boxShadow: 'var(--shadow-card)',
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '0.75rem',
                 maxWidth: '300px',
                 cursor: 'pointer',
                 textAlign: 'left',
-                borderLeft: '4px solid #10B981',
+                borderLeft: '4px solid var(--accent-color)',
                 animation: 'bounce 2s infinite',
-                color: '#111827'
+                color: 'var(--text-primary)'
               }}
             >
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#062D60', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>JM</div>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-color)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>JM</div>
               <div>
-                <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: '#6B7280' }}>DEDICATED STEWARD</p>
-                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>"Hey! Jessica here. Your books are ready to reconcile. Tap to chat!"</p>
+                <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>DEDICATED STEWARD</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>"Hey! Jessica here. Your books are ready to reconcile. Tap to chat!"</p>
               </div>
             </div>
           </div>

@@ -472,7 +472,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
               <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem' }}>Select Workspace Tier Option</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                 {plans.map((p) => {
-                  const isCurrent = subscription && subscription.plan_id === p.id;
+                  const isCurrent = !!(subscription && subscription.plan_id === p.id);
                   
                   // Parse features list
                   let featureList: string[] = [];

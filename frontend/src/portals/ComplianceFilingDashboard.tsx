@@ -283,10 +283,6 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
         
         {/* Compliance Timeline / Deadlines */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-        {/* Compliance Timeline / Deadlines */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
           <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Filing Obligations & Timeline</h3>

@@ -116,6 +116,13 @@ export interface AuditLog {
   created_at: string;
 }
 
+export interface BillingPlan {
+  id: string;
+  name: string;
+  price_cents: number;
+  features?: string;
+}
+
 export interface Subscription {
   id: string;
   tenant_id: string;
@@ -124,6 +131,7 @@ export interface Subscription {
   current_period_start: string;
   current_period_end: string;
   stripe_subscription_id?: string;
+  billing_plans?: BillingPlan;
   created_at: string;
 }
 
