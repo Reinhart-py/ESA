@@ -90,5 +90,30 @@ export const EmailService = {
         LINK: ${inviteLink}`);
       return true;
     }
+  },
+
+  sendEmail: async (params: { to: string; subject: string; body: string }): Promise<boolean> => {
+    const fromAddress = process.env.EMAIL_FROM || 'notifications@eacsolutions.com';
+    if (resend) {
+      console.log(`[Resend] Dispatching email to ${params.to}`);
+      try {
+        await resend.emails.send({
+          from: fromAddress,
+          to: params.to,
+          subject: params.subject,
+          html: params.body,
+        });
+        return true;
+      } catch (err) {
+        console.error('Resend delivery failed:', err);
+        return false;
+      }
+    } else {
+      console.log(`[Email Service Mock] (Resend Not Configured) Send email:
+        TO: ${params.to}
+        SUBJECT: ${params.subject}
+        BODY: ${params.body}`);
+      return true;
+    }
   }
 };

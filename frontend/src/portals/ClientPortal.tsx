@@ -19,6 +19,8 @@ import MarketplaceHub from './MarketplaceHub.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
 import ReportingDashboard from './ReportingDashboard.tsx';
 import InternalMessagingHub from './InternalMessagingHub.tsx';
+import CommandPalette from '../components/ui/CommandPalette.tsx';
+import DataTable from '../components/ui/DataTable.tsx';
 
 const ticketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
@@ -53,6 +55,18 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   const [activeSubTab, setActiveSubTab] = useState('dashboard');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   const [tenants, setTenants] = useState<any[]>([]);
   const [activeTenantId, setActiveTenantId] = useState(currentUser?.tenant_id || '');
@@ -182,6 +196,44 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   const handleDownloadCSV = () => {
     const token = localStorage.getItem('supabase_token');
     window.open(`http://localhost:5000/api/reports/pl/export?access_token=${token}`, '_blank');
+  };
+
+  const [plans, setPlans] = useState<any[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
+
+  const fetchPlans = async () => {
+    try {
+      const res = await apiClient.get('/billing/plans');
+      setPlans(res.data || []);
+    } catch (err) {
+      console.error('Error fetching billing plans:', err);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeSubTab === 'billing') {
+      fetchPlans();
+    }
+  }, [activeSubTab]);
+
+  const handleSubscribePlan = async (planCode: string) => {
+    setBillingLoading(true);
+    try {
+      const res = await apiClient.post('/billing/session', {
+        priceId: planCode,
+        successUrl: window.location.href,
+        cancelUrl: window.location.href
+      });
+      if (res.data?.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl;
+      } else {
+        await syncState();
+      }
+    } catch (err) {
+      console.error('Failed to initiate billing session:', err);
+    } finally {
+      setBillingLoading(false);
+    }
   };
 
   return (
@@ -368,32 +420,190 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
         {/* Billing */}
         {activeSubTab === 'billing' && (
-          <div>
-            <h2>Billing & Subscription</h2>
-            <div style={{ padding: '1.5rem', background: '#1e293b', borderRadius: '8px', marginBottom: '2rem' }}>
-              <h3>Current Plan</h3>
-              <p>{subscription ? `Status: ${subscription.status}` : 'No active subscription plan'}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
+            {/* Header banner */}
+            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CreditCard size={24} style={{ color: '#10b981' }} /> Billing & Workspace Tier
+                </h2>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+                  Manage subscription plans, check workspace resource limits, and retrieve payment invoices.
+                </p>
+              </div>
+
+              {subscription && (
+                <div style={{ background: '#0f172a', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>WORKSPACE TIER STATUS:</span>
+                  <span style={{ 
+                    fontSize: '0.8rem', 
+                    fontWeight: 'bold', 
+                    padding: '0.25rem 0.65rem', 
+                    borderRadius: '4px',
+                    background: subscription.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: subscription.status === 'active' ? '#34d399' : '#fbbf24'
+                  }}>
+                    {subscription.status.toUpperCase()}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <h3>Recent Invoices</h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
-                  <th style={{ padding: '0.5rem' }}>Due Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map(inv => (
-                  <tr key={inv.id} style={{ borderBottom: '1px solid #334155' }}>
-                    <td style={{ padding: '0.5rem' }}>{inv.due_date}</td>
-                    <td>${(inv.amount_cents / 100).toFixed(2)}</td>
-                    <td>{inv.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Current subscription summary */}
+            {subscription && subscription.billing_plans && (
+              <div style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>ACTIVE SUBSCRIPTION TIER</label>
+                  <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{subscription.billing_plans.name}</strong>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>PLAN RECURRING FEE</label>
+                  <strong style={{ color: '#10b981', fontSize: '1.1rem' }}>${(subscription.billing_plans.price_cents / 100).toFixed(2)} / month</strong>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>CURRENT PERIOD END DATE</label>
+                  <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : 'N/A'}</strong>
+                </div>
+              </div>
+            )}
+
+            {/* Plan tiered options */}
+            <div>
+              <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem' }}>Select Workspace Tier Option</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {plans.map((p) => {
+                  const isCurrent = subscription && subscription.plan_id === p.id;
+                  
+                  // Parse features list
+                  let featureList: string[] = [];
+                  try {
+                    const parsed = typeof p.features === 'string' ? JSON.parse(p.features) : p.features;
+                    featureList = parsed?.list || [];
+                  } catch (err) {
+                    featureList = ['Tier Specific SLA Details'];
+                  }
+
+                  const isPro = p.code === 'pro';
+
+                  return (
+                    <div 
+                      key={p.id} 
+                      style={{ 
+                        background: isPro ? '#1e293b' : '#0f172a',
+                        borderRadius: '12px', 
+                        padding: '1.75rem',
+                        border: isCurrent ? '2px solid #10b981' : (isPro ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.05)'),
+                        boxShadow: isPro ? '0 10px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(16,185,129,0.1)' : 'none',
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        justifyContent: 'space-between',
+                        position: 'relative'
+                      }}
+                    >
+                      {isPro && (
+                        <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: '#10b981', color: '#fff', fontSize: '0.65rem', padding: '0.25rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                          RECOMMENDED
+                        </span>
+                      )}
+
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{p.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
+                          <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff' }}>${(p.price_cents / 100).toFixed(0)}</span>
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>/mo</span>
+                        </div>
+
+                        <ul style={{ paddingLeft: '1.2rem', margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.85rem' }}>
+                          {featureList.map((f, idx) => (
+                            <li key={idx} style={{ position: 'relative' }}>
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <button
+                        onClick={() => handleSubscribePlan(p.code)}
+                        disabled={billingLoading || isCurrent}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          background: isCurrent ? 'rgba(16,185,129,0.1)' : (isPro ? '#10b981' : '#1e293b'),
+                          color: isCurrent ? '#10b981' : '#fff',
+                          border: isCurrent ? '1px solid #10b981' : 'none',
+                          borderRadius: '8px',
+                          fontWeight: 'bold',
+                          cursor: billingLoading || isCurrent ? 'default' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {isCurrent ? 'Current Plan Standing' : (billingLoading ? 'Processing Checkout...' : 'Activate Plan Tier')}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Invoices list */}
+            <div>
+              <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1.25rem' }}>Recent Payment Invoices</h3>
+              
+              {invoices.length === 0 ? (
+                <div style={{ background: '#0f172a', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: '#94a3b8' }}>
+                  No historical invoices found. Setup a plan tier to generate payment receipts.
+                </div>
+              ) : (
+                <DataTable
+                  columns={[
+                    {
+                      key: 'stripe_invoice_id',
+                      label: 'Invoice ID',
+                      sortable: true,
+                      render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{row.stripe_invoice_id || row.id}</span>
+                    },
+                    {
+                      key: 'due_date',
+                      label: 'Issue Date',
+                      sortable: true
+                    },
+                    {
+                      key: 'amount_cents',
+                      label: 'Amount Paid',
+                      sortable: true,
+                      render: (row) => <strong style={{ color: '#10b981' }}>${(row.amount_cents / 100).toFixed(2)}</strong>
+                    },
+                    {
+                      key: 'status',
+                      label: 'Status',
+                      sortable: true,
+                      render: (row) => (
+                        <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#34d399' }}>
+                          {row.status.toUpperCase()}
+                        </span>
+                      )
+                    },
+                    {
+                      key: 'actions',
+                      label: 'Receipt Actions',
+                      sortable: false,
+                      render: (row) => (
+                        <button
+                          onClick={() => alert(`Opening PDF invoice receipt: ${row.stripe_invoice_id || row.id}`)}
+                          style={{ padding: '0.35rem 0.75rem', background: '#1e293b', border: 'none', borderRadius: '6px', color: '#cbd5e1', fontSize: '0.8rem', cursor: 'pointer' }}
+                        >
+                          Download PDF
+                        </button>
+                      )
+                    }
+                  ]}
+                  data={invoices}
+                  searchPlaceholder="Filter invoice receipts..."
+                  searchKey="due_date"
+                  pageSize={5}
+                />
+              )}
+            </div>
           </div>
         )}
 
@@ -482,6 +692,11 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
           <AICopilotPanel />
         )}
       </main>
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen} 
+        onClose={() => setIsCommandPaletteOpen(false)} 
+        setActiveSubTab={setActiveSubTab} 
+      />
     </div>
   );
 }

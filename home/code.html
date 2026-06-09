@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EasyVitta | Managed Accounting &amp; Compliance</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Font: Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+          },
+          colors: {
+            primary: '#062d60', // Deep Navy
+            accent: '#10b981', // Emerald/Green from CTA
+            surface: '#faf9fc',
+            'surface-dim': '#dad9dd',
+          },
+          borderRadius: {
+            'custom': '8px',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-layout">
+    body {
+      font-family: 'Manrope', sans-serif;
+      color: #1a1a1a;
+      background-color: #ffffff;
+    }
+    .hero-bg {
+      background-color: #062d60;
+    }
+    .btn-green {
+      background-color: #10b981;
+      transition: all 0.2s ease;
+    }
+    .btn-green:hover {
+      background-color: #059669;
+    }
+    .feature-card:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+  </style>
+</head>
+<body class="antialiased">
+<!-- BEGIN: Navigation -->
+<nav class="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<div class="flex items-center gap-10">
+<!-- Logo -->
+<div class="flex items-center gap-2" data-purpose="brand-logo">
+<div class="w-8 h-8 bg-primary rounded-custom flex items-center justify-center">
+<span class="text-white font-bold">E</span>
+</div>
+<span class="text-xl font-extrabold text-primary tracking-tight">EasyVitta</span>
+</div>
+<!-- Main Nav -->
+<div class="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
+<a class="hover:text-primary" href="#">Services</a>
+<a class="hover:text-primary" href="#">Platform</a>
+<a class="hover:text-primary" href="#">Pricing</a>
+<a class="hover:text-primary" href="#">About</a>
+</div>
+</div>
+<div class="flex items-center gap-4 text-sm font-semibold">
+<a class="text-gray-600" href="#">Log in</a>
+<a class="bg-primary text-white px-5 py-2 rounded-custom" href="#">Free Trial</a>
+<a class="border border-gray-300 px-5 py-2 rounded-custom" href="#">Schedule Call</a>
+</div>
+</div>
+</nav>
+<!-- END: Navigation -->
+<!-- BEGIN: Hero Section -->
+<section class="hero-bg text-white pt-20 pb-24 overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div data-purpose="hero-content">
+<h1 class="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+          Confidence in your numbers without doing the math.
+        </h1>
+<p class="text-lg text-blue-100 mb-10 max-w-xl leading-relaxed">
+          Get a dedicated bookkeeper in your corner who really knows your business, backed by software that keeps everything organized and visible. You get clarity when you need it and stay focused on running your business.
+        </p>
+<div class="flex flex-col gap-4 max-w-sm">
+<button class="btn-green text-white py-4 px-8 rounded-custom font-bold text-lg shadow-lg">
+            Schedule Call
+          </button>
+<a class="text-center font-semibold underline decoration-2 underline-offset-4 hover:text-accent" href="#">Free Trial</a>
+</div>
+<p class="mt-12 text-sm text-blue-200">
+          Now part of EasyVitta, your one-stop business operating system—bookkeeping, taxes, banking and entity formation all in one place.
+        </p>
+</div>
+<div class="relative" data-purpose="hero-visual">
+<!-- Placeholder for the dashboard preview UI -->
+<div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-2xl">
+<img alt="Dashboard Preview" class="rounded-lg w-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBm04PTxgQ4007vNdeNNXqVNwuGe5zi1113qLL9xTCxn6U04ajIAUyI9eA8QdczDQCZcTACKTrSVr1hMvpNLPIaK16RM3A1JFy_v47Oh_DGvyb47utwka4fisxkDid9ZFwBXI3YoIyxuYydDx8jZbKrSexvogvaq_nD4y_KgTfAWCYJsJF1jZcqBUbYVd1pe-AW9IEcWBeEQc4ClXNbrZ54PAHrLZknrLbDmdjtEfrSpr4NRkY-xcKcnxCKXvRluDKEPENYTiGYf_Mm"/>
+</div>
+<!-- Floating chat bubble simulation -->
+<div class="absolute -top-10 right-0 md:right-10 bg-white p-4 rounded-xl shadow-xl flex items-start gap-3 text-gray-800 max-w-[280px]">
+<div class="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
+<div>
+<p class="text-xs font-bold text-gray-500 mb-1">Expert Support</p>
+<p class="text-sm font-medium">Hey! Jess here. Your books are up-to-date—ready to unlock tax credits too?</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Hero Section -->
+<!-- BEGIN: Social Proof Section -->
+<section class="py-24 bg-white">
+<div class="max-w-7xl mx-auto px-6">
+<h2 class="text-3xl font-extrabold text-center mb-16 text-primary">Trusted by 35,000+ American small business owners</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Testimonial 1 -->
+<div class="flex flex-col gap-6" data-purpose="testimonial">
+<p class="text-lg italic text-gray-700 leading-relaxed">"EasyVitta helps keep my business finances crystal clear. No more guessing, no more fumbling around in Excel sheets."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-gray-200"></div>
+<div>
+<p class="font-bold text-sm">JUSTIN METROS</p>
+<p class="text-xs text-gray-500 uppercase tracking-widest">Proprietor, Radiator</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="flex flex-col gap-6" data-purpose="testimonial">
+<p class="text-lg italic text-gray-700 leading-relaxed">"Now that EasyVitta has a tax solution service, they're a 'one stop shop' for small businesses to manage their books and taxes."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-gray-200"></div>
+<div>
+<p class="font-bold text-sm">ALBERT LAMONT</p>
+<p class="text-xs text-gray-500 uppercase tracking-widest">CEO, Sweatcast</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="flex flex-col gap-6" data-purpose="testimonial">
+<p class="text-lg italic text-gray-700 leading-relaxed">"As a small business owner, I feel better knowing that professionals are handling my books so I can spend more time growing my business."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-gray-200"></div>
+<div>
+<p class="font-bold text-sm">LAURA SIMMS</p>
+<p class="text-xs text-gray-500 uppercase tracking-widest">Career Change Expert</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Social Proof Section -->
+<!-- BEGIN: Core Features Sections -->
+<section class="py-20 bg-surface">
+<div class="max-w-7xl mx-auto px-6 space-y-32">
+<!-- Feature 1: One-on-one -->
+<div class="flex flex-col lg:flex-row items-center gap-16" data-purpose="feature-block">
+<div class="w-full lg:w-1/2">
+<img alt="Expert Support" class="rounded-xl shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlUb2zEYavQ9qFpA3BqSTbkqaKRD-eHRKFq3RDVYpiEn_UxmxVTjvlUOkyv-37LPAQH4SGydptgBNpFS_LCQ9HAcsP4oQKyd4W8wiP8dM0vI9x9iF0ilKMnpESrFDSYQtul1y_NK9nu20d5s5DQKBqNjRgYdmzkWdEbwSf5v0CZ_Hy10ISyzv_4P2V1S5gPfME-TInAf_JUNG8_fb2UNpKEQlnf0pbZ-hNJ3g-UYYvLEp3qNrZo-ME1xOeEo0XIRnJHqsAA5h3H6_t"/>
+</div>
+<div class="w-full lg:w-1/2">
+<h3 class="text-4xl font-extrabold text-primary mb-6">One-on-one expert support</h3>
+<p class="text-lg text-gray-600 mb-8 leading-relaxed">EasyVitta gives you a dedicated team so you have a direct line to your own experts on desktop or mobile—professional support is just a few swipes, taps, or clicks away.</p>
+<button class="bg-primary text-white px-8 py-3 rounded-custom font-bold hover:bg-opacity-90">Learn More</button>
+</div>
+</div>
+<!-- Feature 2: Financial Reporting -->
+<div class="flex flex-col lg:flex-row-reverse items-center gap-16" data-purpose="feature-block">
+<div class="w-full lg:w-1/2">
+<img alt="Financial Reporting" class="rounded-xl shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxOS3nIdd6IrH__zVjE1hXEVcxV7oaQtVU9xm_JC2bYHBwxqrTM7gmVl-Hng-LQ53jFPR43_8FGWn08rPYCU0vOe57tu5QHaiYwrd8-c33BVy4lyXlr1vTqV3JLKZ2ujKqD9EitpmB8exfp_zgS7TnGqGSRGWuVC1YwEg-mW9XbIND48AZyYmKamBYTfbNMyWagHXz3fnonBPLTAadBgtP79Gd7L2chgTffqRDT9XdI9s6FG0x8hG-CXmFA9Zh3FIIWU_KU3AU3Nv5"/>
+</div>
+<div class="w-full lg:w-1/2">
+<h3 class="text-4xl font-extrabold text-primary mb-6">Powerful financial reporting</h3>
+<p class="text-lg text-gray-600 mb-8 leading-relaxed">The EasyVitta platform gives you monthly financial statements and expense overviews to keep you in control of your money. At-a-glance visual reports help you see the big picture and give you actionable insights to help grow your business.</p>
+<button class="bg-primary text-white px-8 py-3 rounded-custom font-bold hover:bg-opacity-90">Learn More</button>
+</div>
+</div>
+<!-- Feature 3: Real-time insights -->
+<div class="flex flex-col lg:flex-row items-center gap-16" data-purpose="feature-block">
+<div class="w-full lg:w-1/2">
+<img alt="Insights" class="rounded-xl shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6dww6EpOwu4yhUGUqDE9Q3dMxqOSQ9qLqnrBiSdYS9bL2K7xFVqf_baGq_h-epsYjIHKp2RXOhRsoHpvFU4U0_BRsXtWShHmqTF2kUByUuxXPsMA23X_xGNQ4vdYKVgzMsCiwXYWYgPHfrJidb_FFBRn2HugXcQ6v2927gaXGTyjLc0SDYxVq54CXHAfCJ8VbFnQI8UJ-ctNzPmsv-oE5vuxxa-3HLj2dp7jR6wmPExahwI_Wlrb0N_rN-3doMM2c-9yomB6And3M"/>
+</div>
+<div class="w-full lg:w-1/2">
+<h3 class="text-4xl font-extrabold text-primary mb-6">Real-time insights at your fingertips</h3>
+<p class="text-lg text-gray-600 mb-8 leading-relaxed">Easily see your updated financial data every time you log in. With real-time insights, you can make on-the-fly decisions about where to spend and where to save, helping your business stay on budget.</p>
+<button class="bg-primary text-white px-8 py-3 rounded-custom font-bold hover:bg-opacity-90">Learn More</button>
+</div>
+</div>
+<!-- Feature 4: Tax Season -->
+<div class="flex flex-col lg:flex-row-reverse items-center gap-16" data-purpose="feature-block">
+<div class="w-full lg:w-1/2">
+<img alt="Tax Support" class="rounded-xl shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyNp2eN2pjrOhK33maJU4WvUgMnSF0YMSfoex9ati6QA_j8_IKzDZ1zGbwTfdCZsED_M6XuXx6nZkSiYsZJ0DrbsHoXXm39UiqCOGlgUbTtJmttxUqGfsXSKwgUUvcfyKCMdAyG1civaHWG0RtpLndF63GdeNrtqmVm5LfDyO2vg26QmFEUMVApe5Iwxj7gSbjX_uAAXPWf3ZYnPA0jayPh36PE6GIQX410LhX9WTwE5S-ZR1wOgQWwJfCS0nauOFZshhVaSxHTb-4"/>
+</div>
+<div class="w-full lg:w-1/2">
+<h3 class="text-4xl font-extrabold text-primary mb-6">Tax season, minus the stress</h3>
+<p class="text-lg text-gray-600 mb-8 leading-relaxed">A year-end package with everything you need to file comes standard with EasyVitta. Upgrade your plan, and cross even more off your to-do list. With our Bookkeeping &amp; Tax plan, you get expert tax prep, filing, and year-round tax advisory support.</p>
+<button class="bg-primary text-white px-8 py-3 rounded-custom font-bold hover:bg-opacity-90">Learn More</button>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Core Features Sections -->
+<!-- BEGIN: Logo Grid -->
+<section class="py-20 bg-white border-y border-gray-100">
+<div class="max-w-7xl mx-auto px-6 text-center">
+<h3 class="text-2xl font-bold text-gray-800 mb-12">We partner with the world's best</h3>
+<div class="flex flex-wrap justify-center items-center gap-12 grayscale opacity-60">
+<span class="text-2xl font-bold">gusto</span>
+<span class="text-2xl font-bold">Relay</span>
+<span class="text-2xl font-bold">bluevine</span>
+<span class="text-2xl font-bold">shopify</span>
+<span class="text-2xl font-bold">Square</span>
+<span class="text-2xl font-bold">EasyVitta</span>
+</div>
+</div>
+</section>
+<!-- END: Logo Grid -->
+<!-- BEGIN: Blog Section -->
+<section class="py-24 bg-white">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<p class="text-sm font-bold tracking-widest text-gray-400 uppercase mb-4 border border-gray-300 inline-block px-4 py-1 rounded-full">From the EasyVitta Blog</p>
+<h2 class="text-4xl font-extrabold text-primary">Explore over 600 resources for managing small business finances</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Post 1 -->
+<div class="bg-blue-50 rounded-2xl overflow-hidden flex flex-col h-full" data-purpose="blog-card">
+<div class="h-48 bg-blue-100 flex items-center justify-center">
+<img alt="Tax Deductions" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABmUpsi-w-I28SihKICpCM5FtWkmQhqdq2Tjokp-pPQvCklP8b0kf-4Y-LTWDAze9KxyoI5PeulPblxk_1rFGGIH1KHf2RNWB84Ykr5h7IEsq2ojSjvbcKejyOnHJsGl7E-x4duuL-2jLzrIC-em5hQPzR2Oqt9x5mUD3FbW6IcSDsVEKMb3-hZJZvgEFcWa3Xt-He3Uz2q1CR4CgEtgGv19h8c6stRr3PO-YYIFr-H57Jx5sDNKzYLCPt__KyUzO23R7U5dboBkEP"/>
+</div>
+<div class="p-8 flex-grow flex flex-col">
+<h4 class="text-xl font-bold mb-4 text-primary">17 Big Tax Deductions (Write Offs) for Small Business</h4>
+<p class="text-gray-600 mb-6 flex-grow">You've heard of "spend money to make money," but what about "spend money to save money"? That's the case with tax deductions and you won't want to leave any on the table.</p>
+<a class="text-primary font-bold hover:underline" href="#">Learn more →</a>
+</div>
+</div>
+<!-- Post 2 -->
+<div class="bg-orange-50 rounded-2xl overflow-hidden flex flex-col h-full" data-purpose="blog-card">
+<div class="h-48 bg-orange-100 flex items-center justify-center">
+<img alt="Alternatives" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnT2YHNx7yT_Cjxk4SNQ7BFhjKttbuu7innNS0R_J-V55MbLTmKTaasa8dAj-Md8eDipz6Lm1OR5iu9t4Pdfm1OtZIYj_1iO_btmjZSDL8znGDv3uKjYWVrZ6lZbaZECZobTFR-Xkru4KGajjF232dw-9cElTDcIL9viRq1A-JZM30A8LhTjdbaNGy09aRdjWnhnD4JR-ZB4s6FIr_m3N03rsxi0Q9OFiv3qHXs7QOiJhanMuKIdCsAI96Nyc3jvcd90sDx031xu_-"/>
+</div>
+<div class="p-8 flex-grow flex flex-col">
+<h4 class="text-xl font-bold mb-4 text-primary">11 Alternatives to QuickBooks in 2024</h4>
+<p class="text-gray-600 mb-6 flex-grow">EasyVitta isn't for everyone. Here are 11 alternatives to explore, each with a different emphasis in supporting your small business finances.</p>
+<a class="text-primary font-bold hover:underline" href="#">Learn more →</a>
+</div>
+</div>
+<!-- Post 3 -->
+<div class="bg-teal-50 rounded-2xl overflow-hidden flex flex-col h-full" data-purpose="blog-card">
+<div class="h-48 bg-teal-100 flex items-center justify-center">
+<img alt="Financial Statements" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxBC3M2by1zBkrhok-tqabgB2RXJJEMoivbQUklyQeBizZhPHs40_upmlA3msU0XhpnkTfBvLGkjRzPx4R8PwkgPLxErbrwxeOBWsiZLATqaHkKfrD9kiO6I7qFojEVgbyXlNLniq_0JG72dQ59HnJxaHicpO0Y33uRB6EW6WIo9OqkygO3T2_sEY0UCT9-PFYvpJ5PqOKqfRCCNrfiCofU56rMGM0Gk3nwXUXEzk-9mx1PBHebnFcaOen3tm2pdIHkQ1npQZl_A1R"/>
+</div>
+<div class="p-8 flex-grow flex flex-col">
+<h4 class="text-xl font-bold mb-4 text-primary">How to Read (and Analyze) Financial Statements</h4>
+<p class="text-gray-600 mb-6 flex-grow">When you know how to read your financial statements, you can find ways to increase your profit and catch problems before they grow.</p>
+<a class="text-primary font-bold hover:underline" href="#">Learn more →</a>
+</div>
+</div>
+</div>
+<div class="text-center mt-12">
+<button class="btn-green text-white px-10 py-4 rounded-custom font-bold">Visit The EasyVitta Blog</button>
+</div>
+</div>
+</section>
+<!-- END: Blog Section -->
+<!-- BEGIN: FAQ Section -->
+<section class="py-24 bg-surface">
+<div class="max-w-7xl mx-auto px-6">
+<div class="flex flex-col md:flex-row gap-16">
+<div class="md:w-1/3">
+<h2 class="text-4xl font-extrabold text-primary mb-6">Frequently Asked Questions</h2>
+<a class="text-primary font-bold underline" href="#">More FAQs →</a>
+</div>
+<div class="md:w-2/3 space-y-6">
+<div class="border-b border-gray-200 pb-6" data-purpose="faq-item">
+<button class="flex items-center justify-between w-full text-left font-bold text-lg text-primary">
+              Does EasyVitta do all my bookkeeping tasks for me?
+              <span class="text-2xl text-accent">+</span>
+</button>
+</div>
+<div class="border-b border-gray-200 pb-6" data-purpose="faq-item">
+<button class="flex items-center justify-between w-full text-left font-bold text-lg text-primary">
+              What happens if I take a long time to respond to my EasyVitta team's requests for information?
+              <span class="text-2xl text-accent">+</span>
+</button>
+</div>
+<div class="border-b border-gray-200 pb-6" data-purpose="faq-item">
+<button class="flex items-center justify-between w-full text-left font-bold text-lg text-primary">
+              Is it mandatory to connect my business accounts to EasyVitta?
+              <span class="text-2xl text-accent">+</span>
+</button>
+</div>
+<div class="border-b border-gray-200 pb-6" data-purpose="faq-item">
+<button class="flex items-center justify-between w-full text-left font-bold text-lg text-primary">
+              Why does EasyVitta still need me to upload documents even if my accounts are connected?
+              <span class="text-2xl text-accent">+</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: FAQ Section -->
+<!-- BEGIN: Footer Lead Gen -->
+<section class="bg-primary text-white py-24">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-extrabold mb-4">Join thousands of small business owners who trust EasyVitta with their books</h2>
+<p class="text-blue-200">Schedule today and we'll do one prior month of your bookkeeping and prepare a set of financial statements for free.</p>
+</div>
+<!-- Lead Form Card -->
+<div class="bg-white rounded-2xl p-8 md:p-12 text-gray-800 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+<div data-purpose="form-info">
+<div class="flex items-center gap-2 mb-8">
+<div class="w-8 h-8 bg-primary rounded-custom flex items-center justify-center">
+<span class="text-white font-bold">E</span>
+</div>
+<span class="text-xl font-extrabold text-primary tracking-tight">EasyVitta</span>
+</div>
+<ul class="space-y-6 text-lg">
+<li class="flex items-start gap-4">
+<span class="text-accent text-xl">✓</span>
+<span>EasyVitta Accounting Consultation</span>
+</li>
+<li class="flex items-start gap-4">
+<span class="text-accent text-xl">✓</span>
+<span>See if EasyVitta is right for your business.</span>
+</li>
+<li class="flex items-start gap-4">
+<span class="text-accent text-xl">✓</span>
+<span>With EasyVitta, you get both: A dedicated bookkeeper and the powerful software to back them up.</span>
+</li>
+</ul>
+</div>
+<div data-purpose="lead-form">
+<form class="space-y-4">
+<div class="grid grid-cols-2 gap-4">
+<input class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary" placeholder="First name*" type="text"/>
+<input class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary" placeholder="Last name*" type="text"/>
+</div>
+<input class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary" placeholder="Business Name" type="text"/>
+<input class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary" placeholder="Email*" type="email"/>
+<input class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary" placeholder="Phone*" type="tel"/>
+<select class="w-full border-gray-300 rounded-custom p-3 focus:ring-primary focus:border-primary">
+<option>Average Monthly Revenue*</option>
+<option>$0 - $1,000</option>
+<option>$1,000 - $10,000</option>
+<option>$10,000+</option>
+</select>
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-custom text-lg transition" type="submit">Submit</button>
+</form>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Footer Lead Gen -->
+<!-- BEGIN: Main Footer -->
+<footer class="bg-surface py-20">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-12 mb-16">
+<div class="col-span-2 md:col-span-1">
+<div class="flex items-center gap-2 mb-6">
+<div class="w-6 h-6 bg-primary rounded-sm flex items-center justify-center">
+<span class="text-white text-xs font-bold">E</span>
+</div>
+<span class="text-lg font-bold text-primary">EasyVitta</span>
+</div>
+<p class="text-sm text-gray-500">Online bookkeeping and tax filing powered by real humans.</p>
+</div>
+<div>
+<h5 class="font-bold text-primary mb-6">COMPANY</h5>
+<ul class="text-sm text-gray-600 space-y-4">
+<li><a class="hover:text-primary" href="#">About Us</a></li>
+<li><a class="hover:text-primary" href="#">Press</a></li>
+<li><a class="hover:text-primary" href="#">Privacy Policy</a></li>
+<li><a class="hover:text-primary" href="#">Terms of Service</a></li>
+<li><a class="hover:text-primary" href="#">Contact Us</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-primary mb-6">PRODUCT</h5>
+<ul class="text-sm text-gray-600 space-y-4">
+<li><a class="hover:text-primary" href="#">How It Works</a></li>
+<li><a class="hover:text-primary" href="#">Pricing</a></li>
+<li><a class="hover:text-primary" href="#">Security</a></li>
+<li><a class="hover:text-primary" href="#">What's New</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-primary mb-6">RESOURCES</h5>
+<ul class="text-sm text-gray-600 space-y-4">
+<li><a class="hover:text-primary" href="#">Education</a></li>
+<li><a class="hover:text-primary" href="#">Guides</a></li>
+<li><a class="hover:text-primary" href="#">Tools</a></li>
+<li><a class="hover:text-primary" href="#">FAQ</a></li>
+<li><a class="hover:text-primary" href="#">Customer Reviews</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-primary mb-6">PARTNERS</h5>
+<ul class="text-sm text-gray-600 space-y-4">
+<li><a class="hover:text-primary" href="#">Affiliates</a></li>
+<li><a class="hover:text-primary" href="#">Partner Marketplace</a></li>
+<li><a class="hover:text-primary" href="#">EasyVitta for Accountants</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
+<p>© 2024 EasyVitta Inc. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-primary" href="#">Facebook</a>
+<a class="hover:text-primary" href="#">Twitter</a>
+<a class="hover:text-primary" href="#">LinkedIn</a>
+<a class="hover:text-primary" href="#">Instagram</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- END: Main Footer -->
+</body></html>

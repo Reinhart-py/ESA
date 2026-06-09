@@ -64,6 +64,9 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
   const [runningScheduler, setRunningScheduler] = useState(false);
 
   // UI state
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedPackId, setSelectedPackId] = useState('');
   const [selectedSub, setSelectedSub] = useState<FilingSubmission | null>(null);
   const [selectedFileId, setSelectedFileId] = useState('');
@@ -281,97 +284,244 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
         {/* Compliance Timeline / Deadlines */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
+        {/* Compliance Timeline / Deadlines */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
           <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem' }}>Active Filing Obligations ({submissions.length})</h3>
-            
-            {submissions.length === 0 ? (
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No obligations configured. Select country pack or trigger scheduler sweep.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {submissions.map(sub => {
-                  const ob = sub.obligation || obligations.find(o => o.id === sub.obligation_id);
-                  if (!ob) return null;
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Filing Obligations & Timeline</h3>
+              
+              <div style={{ display: 'flex', gap: '0.25rem', background: '#0f172a', padding: '0.2rem', borderRadius: '6px' }}>
+                <button 
+                  onClick={() => setViewMode('grid')} 
+                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'grid' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Calendar Grid
+                </button>
+                <button 
+                  onClick={() => setViewMode('list')} 
+                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'list' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Timeline List
+                </button>
+              </div>
+            </div>
 
-                  const isObLate = ob.status === 'Late';
-                  
-                  return (
-                    <div 
-                      key={sub.id} 
-                      style={{ 
-                        padding: '1rem', 
-                        background: '#0f172a', 
-                        borderRadius: '8px', 
-                        border: isObLate ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.02)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div style={{
-                          background: isObLate ? 'rgba(239, 68, 68, 0.1)' : sub.status === 'Approved' || sub.status === 'Filed' ? 'rgba(16, 185, 129, 0.1)' : sub.status === 'Under Review' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                          color: isObLate ? '#ef4444' : sub.status === 'Approved' || sub.status === 'Filed' ? '#10b981' : sub.status === 'Under Review' ? '#3b82f6' : '#f59e0b',
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {isObLate ? <AlertCircle size={18} /> : <Calendar size={18} />}
-                        </div>
+            {viewMode === 'grid' ? (
+              <div>
+                {/* Calendar Navigator */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: '#0f172a', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                  <button 
+                    onClick={() => {
+                      if (currentMonth === 0) {
+                        setCurrentMonth(11);
+                        setCurrentYear(prev => prev - 1);
+                      } else {
+                        setCurrentMonth(prev => prev - 1);
+                      }
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#00a896', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
+                  >
+                    &larr;
+                  </button>
+                  <strong style={{ color: '#fff', fontSize: '0.95rem' }}>
+                    {[
+                      'January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'
+                    ][currentMonth]} {currentYear}
+                  </strong>
+                  <button 
+                    onClick={() => {
+                      if (currentMonth === 11) {
+                        setCurrentMonth(0);
+                        setCurrentYear(prev => prev + 1);
+                      } else {
+                        setCurrentMonth(prev => prev + 1);
+                      }
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#00a896', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
+                  >
+                    &rarr;
+                  </button>
+                </div>
 
-                        <div>
-                          <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {ob.title}
-                            {isObLate && (
-                              <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '0.15rem 0.35rem', borderRadius: '4px', fontWeight: 'bold' }}>
-                                OVERDUE
-                              </span>
-                            )}
-                          </h4>
-                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                            Deadline: <strong>{new Date(ob.due_date).toLocaleDateString()}</strong> | Authority: {ob.type}
-                          </span>
-                        </div>
-                      </div>
+                {/* Calendar Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center', marginBottom: '0.5rem' }}>
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <span key={day} style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', paddingBottom: '0.25rem' }}>{day}</span>
+                  ))}
+                </div>
 
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span style={{ 
-                          fontSize: '0.75rem', 
-                          padding: '0.3rem 0.6rem', 
-                          borderRadius: '4px',
-                          fontWeight: 'bold',
-                          background: 
-                            isObLate ? 'rgba(239, 68, 68, 0.2)' :
-                            sub.status === 'Approved' || sub.status === 'Filed' ? 'rgba(16, 185, 129, 0.2)' : 
-                            sub.status === 'Under Review' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                          color: 
-                            isObLate ? '#ef4444' :
-                            sub.status === 'Approved' || sub.status === 'Filed' ? '#10b981' : 
-                            sub.status === 'Under Review' ? '#3b82f6' : '#f59e0b'
-                        }}>
-                          {isObLate ? 'Late' : sub.status}
-                        </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
+                  {(() => {
+                    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+                    const cellsList = [];
+                    
+                    // Pre-padding cells
+                    for (let i = 0; i < firstDayIndex; i++) {
+                      cellsList.push(<div key={`pad-${i}`} style={{ minHeight: '80px', borderRadius: '6px', background: 'transparent' }} />);
+                    }
 
-                        <button
-                          onClick={() => setSelectedSub(sub)}
-                          style={{
-                            padding: '0.4rem 0.8rem',
-                            background: '#1e3e62',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem'
+                    // Month cells
+                    for (let d = 1; d <= daysInMonth; d++) {
+                      const dayStr = String(d).padStart(2, '0');
+                      const monthStr = String(currentMonth + 1).padStart(2, '0');
+                      const targetDateStr = `${currentYear}-${monthStr}-${dayStr}`;
+
+                      // Find matching obligations
+                      const daySubs = submissions.filter(sub => {
+                        const ob = sub.obligation || obligations.find(o => o.id === sub.obligation_id);
+                        return ob && ob.due_date === targetDateStr;
+                      });
+
+                      cellsList.push(
+                        <div 
+                          key={`day-${d}`} 
+                          style={{ 
+                            minHeight: '85px', 
+                            background: '#0f172a', 
+                            borderRadius: '8px', 
+                            border: '1px solid rgba(255,255,255,0.02)',
+                            padding: '0.35rem', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            justifyContent: 'space-between',
+                            alignItems: 'stretch'
                           }}
                         >
-                          Details
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', alignSelf: 'flex-start' }}>{d}</span>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.2rem' }}>
+                            {daySubs.map(sub => {
+                              const ob = sub.obligation || obligations.find(o => o.id === sub.obligation_id);
+                              if (!ob) return null;
+                              const isObLate = ob.status === 'Late';
+
+                              return (
+                                <button
+                                  key={sub.id}
+                                  onClick={() => setSelectedSub(sub)}
+                                  title={`${ob.title} - ${sub.status}`}
+                                  style={{
+                                    width: '100%',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    fontSize: '0.65rem',
+                                    padding: '0.15rem 0.3rem',
+                                    textAlign: 'left',
+                                    background: isObLate ? 'rgba(239, 68, 68, 0.15)' : sub.status === 'Approved' || sub.status === 'Filed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                    color: isObLate ? '#fca5a5' : sub.status === 'Approved' || sub.status === 'Filed' ? '#34d399' : '#fde047',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {ob.title.length > 12 ? ob.title.substring(0, 10) + '..' : ob.title}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return cellsList;
+                  })()}
+                </div>
+              </div>
+            ) : (
+              <div>
+                {submissions.length === 0 ? (
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No obligations configured. Select country pack or trigger scheduler sweep.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {submissions.map(sub => {
+                      const ob = sub.obligation || obligations.find(o => o.id === sub.obligation_id);
+                      if (!ob) return null;
+
+                      const isObLate = ob.status === 'Late';
+                      
+                      return (
+                        <div 
+                          key={sub.id} 
+                          style={{ 
+                            padding: '1rem', 
+                            background: '#0f172a', 
+                            borderRadius: '8px', 
+                            border: isObLate ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.02)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <div style={{
+                              background: isObLate ? 'rgba(239, 68, 68, 0.1)' : sub.status === 'Approved' || sub.status === 'Filed' ? 'rgba(16, 185, 129, 0.1)' : sub.status === 'Under Review' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                              color: isObLate ? '#ef4444' : sub.status === 'Approved' || sub.status === 'Filed' ? '#10b981' : sub.status === 'Under Review' ? '#3b82f6' : '#f59e0b',
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {isObLate ? <AlertCircle size={18} /> : <Calendar size={18} />}
+                            </div>
+
+                            <div>
+                              <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                {ob.title}
+                                {isObLate && (
+                                  <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '0.15rem 0.35rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                    OVERDUE
+                                  </span>
+                                )}
+                              </h4>
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                Deadline: <strong>{new Date(ob.due_date).toLocaleDateString()}</strong> | Authority: {ob.type}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              padding: '0.3rem 0.6rem', 
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              background: 
+                                isObLate ? 'rgba(239, 68, 68, 0.2)' :
+                                sub.status === 'Approved' || sub.status === 'Filed' ? 'rgba(16, 185, 129, 0.2)' : 
+                                sub.status === 'Under Review' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                              color: 
+                                isObLate ? '#ef4444' :
+                                sub.status === 'Approved' || sub.status === 'Filed' ? '#10b981' : 
+                                sub.status === 'Under Review' ? '#3b82f6' : '#f59e0b'
+                            }}>
+                              {isObLate ? 'Late' : sub.status}
+                            </span>
+
+                            <button
+                              onClick={() => setSelectedSub(sub)}
+                              style={{
+                                padding: '0.4rem 0.8rem',
+                                background: '#1e3e62',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

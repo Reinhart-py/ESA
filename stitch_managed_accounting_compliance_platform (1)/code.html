@@ -1,0 +1,483 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet">
+<title>EAC Solutions | Professional Accountant Dashboard</title>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F7F8FA;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E0E0E0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2BB1A4;
+        }
+    </style>
+</head>
+<body class="bg-canvas-gray font-body-md text-on-surface antialiased">
+<!-- Theme Config Inclusion -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#302e2a",
+                    "tertiary-fixed-dim": "#cac6c0",
+                    "deep-navy": "#062D60",
+                    "surface-container": "#eeedf1",
+                    "on-tertiary-fixed-variant": "#494642",
+                    "on-primary-fixed": "#001a40",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#d7e2ff",
+                    "on-secondary-fixed": "#00201d",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#dad9dd",
+                    "on-primary-fixed-variant": "#27467a",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c4c6d1",
+                    "secondary-container": "#7bf3e5",
+                    "primary-container": "#062d60",
+                    "warm-sand": "#F4EFE9",
+                    "inverse-primary": "#acc7ff",
+                    "surface-tint": "#415e94",
+                    "primary": "#00193c",
+                    "inverse-surface": "#2f3033",
+                    "primary-fixed-dim": "#acc7ff",
+                    "surface-bright": "#faf9fc",
+                    "on-tertiary-fixed": "#1d1b18",
+                    "tertiary-fixed": "#e6e2dc",
+                    "surface-container-low": "#f4f3f7",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#1b1916",
+                    "inverse-on-surface": "#f1f0f4",
+                    "on-secondary-fixed-variant": "#005049",
+                    "surface-variant": "#e3e2e6",
+                    "surface": "#faf9fc",
+                    "on-primary-container": "#7996cf",
+                    "outline": "#747780",
+                    "secondary-fixed": "#7ef6e8",
+                    "soft-teal": "#2BB1A4",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#999590",
+                    "surface-container-highest": "#e3e2e6",
+                    "on-surface": "#1a1c1e",
+                    "on-error": "#ffffff",
+                    "canvas-gray": "#F7F8FA",
+                    "secondary": "#006a62",
+                    "secondary-fixed-dim": "#5fdacc",
+                    "background": "#faf9fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#1a1c1e",
+                    "on-surface-variant": "#43474f",
+                    "on-secondary-container": "#006f66",
+                    "alert-gold": "#FCD269",
+                    "surface-container-high": "#e9e8eb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "stack-lg": "48px",
+                    "stack-md": "24px",
+                    "base": "8px",
+                    "stack-sm": "12px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 bg-surface shadow-sm dark:bg-inverse-surface">
+<div class="flex items-center gap-stack-md">
+<span class="text-headline-md font-headline-md font-bold text-deep-navy dark:text-primary-fixed">EasyVitta</span>
+<nav class="hidden md:flex items-center gap-stack-md ml-stack-lg">
+<a class="text-label-md font-label-md text-soft-teal border-b-2 border-soft-teal pb-1" href="#">Dashboard</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-soft-teal transition-colors" href="#">Clients</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-soft-teal transition-colors" href="#">Compliance</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-soft-teal transition-colors" href="#">Reports</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-soft-teal transition-colors" href="#">Tasks</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-sm w-64 focus:ring-2 focus:ring-soft-teal" placeholder="Search clients or files..." type="text">
+</div>
+<button class="bg-deep-navy text-white px-6 py-2 rounded-lg font-label-md hover:opacity-90 transition-opacity">New Task</button>
+<div class="flex items-center gap-4 border-l border-outline-variant pl-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-soft-teal transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-soft-teal transition-colors" data-icon="settings">settings</span>
+<img alt="Accountant profile photo" class="w-10 h-10 rounded-full object-cover ring-2 ring-surface-container" data-alt="A professional accountant portrait in a bright modern office. The image has a high-key, clean aesthetic with soft natural lighting and a minimalist background. The subject is wearing a tailored navy blazer, reflecting the deep-navy and soft-teal brand palette of EAC Solutions." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4_ZmtkpBdBfhZdBS-YnuT3vcpeG6Tc7g7aFjngKuhd2cjQA_HMPgGDVffpKpF0HiFspzbwuyVSuZXVeOjeAJGdsnVTAKc90EeQcNZAWFtDtCffyYP8piBHn1mum8re8AkwEvja2_KZUR21-gATURyHzp68-gji5dV5wgZvP3Nt7CmWKX39UB2A2jMG0ZblRhEQ-XE1hQUzdDkeQKs8Wi7Gp46X4we3vCAZYcYM1Oy23JGzqKbhzEnWMaR35ipNr9nxwlLBWcs7IaH">
+</div>
+</div>
+</header>
+<!-- Sidebar (Contextual) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col p-stack-md bg-white border-r border-canvas-gray shadow-sm hidden md:flex">
+<div class="mb-stack-lg">
+<div class="flex items-center gap-3 p-2 bg-surface-container-low rounded-xl mb-6">
+<img alt="Client avatar" class="w-10 h-10 rounded-lg object-cover" data-alt="Close-up of a smiling business client in a professional workspace. The lighting is warm and inviting, representing the humanized precision of EAC Solutions. The background is a blurred high-end corporate office with soft whites and grays." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgAy0ozOaijBXuzyDy-BDV9k4ZhWazQBjE6c3SZKxbQ7RvgC5VtzoBM-Pb1jjvSsWPQcY3o2RB2nAGbCTmo_8rPVh58HwphYzwD0qeQ7zJf8yAOfWeILTk-CtrwS-Q6NtdlcJrWHdlX39AYxFLjNJLvoSl-atwjY9rolbOL81x4P6fwWlGnjRxA4wUcukPsNWx0gxNcAujj5WofD7VAxDLF0HzpLtalRoSgNQZC04W7ypYazL0hNVIFGHoa3pP8jfen9pXc449_eyZ">
+<div>
+<p class="font-label-md text-deep-navy">Overview</p>
+<p class="text-label-sm text-on-surface-variant">Precision Stewardship</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-base bg-surface-container-low text-deep-navy rounded-lg px-4 py-3 scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="dashboard">dashboard</span>
+<span class="font-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="upload_file">upload_file</span>
+<span class="font-label-md">Documents</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="verified">verified</span>
+<span class="font-label-md">Compliance</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="analytics">analytics</span>
+<span class="font-label-md">Reports</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="payments">payments</span>
+<span class="font-label-md">Payments</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto space-y-1 border-t border-canvas-gray pt-4">
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+<span class="font-label-md">Support</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-canvas-gray px-4 py-3 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="logout">logout</span>
+<span class="font-label-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-24 px-margin-mobile md:px-margin-desktop pb-stack-lg max-w-container-max mx-auto">
+<!-- Dashboard Header -->
+<header class="mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-deep-navy">Welcome back, Arthur</h1>
+<p class="font-body-md text-on-surface-variant mt-1">You have 4 high-priority compliance filings due this week.</p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Column 1: Client Portfolio (Main Data Hub) -->
+<section class="lg:col-span-8 space-y-gutter">
+<div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
+<div class="p-6 border-b border-canvas-gray flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-deep-navy">Client Portfolio</h2>
+<div class="flex gap-2">
+<span class="bg-surface-container-low px-3 py-1 rounded-full text-label-sm text-on-surface-variant">42 Total</span>
+<button class="text-soft-teal hover:underline font-label-md">View All</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Client Name</th>
+<th class="px-6 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Last Activity</th>
+<th class="px-6 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-canvas-gray">
+<tr class="hover:bg-canvas-gray/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-fixed text-primary flex items-center justify-center font-bold">AL</div>
+<div>
+<p class="font-label-md text-deep-navy">Apex Logistics Ltd</p>
+<p class="text-label-sm text-outline">Q3 Corporate Tax</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-medium bg-red-50 text-error border border-error/10">
+                                            Late
+                                        </span>
+</td>
+<td class="px-6 py-4 font-body-sm text-on-surface-variant">2 hours ago</td>
+<td class="px-6 py-4">
+<button class="text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-canvas-gray/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">ST</div>
+<div>
+<p class="font-label-md text-deep-navy">Skyline Tech</p>
+<p class="text-label-sm text-outline">Annual Audit</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-medium bg-alert-gold/10 text-on-surface border border-alert-gold/30">
+                                            Needs Review
+                                        </span>
+</td>
+<td class="px-6 py-4 font-body-sm text-on-surface-variant">Yesterday</td>
+<td class="px-6 py-4">
+<button class="text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-canvas-gray/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-soft-teal/10 text-soft-teal flex items-center justify-center font-bold">VV</div>
+<div>
+<p class="font-label-md text-deep-navy">Veridian Ventures</p>
+<p class="text-label-sm text-outline">Payroll Processing</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-medium bg-soft-teal/10 text-soft-teal border border-soft-teal/20">
+                                            On Track
+                                        </span>
+</td>
+<td class="px-6 py-4 font-body-sm text-on-surface-variant">3 days ago</td>
+<td class="px-6 py-4">
+<button class="text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-canvas-gray/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-warm-sand text-on-tertiary-fixed-variant flex items-center justify-center font-bold">MB</div>
+<div>
+<p class="font-label-md text-deep-navy">Merit Builders</p>
+<p class="text-label-sm text-outline">VAT Submission</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-medium bg-soft-teal/10 text-soft-teal border border-soft-teal/20">
+                                            On Track
+                                        </span>
+</td>
+<td class="px-6 py-4 font-body-sm text-on-surface-variant">5 days ago</td>
+<td class="px-6 py-4">
+<button class="text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 mt-auto bg-surface-container-low flex justify-center">
+<button class="text-deep-navy font-label-md hover:text-soft-teal transition-colors flex items-center gap-2">
+                            Load More Clients <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Featured Task: Document Review -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="bg-deep-navy text-white rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group">
+<div class="z-10">
+<span class="bg-soft-teal px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Urgent</span>
+<h3 class="font-headline-md text-headline-md mt-4">Document Verification</h3>
+<p class="font-body-sm text-white/70 mt-2">14 new documents uploaded by Apex Logistics require manual verification for Q3 tax filing.</p>
+</div>
+<button class="z-10 mt-8 w-max bg-white text-deep-navy px-6 py-3 rounded-lg font-label-md hover:bg-soft-teal hover:text-white transition-all">Review Now</button>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-white/10 text-[120px] group-hover:scale-110 transition-transform">description</span>
+</div>
+<div class="bg-warm-sand rounded-xl p-8 border border-outline-variant/20 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-deep-navy">Consultation Hours</h3>
+<p class="font-body-sm text-on-surface-variant mt-2">You have 6 hours of booked consultations this week. 2 slots remain open.</p>
+</div>
+<div class="flex items-center justify-between mt-8">
+<div class="flex -space-x-2">
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="Corporate headshot of a business executive in a high-key setting. Part of a collaborative office atmosphere with professional styling and warm natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcoSuARx9EBl_K7bmQzSsZf3OAOjLpjcUeKLTlPDvXRvekw3CdHBVhHI4IqPobGIHVFwVhSpVd6nX-bUoZkV90iIj8_4Odm7kERzfzK-ISPBr6X55m74oQ8Vd658xWmm8rQxpHOuYdF_yf68QofW-FPCVH_2I_wSarRFOxwXxIN9B2GXDsbbt2nTXaZb2D6w9EaiMbddcbqhb7B1hAVo9rBHAmqqvbyagYVGKXI-_vCvOcKI_VzYTJ2K2i2KUK3AoLYXxg-lZMxHjh">
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="Professional female entrepreneur in a bright, modern studio. Soft minimalist background with neutral tones and focused lighting to highlight the subject's expert persona." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYukDA5GZXrpRY6p2T0y975AeStPaKwC42qasZegQP9ubbzqocxBCbBadOSxHYq7yKUOzmIkuFyay-Z482aAJZzbbxYWfzJK2luIWCItGwia4u_K-FUHfI0fl9ISMsZt435lgzPqlIsQsSJms4Pir1QUQL9ZexRpAAkwCw3sGl8bbg4GIT2VntnpkZF1eDr8peNcUrz-YKXitbkEZXkhFodqsDb5ujj0nZBhfA5lcC7zNpQd8n0fd4lQvqrN8qHvni_uTmsFXk7nav">
+<div class="w-10 h-10 rounded-full bg-soft-teal border-2 border-white flex items-center justify-center text-white text-xs font-bold">+2</div>
+</div>
+<button class="text-soft-teal font-label-md hover:underline">Manage Calendar</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Column 2: Compliance & Inbox (Secondary Context) -->
+<section class="lg:col-span-4 space-y-gutter">
+<!-- Compliance Calendar -->
+<div class="bg-white rounded-xl shadow-sm p-6">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-label-md text-deep-navy uppercase tracking-wider">Compliance Calendar</h2>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">calendar_today</span>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 p-4 border border-canvas-gray rounded-lg hover:border-soft-teal transition-colors cursor-pointer">
+<div class="flex flex-col items-center justify-center bg-surface-container-low w-12 h-14 rounded-lg">
+<span class="text-label-sm text-on-surface-variant font-bold">OCT</span>
+<span class="text-headline-md font-bold text-deep-navy">15</span>
+</div>
+<div>
+<p class="font-label-md text-deep-navy">Q3 VAT Deadline</p>
+<p class="text-label-sm text-outline">12 clients remaining</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 border border-canvas-gray rounded-lg hover:border-soft-teal transition-colors cursor-pointer">
+<div class="flex flex-col items-center justify-center bg-surface-container-low w-12 h-14 rounded-lg">
+<span class="text-label-sm text-on-surface-variant font-bold">OCT</span>
+<span class="text-headline-md font-bold text-deep-navy">19</span>
+</div>
+<div>
+<p class="font-label-md text-deep-navy">PAYE Submission</p>
+<p class="text-label-sm text-outline">All clients pending</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 border border-canvas-gray rounded-lg hover:border-soft-teal transition-colors cursor-pointer">
+<div class="flex flex-col items-center justify-center bg-surface-container-low w-12 h-14 rounded-lg">
+<span class="text-label-sm text-on-surface-variant font-bold">OCT</span>
+<span class="text-headline-md font-bold text-deep-navy">24</span>
+</div>
+<div>
+<p class="font-label-md text-deep-navy">Self Assessment</p>
+<p class="text-label-sm text-outline">Priority Filings</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Task Inbox -->
+<div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
+<h2 class="font-label-md text-deep-navy uppercase tracking-wider mb-6">Task Inbox</h2>
+<div class="space-y-1">
+<div class="group flex items-center justify-between p-3 hover:bg-canvas-gray rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-3 overflow-hidden">
+<span class="material-symbols-outlined text-alert-gold" data-weight="fill">mail</span>
+<div class="truncate">
+<p class="font-label-md text-on-surface truncate">Update from Merit Builders</p>
+<p class="text-label-sm text-outline">Re: Invoice corrections...</p>
+</div>
+</div>
+<span class="text-[10px] text-outline whitespace-nowrap">2m ago</span>
+</div>
+<div class="group flex items-center justify-between p-3 hover:bg-canvas-gray rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-3 overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant">chat</span>
+<div class="truncate">
+<p class="font-label-md text-on-surface truncate">Sarah J. (Skyline Tech)</p>
+<p class="text-label-sm text-outline">Can we talk about the P&amp;L?</p>
+</div>
+</div>
+<span class="text-[10px] text-outline whitespace-nowrap">1h ago</span>
+</div>
+<div class="group flex items-center justify-between p-3 hover:bg-canvas-gray rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-3 overflow-hidden">
+<span class="material-symbols-outlined text-soft-teal">check_circle</span>
+<div class="truncate">
+<p class="font-label-md text-on-surface truncate">System Notification</p>
+<p class="text-label-sm text-outline">Q3 Report Generated</p>
+</div>
+</div>
+<span class="text-[10px] text-outline whitespace-nowrap">4h ago</span>
+</div>
+</div>
+<button class="mt-6 w-full py-3 border border-deep-navy text-deep-navy rounded-lg font-label-md hover:bg-deep-navy hover:text-white transition-all">
+                        View All Messages
+                    </button>
+</div>
+<!-- Productivity Tip Card -->
+<div class="bg-gradient-to-br from-soft-teal to-on-secondary-container rounded-xl p-6 text-white shadow-lg">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined">lightbulb</span>
+<h4 class="font-label-md uppercase tracking-widest">Expert Tip</h4>
+</div>
+<p class="font-body-sm mb-4 leading-relaxed">Batching document reviews between 9 AM and 11 AM has been shown to increase accounting efficiency by 24%.</p>
+<a class="text-white text-label-sm font-bold underline" href="#">Learn EAC Best Practices</a>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-stack-lg px-margin-desktop mt-auto flex flex-col md:flex-row justify-between items-center bg-deep-navy dark:bg-primary">
+<div class="mb-stack-md md:mb-0">
+<span class="font-headline-lg text-headline-lg text-white">EasyVitta</span>
+<p class="text-warm-sand/80 text-body-sm mt-2">© 2024 EasyVitta. Humanized Precision in Accounting.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-stack-md">
+<a class="text-label-sm font-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Privacy Policy</a>
+<a class="text-label-sm font-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Terms of Service</a>
+<a class="text-label-sm font-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Security</a>
+<a class="text-label-sm font-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Contact Us</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.add('scale-[0.995]', 'bg-surface-container-low');
+                setTimeout(() => {
+                    row.classList.remove('scale-[0.995]');
+                }, 100);
+            });
+        });
+
+        // Hover effect for the productivity card
+        const tipCard = document.querySelector('.from-soft-teal');
+        if (tipCard) {
+            tipCard.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = tipCard.getBoundingClientRect();
+                const x = (e.clientX - left) / width;
+                const y = (e.clientY - top) / height;
+                tipCard.style.transform = `perspective(1000px) rotateY(${(x - 0.5) * 5}deg) rotateX(${(y - 0.5) * -5}deg)`;
+            });
+            tipCard.addEventListener('mouseleave', () => {
+                tipCard.style.transform = 'none';
+            });
+        }
+    </script>
+
+
+</body></html>

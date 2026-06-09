@@ -1,0 +1,451 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>EasyVitta | Client Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#302e2a",
+                    "tertiary-fixed-dim": "#cac6c0",
+                    "deep-navy": "#062D60",
+                    "surface-container": "#eeedf1",
+                    "on-tertiary-fixed-variant": "#494642",
+                    "on-primary-fixed": "#001a40",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#d7e2ff",
+                    "on-secondary-fixed": "#00201d",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#dad9dd",
+                    "on-primary-fixed-variant": "#27467a",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c4c6d1",
+                    "secondary-container": "#7bf3e5",
+                    "primary-container": "#062d60",
+                    "warm-sand": "#F4EFE9",
+                    "inverse-primary": "#acc7ff",
+                    "surface-tint": "#415e94",
+                    "primary": "#00193c",
+                    "inverse-surface": "#2f3033",
+                    "primary-fixed-dim": "#acc7ff",
+                    "surface-bright": "#faf9fc",
+                    "on-tertiary-fixed": "#1d1b18",
+                    "tertiary-fixed": "#e6e2dc",
+                    "surface-container-low": "#f4f3f7",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#1b1916",
+                    "inverse-on-surface": "#f1f0f4",
+                    "on-secondary-fixed-variant": "#005049",
+                    "surface-variant": "#e3e2e6",
+                    "surface": "#faf9fc",
+                    "on-primary-container": "#7996cf",
+                    "outline": "#747780",
+                    "secondary-fixed": "#7ef6e8",
+                    "soft-teal": "#2BB1A4",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#999590",
+                    "surface-container-highest": "#e3e2e6",
+                    "on-surface": "#1a1c1e",
+                    "on-error": "#ffffff",
+                    "canvas-gray": "#F7F8FA",
+                    "secondary": "#006a62",
+                    "secondary-fixed-dim": "#5fdacc",
+                    "background": "#faf9fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#1a1c1e",
+                    "on-surface-variant": "#43474f",
+                    "on-secondary-container": "#006f66",
+                    "alert-gold": "#FCD269",
+                    "surface-container-high": "#e9e8eb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "stack-lg": "48px",
+                    "stack-md": "24px",
+                    "base": "8px",
+                    "stack-sm": "12px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #F7F8FA; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ambient-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Top AppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-64 md:px-margin-desktop h-16 bg-surface dark:bg-inverse-surface shadow-sm dark:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="text-headline-md font-headline-md font-bold text-deep-navy dark:text-primary-fixed">EasyVitta</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<nav class="flex gap-6">
+<a class="font-label-md text-label-md text-soft-teal dark:text-secondary-fixed-dim border-b-2 border-soft-teal pb-1" href="#">Dashboard</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-soft-teal transition-colors" href="#">Clients</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-soft-teal transition-colors" href="#">Compliance</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-soft-teal transition-colors" href="#">Reports</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-soft-teal transition-colors" href="#">Tasks</a>
+</nav>
+<div class="flex items-center gap-4 border-l pl-8 border-outline-variant">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-soft-teal transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-soft-teal transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="Accountant profile photo" data-alt="A professional headshot of a female accountant with a warm, confident smile, set against a blurred modern office background. The lighting is soft and natural, emphasizing a humanized yet high-end professional atmosphere. The color palette is clean with subtle cool tones, perfectly aligning with the corporate minimalism of the EAC Solutions portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2BhzM7IOh77qOdexvw7EcaNGDIaUc3xMbKQto8g-ISbkv3dYAcgWGKntITYbzv3tTCFwoagk8Cq0jKIxxhZjk5jgPCQIiA0Dx7XMPy0UnFsJBag2sdHm4dnofGliVKzP3mymf4QplEvyiInVp_F02FnKAe7GowAvtRMQBQnlmTl_v18x-umbkFRr0UO0VI169LmttjtRcYnFWIOZu9VQTbHhnRrE5To5VA7jTCF7pQjqKAB336pwwxvxVR0k0a0Q0AiGRoP7m0RZO">
+</div>
+</div>
+</div>
+</header>
+<!-- Side Navigation -->
+<aside class="fixed left-0 top-0 h-full w-64 flex flex-col p-stack-md border-r border-canvas-gray dark:border-tertiary-container bg-white dark:bg-surface-container-low z-40 mt-16">
+<div class="mb-stack-lg">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-deep-navy flex items-center justify-center text-white">
+<span class="material-symbols-outlined">corporate_fare</span>
+</div>
+<div>
+<h2 class="font-headline-md text-label-md font-bold text-deep-navy">Client Portal</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Precision Stewardship</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-grow">
+<a class="flex items-center gap-4 bg-surface-container-low dark:bg-primary-container text-deep-navy dark:text-on-primary-container rounded-lg px-4 py-3 scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">upload_file</span>
+<span class="font-label-md text-label-md">Documents</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-md text-label-md">Compliance</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">Payments</span>
+</a>
+</nav>
+<div class="pt-6 mt-6 border-t border-canvas-gray flex flex-col gap-2">
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 hover:bg-canvas-gray transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 pt-24 pb-stack-lg px-margin-desktop min-h-screen">
+<div class="max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="mb-stack-lg flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-deep-navy mb-2">Welcome back, Sarah</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Your financial health is our priority. Here is a summary of your current compliance status and upcoming requirements.</p>
+</div>
+<button class="bg-deep-navy text-white px-6 py-3 rounded-lg font-label-md text-label-md hover:bg-primary transition-all flex items-center gap-2 ambient-shadow">
+<span class="material-symbols-outlined">add</span>
+                    Book Consultation
+                </button>
+</div>
+<!-- Bento Grid Dashboard -->
+<div class="bento-grid">
+<!-- Compliance Status Card -->
+<div class="col-span-12 lg:col-span-8 bg-white p-8 rounded-xl ambient-shadow border border-canvas-gray">
+<div class="flex justify-between items-center mb-8">
+<div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Status Overview</span>
+<h3 class="font-headline-md text-headline-md text-deep-navy mt-1">Compliance Status</h3>
+</div>
+<span class="px-4 py-1.5 bg-soft-teal/10 text-soft-teal rounded-full font-label-sm text-label-sm flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-soft-teal"></span>
+                            Compliant
+                        </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Annual Tax Filing</span>
+<span class="font-label-md text-label-md text-soft-teal">85%</span>
+</div>
+<div class="w-full bg-canvas-gray h-2 rounded-full overflow-hidden">
+<div class="bg-soft-teal h-full rounded-full" style="width: 85%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Quarterly VAT Return</span>
+<span class="font-label-md text-label-md text-alert-gold">45%</span>
+</div>
+<div class="w-full bg-canvas-gray h-2 rounded-full overflow-hidden">
+<div class="bg-alert-gold h-full rounded-full" style="width: 45%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Payroll Compliance</span>
+<span class="font-label-md text-label-md text-soft-teal">100%</span>
+</div>
+<div class="w-full bg-canvas-gray h-2 rounded-full overflow-hidden">
+<div class="bg-soft-teal h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<div class="relative rounded-lg overflow-hidden h-48 group">
+<img alt="Financial progress data visualization" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 transition-all duration-500" data-alt="A clean, high-key photograph of a laptop displaying minimalist financial charts and data visualizations. The environment is a bright, modern office with soft daylight and warm wooden textures. The focus is on the precision of the data displayed, evoking a sense of clarity, stewardship, and professional calm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyohfAcMlMUpYQBKdiscPMuUbcnkG0q4jo1En5UGoXSHEBT5J5npczoQ8lPyMVadAtCvyriBrAvazAc1dbAo2gI7vsUE5KFL3_A1xpzpzXsFfsqc4L6OrNl7uTt6qYGuoVBkdaopDKyLOt9JWQSp-TggnOZmr1RsAinSUtAQn-lZbvUPZlTErNUqCIi78XyLguICpcYnT01Jhn-MiJMjNx2SIROPqYFeQZ39A7JtOTH9lsvN4cgt65YvGcfOnH6C41SceRin-V50l_">
+<div class="absolute inset-0 bg-deep-navy/40 flex items-center justify-center p-6 text-center">
+<p class="text-white font-label-md text-label-md leading-relaxed">Your accounts are currently being reconciled for the 2024 Q3 period.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Upcoming Deadlines -->
+<div class="col-span-12 lg:col-span-4 bg-warm-sand p-8 rounded-xl border border-canvas-gray flex flex-col">
+<div class="mb-6">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Priority</span>
+<h3 class="font-headline-md text-headline-md text-deep-navy mt-1">Upcoming Deadlines</h3>
+</div>
+<div class="space-y-4 flex-grow">
+<div class="bg-white/80 backdrop-blur-sm p-4 rounded-lg flex gap-4 items-center">
+<div class="w-12 h-12 rounded bg-error/10 text-error flex flex-col items-center justify-center font-bold">
+<span class="text-xs">SEP</span>
+<span class="text-lg leading-none">15</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-deep-navy">Q3 Estimated Tax</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Action required: Upload receipts</p>
+</div>
+</div>
+<div class="bg-white/80 backdrop-blur-sm p-4 rounded-lg flex gap-4 items-center">
+<div class="w-12 h-12 rounded bg-deep-navy/10 text-deep-navy flex flex-col items-center justify-center font-bold">
+<span class="text-xs">OCT</span>
+<span class="text-lg leading-none">02</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-deep-navy">VAT Submission</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Draft review pending</p>
+</div>
+</div>
+<div class="bg-white/80 backdrop-blur-sm p-4 rounded-lg flex gap-4 items-center opacity-60">
+<div class="w-12 h-12 rounded bg-deep-navy/10 text-deep-navy flex flex-col items-center justify-center font-bold">
+<span class="text-xs">OCT</span>
+<span class="text-lg leading-none">18</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-deep-navy">Payroll Processing</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Automatically handled</p>
+</div>
+</div>
+</div>
+<a class="mt-6 text-soft-teal font-label-md text-label-md flex items-center gap-2 hover:underline" href="#">
+                        View all deadlines <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<!-- Recent Reports -->
+<div class="col-span-12 lg:col-span-7 bg-white p-8 rounded-xl ambient-shadow border border-canvas-gray">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-deep-navy">Recent Reports</h3>
+<button class="text-on-surface-variant hover:text-deep-navy transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-canvas-gray">
+<th class="py-4 font-label-sm text-label-sm text-outline uppercase tracking-wider">Report Name</th>
+<th class="py-4 font-label-sm text-label-sm text-outline uppercase tracking-wider">Date</th>
+<th class="py-4 font-label-sm text-label-sm text-outline uppercase tracking-wider">Type</th>
+<th class="py-4 text-right"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-canvas-gray hover:bg-canvas-gray transition-colors">
+<td class="py-4 font-label-md text-label-md text-deep-navy">Quarterly Profit &amp; Loss</td>
+<td class="py-4 font-body-sm text-body-sm text-on-surface-variant">Aug 28, 2024</td>
+<td class="py-4"><span class="px-3 py-1 bg-surface-container-low rounded-full font-label-sm text-label-sm">Financial</span></td>
+<td class="py-4 text-right"><span class="material-symbols-outlined text-soft-teal cursor-pointer">download</span></td>
+</tr>
+<tr class="border-b border-canvas-gray hover:bg-canvas-gray transition-colors">
+<td class="py-4 font-label-md text-label-md text-deep-navy">Cash Flow Statement</td>
+<td class="py-4 font-body-sm text-body-sm text-on-surface-variant">Aug 15, 2024</td>
+<td class="py-4"><span class="px-3 py-1 bg-surface-container-low rounded-full font-label-sm text-label-sm">Projection</span></td>
+<td class="py-4 text-right"><span class="material-symbols-outlined text-soft-teal cursor-pointer">download</span></td>
+</tr>
+<tr class="hover:bg-canvas-gray transition-colors">
+<td class="py-4 font-label-md text-label-md text-deep-navy">Balance Sheet - July</td>
+<td class="py-4 font-body-sm text-body-sm text-on-surface-variant">Aug 02, 2024</td>
+<td class="py-4"><span class="px-3 py-1 bg-surface-container-low rounded-full font-label-sm text-label-sm">Financial</span></td>
+<td class="py-4 text-right"><span class="material-symbols-outlined text-soft-teal cursor-pointer">download</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Quick Upload -->
+<div class="col-span-12 lg:col-span-5 bg-white p-8 rounded-xl ambient-shadow border border-canvas-gray">
+<h3 class="font-headline-md text-headline-md text-deep-navy mb-4">Quick Upload</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">Need to send a document? Drag and drop it here for immediate review by your stewardship team.</p>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center bg-canvas-gray hover:bg-soft-teal/5 hover:border-soft-teal transition-all cursor-pointer group" id="dropzone">
+<span class="material-symbols-outlined text-4xl text-outline group-hover:text-soft-teal mb-4">cloud_upload</span>
+<p class="font-label-md text-label-md text-on-surface mb-1">Click or drag to upload</p>
+<p class="font-body-sm text-body-sm text-outline">PDF, PNG, JPG (Max 10MB)</p>
+</div>
+<div class="mt-6 p-4 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+<div>
+<p class="font-label-sm text-label-sm text-deep-navy">recent_invoice.pdf</p>
+<p class="text-[10px] text-outline">Uploaded 2 mins ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-soft-teal text-sm">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat Widget -->
+<div class="fixed bottom-8 right-8 z-50">
+<div class="hidden absolute bottom-20 right-0 w-80 bg-white rounded-xl ambient-shadow border border-canvas-gray overflow-hidden flex flex-col transition-all" id="chat-window">
+<div class="bg-deep-navy p-4 text-white flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-soft-teal flex items-center justify-center font-bold text-xs">JD</div>
+<div>
+<p class="font-label-sm text-label-sm">James Dalton</p>
+<p class="text-[10px] opacity-80">Primary Accountant • Online</p>
+</div>
+</div>
+<button class="material-symbols-outlined text-sm" onclick="toggleChat()">close</button>
+</div>
+<div class="h-64 p-4 overflow-y-auto bg-warm-sand/30 space-y-4">
+<div class="flex flex-col gap-1 max-w-[80%]">
+<div class="bg-surface-container p-3 rounded-lg rounded-tl-none font-body-sm text-body-sm">
+                            Hello Sarah! I've reviewed the documents you uploaded this morning. Everything looks good.
+                        </div>
+<span class="text-[10px] text-outline px-1">10:24 AM</span>
+</div>
+<div class="flex flex-col gap-1 max-w-[80%] ml-auto">
+<div class="bg-soft-teal text-white p-3 rounded-lg rounded-tr-none font-body-sm text-body-sm">
+                            Thanks James. Will the quarterly forecast be ready by Friday?
+                        </div>
+<span class="text-[10px] text-outline px-1 text-right">10:45 AM</span>
+</div>
+</div>
+<div class="p-4 border-t border-canvas-gray">
+<div class="relative">
+<input class="w-full pl-4 pr-10 py-2 bg-canvas-gray border-none rounded-full text-body-sm focus:ring-1 focus:ring-soft-teal" placeholder="Type a message..." type="text">
+<button class="absolute right-2 top-1/2 -translate-y-1/2 material-symbols-outlined text-soft-teal">send</button>
+</div>
+</div>
+</div>
+<button class="w-16 h-16 bg-deep-navy text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all relative" onclick="toggleChat()">
+<span class="material-symbols-outlined text-2xl">chat</span>
+<span class="absolute top-0 right-0 w-4 h-4 bg-error rounded-full border-2 border-white"></span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-stack-lg px-64 md:px-margin-desktop mt-auto flex flex-col md:flex-row justify-between items-center bg-deep-navy dark:bg-primary text-warm-sand dark:text-primary-fixed">
+<div class="mb-8 md:mb-0">
+<span class="font-headline-lg text-headline-lg text-white">EasyVitta</span>
+<p class="font-body-sm text-body-sm text-warm-sand/60 mt-2">© 2024 EasyVitta. Humanized Precision in Accounting.</p>
+</div>
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<nav class="flex gap-6">
+<a class="font-label-sm text-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Security</a>
+<a class="font-label-sm text-label-sm text-warm-sand/80 hover:text-soft-teal transition-colors" href="#">Contact Us</a>
+</nav>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-warm-sand/40 hover:text-white cursor-pointer">language</span>
+<span class="material-symbols-outlined text-warm-sand/40 hover:text-white cursor-pointer">share</span>
+</div>
+</div>
+</footer>
+<script>
+        function toggleChat() {
+            const chat = document.getElementById('chat-window');
+            chat.classList.toggle('hidden');
+            if (!chat.classList.contains('hidden')) {
+                chat.style.bottom = '80px';
+                chat.style.opacity = '1';
+            }
+        }
+
+        // Dropzone interaction
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('bg-soft-teal/10', 'border-soft-teal');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('bg-soft-teal/10', 'border-soft-teal');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('bg-soft-teal/10', 'border-soft-teal');
+            alert('File received. Preparing for encryption and upload.');
+        });
+    </script>
+
+
+</body></html>

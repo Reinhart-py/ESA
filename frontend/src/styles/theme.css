@@ -1,24 +1,9 @@
-:root {
-  /* Brand Colors */
-  --primary-navy: #0B192C;
-  --primary-navy-light: #1E3E62;
-  --accent-teal: #008080;
-  --accent-teal-light: #00A896;
-  --accent-teal-transparent: rgba(0, 168, 150, 0.1);
-  
-  /* System Status Colors */
-  --color-success: #10B981;
-  --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-warning: #F59E0B;
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-danger: #EF4444;
-  --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-info: #3B82F6;
-  --color-info-bg: rgba(59, 130, 246, 0.1);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
+:root {
   /* Fonts */
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-title: 'Outfit', 'Inter', sans-serif;
+  --font-family-title: 'Manrope', sans-serif;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -29,41 +14,78 @@
   --spacing-2xl: 3rem;
 
   /* Borders & Radius */
-  --border-radius-sm: 6px;
+  --border-radius-sm: 8px;
   --border-radius-md: 12px;
-  --border-radius-lg: 18px;
+  --border-radius-lg: 16px;
   --border-radius-full: 9999px;
 
   /* Transitions */
-  --transition-fast: 0.15s ease;
+  --transition-fast: 0.1s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-width: 260px;
 
-  /* Light Theme Variables (Normal Mode) */
-  --bg-color: #F8F9FA;
+  /* --- LIGHT THEME (Clean White & Green Palette) --- */
+  --bg-color: #FFFFFF;
+  --surface-color: #F8F9FA;
   --card-bg: #FFFFFF;
-  --card-border: rgba(15, 25, 44, 0.08);
-  --text-primary: #1F2937;
-  --text-sec: #6B7280;
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --card-border: #E5E7EB;
+  
+  /* Palette Colors */
+  --primary-color: #062D60;       /* Deep Navy */
+  --accent-color: #10B981;        /* Vibrant Emerald Green */
+  --accent-color-hover: #059669;
+  --text-primary: #111827;        /* Ultra dark gray for high visibility */
+  --text-sec: #4B5563;            /* Clear secondary gray */
+  --text-muted: #6B7280;
+  
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-success-bg: rgba(16, 185, 129, 0.1);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+  --color-info: #2563EB;
+  --color-info-bg: rgba(37, 99, 235, 0.1);
+
+  /* Shadow & Blur */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
   --glass-blur: none;
-  --nav-bg: #0B192C;
   --shiny-edge: none;
 }
 
-/* Dark Theme Variables (Glassy UI with Shiny Edges) */
+/* --- DARK THEME (Premium Cyber Slate & Neon Theme) --- */
 [data-theme='dark'] {
-  --bg-color: #060C14;
-  --card-bg: rgba(15, 25, 44, 0.6);
-  --card-border: rgba(0, 168, 150, 0.2);
-  --text-primary: #F3F4F6;
-  --text-sec: #9CA3AF;
-  --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --glass-blur: blur(12px);
-  --nav-bg: rgba(11, 25, 44, 0.85);
-  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 12px 0 rgba(0, 168, 150, 0.25);
+  --bg-color: #0B0F19;            /* Pitch Slate */
+  --surface-color: #111827;       /* Darker container gray */
+  --card-bg: #1F2937;             /* Sleek slate card */
+  --card-border: rgba(52, 211, 153, 0.15); /* Emerald container line */
+  
+  /* Palette Colors */
+  --primary-color: #10B981;       /* Green becomes primary highlight in dark mode */
+  --accent-color: #34D399;        /* Bright Mint Accent */
+  --accent-color-hover: #6EE7B7;
+  --text-primary: #F9FAFB;        /* Pure bright white for extreme contrast */
+  --text-sec: #9CA3AF;            /* Crisp silver gray */
+  --text-muted: #6B7280;
+
+  /* Status Colors */
+  --color-success: #34D399;
+  --color-success-bg: rgba(52, 211, 153, 0.15);
+  --color-warning: #FBBF24;
+  --color-warning-bg: rgba(251, 191, 36, 0.15);
+  --color-danger: #F87171;
+  --color-danger-bg: rgba(248, 113, 113, 0.15);
+  --color-info: #60A5FA;
+  --color-info-bg: rgba(96, 165, 250, 0.15);
+
+  /* Shadow & Blur */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(8px);
+  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 8px rgba(52, 211, 153, 0.1);
 }
 
+/* Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -87,7 +109,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-/* Premium Card Style (Supporting Glassmorphism) */
+/* Premium Card Styles */
 .premium-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -96,13 +118,111 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-card);
   padding: var(--spacing-lg);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-normal);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-normal), border var(--transition-normal);
   outline: var(--shiny-edge);
 }
+
 .premium-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
+[data-theme='dark'] .premium-card:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(52, 211, 153, 0.15);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 0.625rem 1.25rem;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-accent {
+  background-color: var(--accent-color);
+  color: #FFFFFF;
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-color-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--surface-color);
+}
+
+/* Micro-Animations & Utility Classes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, var(--surface-color) 25%, var(--card-border) 50%, var(--surface-color) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.table-row-hover:hover {
+  background-color: rgba(16, 185, 129, 0.04) !important;
+}
+
+[data-theme='dark'] .table-row-hover:hover {
+  background-color: rgba(52, 211, 153, 0.05) !important;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  transition: color var(--transition-normal), transform var(--transition-normal);
+}
+
+/* Flex utilities */
 .flex-row-center {
   display: flex;
   align-items: center;
@@ -114,20 +234,58 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
 }
 
-.grid-cols-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
-}
+/* --- Phase 6: Mobile Responsiveness & Accessibility Overrides --- */
 
-.grid-cols-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-lg);
+/* Responsive Layouts & Breakpoints */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 80px; /* Slim sidebar for tablets */
+  }
 }
 
 @media (max-width: 768px) {
-  .grid-cols-2, .grid-cols-3 {
-    grid-template-columns: 1fr;
+  :root {
+    --sidebar-width: 0px; /* Hidden or toggleable drawer on mobile */
   }
 }
+
+/* Keyboard Focus Ring */
+*:focus-visible {
+  outline: 3px solid var(--accent-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* Screen Reader Utility class (Aria compliant) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Touch Targets Optimization */
+button, a, input, select {
+  min-height: 40px; /* Touch target baseline */
+}
+
+/* Responsive Table Wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* User preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

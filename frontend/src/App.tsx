@@ -56,6 +56,22 @@ function App() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    // Developer Local Demo Mode Bypass
+    const cleanEmail = email.toLowerCase().trim();
+    if (cleanEmail.endsWith('@eac.local') || cleanEmail === 'admin' || cleanEmail === 'accountant' || cleanEmail === 'client') {
+      let role = 'client_owner';
+      if (cleanEmail.startsWith('admin') || cleanEmail === 'admin') role = 'super_admin';
+      else if (cleanEmail.startsWith('accountant') || cleanEmail === 'accountant') role = 'accountant';
+      
+      localStorage.setItem('supabase_token', 'demo_token');
+      localStorage.setItem('eac_role', role);
+      context.setSessionToken('demo_token');
+      context.setUserRole(role);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error: loginErr } = await supabaseClient.auth.signInWithPassword({
         email,
@@ -140,7 +156,11 @@ function App() {
   };
 
   const handleLogout = async () => {
-    await supabaseClient.auth.signOut();
+    try {
+      await supabaseClient.auth.signOut();
+    } catch (e) {}
+    localStorage.removeItem('supabase_token');
+    context.setSessionToken(null);
     setUserRole('guest');
   };
 

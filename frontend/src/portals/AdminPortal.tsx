@@ -6,6 +6,7 @@ import {
   UserCheck, DollarSign, Users, Award, HardDrive, RefreshCw, Edit2, Check, X,
   CheckCircle
 } from 'lucide-react';
+import DataTable from '../components/ui/DataTable.tsx';
 
 export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -249,78 +250,93 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
                 </div>
               )}
               
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left', color: '#94a3b8' }}>
-                    <th style={{ padding: '0.75rem' }}>Tenant Name</th>
-                    <th>Business Type</th>
-                    <th>Compliance Score</th>
-                    <th>Storage Allocation (Used / Quota)</th>
-                    <th style={{ textAlign: 'right', paddingRight: '0.75rem' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenants.map(t => (
-                    <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                      <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#fff' }}>{t.name}</td>
-                      <td>{t.business_type}</td>
-                      <td>
-                        <span style={{ color: t.compliance_score >= 80 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
-                          {t.compliance_score}%
-                        </span>
-                      </td>
-                      <td>
-                        {editingQuotaTenantId === t.id ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <input 
-                              type="number"
-                              value={newQuotaGb}
-                              onChange={e => setNewQuotaGb(Number(e.target.value))}
-                              style={{ width: '60px', padding: '0.2rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '4px' }}
-                            />
-                            <span style={{ fontSize: '0.8rem' }}>GB</span>
-                            <button 
-                              onClick={() => handleUpdateQuota(t.id)}
-                              style={{ padding: '0.25rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              <Check size={12} />
-                            </button>
-                            <button 
-                              onClick={() => setEditingQuotaTenantId(null)}
-                              style={{ padding: '0.25rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span>{(t.storage_used_bytes / 1024 / 1024).toFixed(1)} MB / {(t.storage_limit_bytes / 1024 / 1024 / 1024).toFixed(1)} GB</span>
-                            <button 
-                              onClick={() => { setEditingQuotaTenantId(t.id); setNewQuotaGb(t.storage_limit_bytes / 1024 / 1024 / 1024); }}
-                              style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: 0 }}
-                              title="Override Quota"
-                            >
-                              <Edit2 size={12} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right', paddingRight: '0.75rem' }}>
-                        {impersonatingId === t.id ? (
-                          <span style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 'bold' }}>Active Impersonation</span>
-                        ) : (
+              <DataTable
+                columns={[
+                  {
+                    key: 'name',
+                    label: 'Tenant Name',
+                    sortable: true,
+                    render: (row) => <strong style={{ color: '#fff' }}>{row.name}</strong>
+                  },
+                  {
+                    key: 'business_type',
+                    label: 'Business Type',
+                    sortable: true
+                  },
+                  {
+                    key: 'compliance_score',
+                    label: 'Compliance Score',
+                    sortable: true,
+                    render: (row) => (
+                      <span style={{ color: row.compliance_score >= 80 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
+                        {row.compliance_score}%
+                      </span>
+                    )
+                  },
+                  {
+                    key: 'storage_limit_bytes',
+                    label: 'Storage Allocation (Used / Quota)',
+                    sortable: true,
+                    render: (row) => {
+                      return editingQuotaTenantId === row.id ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input 
+                            type="number"
+                            value={newQuotaGb}
+                            onChange={e => setNewQuotaGb(Number(e.target.value))}
+                            style={{ width: '60px', padding: '0.2rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '4px' }}
+                          />
+                          <span style={{ fontSize: '0.8rem' }}>GB</span>
                           <button 
-                            onClick={() => handleImpersonate(t.id)}
-                            style={{ padding: '0.35rem 0.75rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold' }}
+                            onClick={() => handleUpdateQuota(row.id)}
+                            style={{ padding: '0.25rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                           >
-                            <Eye size={14} /> Impersonate
+                            <Check size={12} />
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <button 
+                            onClick={() => setEditingQuotaTenantId(null)}
+                            style={{ padding: '0.25rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>{(row.storage_used_bytes / 1024 / 1024).toFixed(1)} MB / {(row.storage_limit_bytes / 1024 / 1024 / 1024).toFixed(1)} GB</span>
+                          <button 
+                            onClick={() => { setEditingQuotaTenantId(row.id); setNewQuotaGb(row.storage_limit_bytes / 1024 / 1024 / 1024); }}
+                            style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: 0 }}
+                            title="Override Quota"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        </div>
+                      );
+                    }
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Actions',
+                    sortable: false,
+                    render: (row) => {
+                      return impersonatingId === row.id ? (
+                        <span style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 'bold' }}>Active Impersonation</span>
+                      ) : (
+                        <button 
+                          onClick={() => handleImpersonate(row.id)}
+                          style={{ padding: '0.35rem 0.75rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 'bold' }}
+                        >
+                          <Eye size={14} /> Impersonate
+                        </button>
+                      );
+                    }
+                  }
+                ]}
+                data={tenants}
+                searchPlaceholder="Search tenants..."
+                searchKey="name"
+                pageSize={5}
+              />
             </div>
           </div>
         )}
@@ -341,49 +357,64 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
                 <p style={{ margin: 0 }}>All professional profiles have been verified. Verification queue is empty.</p>
               </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left', color: '#94a3b8' }}>
-                    <th style={{ padding: '0.75rem' }}>Professional Name</th>
-                    <th>Email Address</th>
-                    <th>Hourly Rate</th>
-                    <th>Specializations</th>
-                    <th>Verification Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingPros.map(pro => (
-                    <tr key={pro.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#cbd5e1' }}>
-                      <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#fff' }}>{pro.users?.full_name || 'Member'}</td>
-                      <td>{pro.users?.email || 'N/A'}</td>
-                      <td>${(pro.hourly_rate_cents / 100).toFixed(2)} / hr</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                          {pro.specializations?.map((spec: string, idx: number) => (
-                            <span key={idx} style={{ background: '#0f172a', padding: '0.15rem 0.35rem', borderRadius: '4px', fontSize: '0.75rem' }}>{spec}</span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            onClick={() => handleVerifyPro(pro.id, true)}
-                            style={{ padding: '0.35rem 0.75rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                          >
-                            Approve Credentials
-                          </button>
-                          <button
-                            onClick={() => handleVerifyPro(pro.id, false)}
-                            style={{ padding: '0.35rem 0.75rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <DataTable
+                columns={[
+                  {
+                    key: 'full_name',
+                    label: 'Professional Name',
+                    sortable: true,
+                    render: (row) => <strong style={{ color: '#fff' }}>{row.users?.full_name || 'Member'}</strong>
+                  },
+                  {
+                    key: 'email',
+                    label: 'Email Address',
+                    sortable: true,
+                    render: (row) => <span>{row.users?.email || 'N/A'}</span>
+                  },
+                  {
+                    key: 'hourly_rate_cents',
+                    label: 'Hourly Rate',
+                    sortable: true,
+                    render: (row) => <span>${(row.hourly_rate_cents / 100).toFixed(2)} / hr</span>
+                  },
+                  {
+                    key: 'specializations',
+                    label: 'Specializations',
+                    sortable: false,
+                    render: (row) => (
+                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        {row.specializations?.map((spec: string, idx: number) => (
+                          <span key={idx} style={{ background: '#0f172a', padding: '0.15rem 0.35rem', borderRadius: '4px', fontSize: '0.75rem' }}>{spec}</span>
+                        ))}
+                      </div>
+                    )
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Verification Actions',
+                    sortable: false,
+                    render: (row) => (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => handleVerifyPro(row.id, true)}
+                          style={{ padding: '0.35rem 0.75rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                        >
+                          Approve Credentials
+                        </button>
+                        <button
+                          onClick={() => handleVerifyPro(row.id, false)}
+                          style={{ padding: '0.35rem 0.75rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )
+                  }
+                ]}
+                data={pendingPros}
+                searchPlaceholder="Search professional queue..."
+                pageSize={5}
+              />
             )}
           </div>
         )}
@@ -392,29 +423,39 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         {activeSubTab === 'invoices' && (
           <div>
             <h2 style={{ color: '#fff', marginBottom: '1.25rem' }}>Global Invoices Directory</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', background: '#1e293b' }}>
-                  <th style={{ padding: '1rem' }}>Invoice ID</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Due Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tenants.map(t => (
-                  // Displaying custom mock/related bills as billing history for all tenants
-                  <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#cbd5e1' }}>
-                    <td style={{ padding: '1rem' }}>INV-W-{t.id.slice(0, 8).toUpperCase()}</td>
-                    <td style={{ fontWeight: 'bold', color: '#fff' }}>$199.00</td>
-                    <td>
-                      <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>Paid</span>
-                    </td>
-                    <td>2026-07-01</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={[
+                {
+                  key: 'id',
+                  label: 'Invoice ID',
+                  sortable: true,
+                  render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>INV-W-{row.id.slice(0, 8).toUpperCase()}</span>
+                },
+                {
+                  key: 'amount',
+                  label: 'Amount',
+                  sortable: true,
+                  render: () => <strong style={{ color: '#fff' }}>$199.00</strong>
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  sortable: true,
+                  render: () => (
+                    <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>Paid</span>
+                  )
+                },
+                {
+                  key: 'due_date',
+                  label: 'Due Date',
+                  sortable: true,
+                  render: () => <span>2026-07-01</span>
+                }
+              ]}
+              data={tenants}
+              searchPlaceholder="Filter global invoices..."
+              pageSize={5}
+            />
           </div>
         )}
 
@@ -422,36 +463,46 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         {activeSubTab === 'tickets' && (
           <div>
             <h2 style={{ color: '#fff', marginBottom: '1.25rem' }}>Helpdesk Tickets Management</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', background: '#1e293b' }}>
-                  <th style={{ padding: '1rem' }}>Subject</th>
-                  <th>Category</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tickets.map(tkt => (
-                  <tr key={tkt.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#cbd5e1' }}>
-                    <td style={{ padding: '1rem', fontWeight: 'bold', color: '#fff' }}>{tkt.subject}</td>
-                    <td>{tkt.category}</td>
-                    <td>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '0.2rem 0.4rem', 
-                        borderRadius: '4px',
-                        background: tkt.priority === 'High' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.05)',
-                        color: tkt.priority === 'High' ? '#ef4444' : '#cbd5e1'
-                      }}>
-                        {tkt.priority}
-                      </span>
-                    </td>
-                    <td>{tkt.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={[
+                {
+                  key: 'subject',
+                  label: 'Subject',
+                  sortable: true,
+                  render: (row) => <strong style={{ color: '#fff' }}>{row.subject}</strong>
+                },
+                {
+                  key: 'category',
+                  label: 'Category',
+                  sortable: true
+                },
+                {
+                  key: 'priority',
+                  label: 'Priority',
+                  sortable: true,
+                  render: (row) => (
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      padding: '0.2rem 0.4rem', 
+                      borderRadius: '4px',
+                      background: row.priority === 'High' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.05)',
+                      color: row.priority === 'High' ? '#ef4444' : '#cbd5e1'
+                    }}>
+                      {row.priority}
+                    </span>
+                  )
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  sortable: true
+                }
+              ]}
+              data={tickets}
+              searchPlaceholder="Search helpdesk tickets..."
+              searchKey="subject"
+              pageSize={5}
+            />
           </div>
         )}
 

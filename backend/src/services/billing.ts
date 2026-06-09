@@ -10,6 +10,49 @@ export const stripe = new Stripe(stripeSecret, {
 });
 
 export class BillingService {
+  static async bootstrapBillingPlans() {
+    const { data: existing, error } = await supabase
+      .from('billing_plans')
+      .select('id')
+      .limit(1);
+    
+    if (error) throw error;
+    if (existing && existing.length > 0) return;
+
+    console.log('[Billing Service] Seeding default billing plans...');
+
+    const defaultPlans = [
+      {
+        name: 'Starter Compliance Plan',
+        code: 'starter',
+        price_cents: 4900,
+        currency: 'USD',
+        features: JSON.stringify({ list: ['Standard Ledger', 'Compliance Checklists', 'Basic Vault (5GB)', 'Up to 3 Users'] }),
+        storage_limit_bytes: 5 * 1024 * 1024 * 1024
+      },
+      {
+        name: 'Growth Business Pro',
+        code: 'pro',
+        price_cents: 9900,
+        currency: 'USD',
+        features: JSON.stringify({ list: ['Advanced Ledger Pro', 'Dedicated Support Thread', 'Standard Vault (20GB)', 'Up to 10 Users', 'AI Copilot Engine'] }),
+        storage_limit_bytes: 20 * 1024 * 1024 * 1024
+      },
+      {
+        name: 'Enterprise Advisory Unlimited',
+        code: 'enterprise',
+        price_cents: 24900,
+        currency: 'USD',
+        features: JSON.stringify({ list: ['Dedicated Accountant Review', 'All Regional Compliance Packs', 'Enterprise Vault (100GB)', 'Unlimited Workspace Users', 'Priority Support Desk'] }),
+        storage_limit_bytes: 100 * 1024 * 1024 * 1024
+      }
+    ];
+
+    for (const plan of defaultPlans) {
+      await supabase.from('billing_plans').insert(plan);
+    }
+  }
+
   /**
    * Generates a checkout session for a subscription plan
    */
@@ -23,6 +66,61 @@ export class BillingService {
 
     if (tenantErr || !tenant) {
       throw new Error('Tenant not found');
+    }
+
+    // Attempt to resolve priceId to a plan in the database to see what they are buying
+    const { data: plan } = await supabase
+      .from('billing_plans')
+      .select('*')
+      .or(`id.eq.${priceId},code.eq.${priceId}`)
+      .maybeSingle();
+
+    if (!stripeSecret) {
+      console.log('[Billing Service Mock] Stripe secret key is not set. Directly applying mock subscription upgrade offline.');
+      
+      const targetPlanId = plan ? plan.id : null;
+      const priceCents = plan ? plan.price_cents : 0;
+
+      // Update or Insert active subscription
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      const nextPeriod = new Date();
+      nextPeriod.setMonth(nextPeriod.getMonth() + 1);
+
+      if (existingSub) {
+        await supabase
+          .from('subscriptions')
+          .update({
+            plan_id: targetPlanId,
+            status: 'active',
+            current_period_end: nextPeriod.toISOString()
+          })
+          .eq('tenant_id', tenantId);
+      } else {
+        await supabase
+          .from('subscriptions')
+          .insert({
+            tenant_id: tenantId,
+            plan_id: targetPlanId,
+            status: 'active',
+            current_period_end: nextPeriod.toISOString()
+          });
+      }
+
+      // Create a mock invoice for the payment
+      await supabase.from('invoices').insert({
+        tenant_id: tenantId,
+        amount_cents: priceCents,
+        status: 'paid',
+        due_date: new Date().toISOString().split('T')[0],
+        stripe_invoice_id: 'mock_stripe_inv_' + Math.random().toString(36).substring(7)
+      });
+
+      return successUrl;
     }
 
     const session = await stripe.checkout.sessions.create({

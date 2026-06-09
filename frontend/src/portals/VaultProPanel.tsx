@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { apiClient } from '../api/client.ts';
 import { AppContext } from '../context/AppContext.tsx';
 import { 
   FolderPlus, Trash2, Share2, PenTool, CheckSquare, Square, 
   Download, Link2, Copy, Check, X, ShieldCheck, Mail, Eye,
   Search, Archive, Calendar, AlertTriangle, FileText, CheckCircle,
-  FileCode, Scale, RefreshCw
+  FileCode, Scale, RefreshCw, FolderOpen
 } from 'lucide-react';
+import ConfirmDialog from '../components/ui/ConfirmDialog.tsx';
+import EmptyState from '../components/ui/EmptyState.tsx';
+import Toast, { ToastMessage } from '../components/ui/Toast.tsx';
 
 interface FolderItem {
   id: string;
@@ -44,6 +47,7 @@ export default function VaultProPanel({
   deleteFile
 }: VaultProProps) {
   const context = useContext(AppContext);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'files' | 'trash' | 'ocr_search'>('files');
@@ -75,6 +79,7 @@ export default function VaultProPanel({
   const [uploadBase64, setUploadBase64] = useState('');
   const [uploadSize, setUploadSize] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Trash & Soft Delete
   const [trashFiles, setTrashFiles] = useState<FileItem[]>([]);
@@ -102,6 +107,18 @@ export default function VaultProPanel({
     retention_until?: string;
   } | null>(null);
   const [previewTab, setPreviewTab] = useState<'document' | 'ocr'>('document');
+
+  // Toast notifications & Confirm Dialog
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const addToast = (type: 'success' | 'warning' | 'error' | 'info', title: string, message: string) => {
+    setToasts(prev => [...prev, { id: Math.random().toString(), type, title, message }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   const fetchESignRequests = async () => {
     try {
@@ -180,7 +197,7 @@ export default function VaultProPanel({
       });
       setSignerEmail('');
       await fetchESignRequests();
-      alert('E-Sign request dispatched successfully!');
+      addToast('success', 'E-Sign Dispatched', 'E-Sign request dispatched successfully!');
     } catch (err) {
       console.error('Error requesting signature:', err);
     } finally {
@@ -190,7 +207,7 @@ export default function VaultProPanel({
 
   const handleExecuteSignature = async (reqId: string) => {
     if (!signatureText.trim()) {
-      alert('Please type your name as authentication.');
+      addToast('warning', 'Validation Error', 'Please type your name as authentication.');
       return;
     }
     setLoadingSign(true);
@@ -200,7 +217,7 @@ export default function VaultProPanel({
       });
       setSignatureText('');
       await fetchESignRequests();
-      alert('Document signed successfully!');
+      addToast('success', 'Document Signed', 'Document signed successfully!');
       setShowSignModal(false);
       setActiveFile(null);
     } catch (err) {
@@ -210,19 +227,65 @@ export default function VaultProPanel({
     }
   };
 
-  // Upload handler with duplicate detection display
+  const processFile = (file: File) => {
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('File size exceeds the 50MB workspace limit.');
+      addToast('error', 'Limit Exceeded', 'File exceeds the 50MB storage limit.');
+      return;
+    }
+    
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'text/plain',
+      'image/png',
+      'image/jpeg',
+      'image/webp'
+    ];
+    if (!allowedMimeTypes.includes(file.type)) {
+      setUploadError('Invalid file type. Only PDF, DOCX, XLSX, CSV, TXT, PNG, and JPEG files are supported.');
+      addToast('warning', 'Invalid Format', 'Supported formats: PDF, DOCX, XLSX, CSV, TXT, PNG, JPEG.');
+      return;
+    }
+
+    setUploadName(file.name);
+    setUploadSize(file.size);
+    setUploadError(null);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = (reader.result as string).split(',')[1];
+      setUploadBase64(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadName(file.name);
-      setUploadSize(file.size);
-      setUploadError(null);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = (reader.result as string).split(',')[1];
-        setUploadBase64(base64String);
-      };
-      reader.readAsDataURL(file);
+      processFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
     }
   };
 
@@ -246,14 +309,14 @@ export default function VaultProPanel({
   const handleRestoreFile = async (fileId: string) => {
     try {
       await apiClient.post(`/documents/file/${fileId}/restore`);
-      alert('Document successfully restored to active vault!');
+      addToast('success', 'Document Restored', 'Document successfully restored to active vault!');
       if (context && context.syncState) {
         await context.syncState();
       }
       await fetchTrashFiles();
     } catch (err: any) {
       console.error('Error restoring file:', err);
-      alert(err.response?.data?.error || 'Failed to restore document.');
+      addToast('error', 'Restoration Failed', err.response?.data?.error || 'Failed to restore document.');
     }
   };
 
@@ -274,7 +337,7 @@ export default function VaultProPanel({
         retentionUntil: retentionDate || null,
         isLegalHold: legalHold
       });
-      alert('Compliance metrics updated successfully.');
+      addToast('success', 'Compliance Updated', 'Compliance metrics updated successfully.');
       if (context && context.syncState) {
         await context.syncState();
       }
@@ -282,7 +345,7 @@ export default function VaultProPanel({
       setActiveFile(null);
     } catch (err: any) {
       console.error('Error saving compliance policies:', err);
-      alert(err.response?.data?.error || 'Failed to update compliance settings.');
+      addToast('error', 'Update Failed', err.response?.data?.error || 'Failed to update compliance settings.');
     } finally {
       setComplianceSaving(false);
     }
@@ -433,10 +496,17 @@ export default function VaultProPanel({
 
           {/* Folders & Files Grid */}
           <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8' }}>
-                  <th style={{ padding: '0.75rem', width: '40px' }}>
+            {folders.length === 0 && files.length === 0 ? (
+              <EmptyState 
+                icon={<FolderOpen size={44} />}
+                title="Secure Vault is Empty"
+                description="No folders or documents were found in this directory. Connect feeds or upload files below to populate your record ledger."
+              />
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8' }}>
+                    <th style={{ padding: '0.75rem', width: '40px' }}>
                     <button 
                       onClick={toggleSelectAll} 
                       style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
@@ -550,7 +620,7 @@ export default function VaultProPanel({
                         </button>
 
                         <button 
-                          onClick={() => deleteFile(file.id)}
+                          onClick={() => setDeleteConfirmId(file.id)}
                           style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
                           title="Delete file"
                         >
@@ -562,23 +632,71 @@ export default function VaultProPanel({
                 ))}
               </tbody>
             </table>
+            )}
           </div>
 
-          {/* Secure Document Upload */}
-          <div style={{ marginTop: '0.5rem', padding: '1.5rem', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Secure Document Upload</h3>
+          {/* Secure Document Upload Dropzone */}
+          <div style={{ marginTop: '1rem', padding: '1.5rem', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem' }}>Secure Document Vault Upload</h3>
             {uploadError && (
               <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
                 <AlertTriangle size={16} /> {uploadError}
               </div>
             )}
-            <form onSubmit={handleUploadSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <input type="file" onChange={handleFileChange} style={{ color: '#fff' }} />
+            
+            <div 
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: isDragging ? '2px dashed #10b981' : '2px dashed rgba(255,255,255,0.1)',
+                background: isDragging ? 'rgba(16, 185, 129, 0.05)' : '#0f172a',
+                padding: '2rem',
+                borderRadius: '8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                marginBottom: '1rem'
+              }}
+            >
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleFileChange} 
+                style={{ display: 'none' }} 
+              />
+              <div style={{ color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                <FolderOpen size={36} style={{ color: isDragging ? '#10b981' : '#64748b' }} />
+                {uploadName ? (
+                  <div>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{uploadName}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>({(uploadSize / 1024).toFixed(1)} KB)</span>
+                  </div>
+                ) : (
+                  <div>
+                    <strong style={{ color: '#fff' }}>Drag & drop files here</strong> or <span style={{ color: '#10b981' }}>browse records</span>
+                    <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '0.25rem' }}>Max file size: 50MB. Supported: PDF, DOCX, XLSX, CSV, TXT, PNG, JPEG.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <form onSubmit={handleUploadSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              {uploadName && (
+                <button
+                  type="button"
+                  onClick={() => { setUploadName(''); setUploadBase64(''); setUploadSize(0); }}
+                  style={{ padding: '0.5rem 1rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  Cancel
+                </button>
+              )}
               
               <select 
                 value={uploadCategory} 
                 onChange={e => setUploadCategory(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
               >
                 <option value="General">General</option>
                 <option value="Taxation">Taxation</option>
@@ -589,7 +707,7 @@ export default function VaultProPanel({
               <button 
                 type="submit" 
                 disabled={!uploadName}
-                style={{ padding: '0.5rem 1.2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', opacity: uploadName ? 1 : 0.6 }}
+                style={{ padding: '0.5rem 1.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: uploadName ? 1 : 0.6 }}
               >
                 Upload to Vault
               </button>
@@ -1016,6 +1134,36 @@ export default function VaultProPanel({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Delete File Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirmId !== null}
+        title="Delete Vault Document"
+        message="Are you sure you want to move this file to the compliance trash bin? Soft-deleted documents can be restored later or permanently purged by an administrator."
+        confirmLabel="Move to Trash"
+        onConfirm={async () => {
+          if (deleteConfirmId) {
+            try {
+              await deleteFile(deleteConfirmId);
+              addToast('success', 'Document Purged', 'Document has been soft-deleted and moved to trash.');
+            } catch (err: any) {
+              addToast('error', 'Purge Failed', err.response?.data?.error || 'Failed to delete file.');
+            } finally {
+              setDeleteConfirmId(null);
+            }
+          }
+        }}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
+
+      {/* Floating Toast Notification Area */}
+      {toasts.length > 0 && (
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 10000, display: 'flex', flexDirection: 'column', gap: '0.5rem', pointerEvents: 'none' }}>
+          {toasts.map(t => (
+            <Toast key={t.id} id={t.id} type={t.type} title={t.title} message={t.message} onClose={removeToast} />
+          ))}
         </div>
       )}
     </div>

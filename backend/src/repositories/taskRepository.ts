@@ -11,6 +11,18 @@ export class TaskRepository {
     return data || [];
   }
 
+  static async getTasksByTenantPaginated(tenantId: string, offset: number, limit: number) {
+    const { data, error, count } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { data: data || [], total: count || 0 };
+  }
+
   static async createTask(task: {
     tenant_id: string;
     title: string;
@@ -70,5 +82,36 @@ export class TaskRepository {
 
     if (error) throw error;
     return data;
+  }
+
+  static async updateTask(taskId: string, tenantId: string, updates: Partial<{
+    title: string;
+    description: string;
+    due_date: string;
+    priority: string;
+    status: string;
+    assigned_to: string | null;
+  }>) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(updates)
+      .eq('id', taskId)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async deleteTask(taskId: string, tenantId: string) {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+      .eq('tenant_id', tenantId);
+
+    if (error) throw error;
+    return true;
   }
 }

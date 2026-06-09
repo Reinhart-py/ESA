@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, requireRoles, AuthenticatedRequest } from './middleware/auth.js';
 import { supabase } from './config/supabase.js';
 // Services & Engines
@@ -31,6 +33,7 @@ import { MarketplaceRepository } from './repositories/marketplaceRepository.js';
 import { MarketplaceService } from './services/marketplaceService.js';
 import { OcrService } from './services/ocrService.js';
 import crypto from 'crypto';
+import { getPagination, buildPaginatedResult } from './utils/pagination.js';
 import { LedgerRepository } from './repositories/ledgerRepository.js';
 import { LedgerService } from './services/ledgerService.js';
 import { ExpenseRepository } from './repositories/expenseRepository.js';
@@ -79,7 +82,31 @@ if (missingVars.length > 0) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(helmet());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 
 // Webhook requires raw payload for Stripe signature verification
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -93,7 +120,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
   }
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Helper to record audit logs via repository pattern
 const logActivity = async (req: AuthenticatedRequest, category: string, action: string, details: any = {}) => {
@@ -244,6 +271,30 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
 
   if (!tenantId || !userId) {
     return res.status(400).json({ error: 'Context tenant_id and user_id are required' });
+  }
+
+  // File size check (Max 50MB)
+  if (sizeBytes > 50 * 1024 * 1024) {
+    return res.status(400).json({ error: 'File size exceeds maximum permitted limit (50MB).' });
+  }
+
+  // MIME type whitelist validation
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+    'text/plain',
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'application/octet-stream'
+  ];
+
+  if (!allowedMimeTypes.includes(mimeType)) {
+    return res.status(400).json({ error: `File type '${mimeType}' is not allowed. Supported types: PDF, DOCX, XLSX, CSV, TXT, PNG, JPEG, WEBP.` });
   }
 
   try {
@@ -1000,8 +1051,16 @@ app.get('/api/ai/chat/history', requireAuth, async (req: AuthenticatedRequest, r
 app.get('/api/tasks', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const tenantId = req.user?.tenant_id || '';
-    const data = await TaskRepository.getTasksByTenant(tenantId);
-    res.json(data);
+    const { page: pageVal, limit: limitVal } = req.query;
+
+    if (pageVal || limitVal) {
+      const { page, limit, offset } = getPagination(pageVal as string, limitVal as string);
+      const { data, total } = await TaskRepository.getTasksByTenantPaginated(tenantId, offset, limit);
+      res.json(buildPaginatedResult(data, total, page, limit));
+    } else {
+      const data = await TaskRepository.getTasksByTenant(tenantId);
+      res.json(data);
+    }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1023,6 +1082,31 @@ app.post('/api/tasks', requireAuth, validateRequest(createTaskSchema), async (re
       created_by: userId
     });
     res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/tasks/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  const updates = req.body;
+
+  try {
+    const data = await TaskRepository.updateTask(taskId, tenantId, updates);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/tasks/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const taskId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+
+  try {
+    await TaskRepository.deleteTask(taskId, tenantId);
+    res.status(204).end();
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1147,6 +1231,19 @@ app.get('/api/audit-logs', requireAuth, requireRoles(['super_admin', 'admin', 'a
 });
 
 // --- BILLING & SUBSCRIPTIONS ---
+app.get('/api/billing/plans', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('billing_plans')
+      .select('*')
+      .order('price_cents', { ascending: true });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/billing/subscription', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const tenantId = req.user?.tenant_id || '';
@@ -1203,7 +1300,7 @@ app.post('/api/onboarding/professional', requireAuth, validateRequest(onboardPro
       bio,
       hourly_rate_cents: hourlyRateCents,
       specializations,
-      is_verified: true, // Auto-verify in demo for seamless flow
+      is_verified: false,
       availability_status: 'available'
     });
     await logActivity(req, 'Verification', 'Registered professional profile', { userId });
@@ -1597,5 +1694,8 @@ app.patch('/api/messages/threads/:id/read', requireAuth, async (req: Authenticat
 // --- SYSTEM INITIALIZER BOOTSTRAP ---
 app.listen(PORT, () => {
   console.log(`EAC Solutions server running on http://localhost:${PORT}`);
+  BillingService.bootstrapBillingPlans().catch((err) => {
+    console.error('Failed to seed default billing plans:', err);
+  });
 });
 

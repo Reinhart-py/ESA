@@ -11,6 +11,7 @@ interface AppContextType {
   syncState: () => Promise<void>;
   supabaseClient: any;
   sessionToken: string | null;
+  setSessionToken: (token: string | null) => void;
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   folders: Folder[];
@@ -33,14 +34,14 @@ interface AppContextType {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE1OTg4ODMwMDAsImV4cCI6MTkwNDQ2OTAwMH0.placeholder';
 
 export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('eac_role') || 'guest');
-  const [themeMode, setThemeMode] = useState<string>(() => localStorage.getItem('eac_theme') || 'light');
+  const [themeMode, setThemeMode] = useState<string>('light');
   const [sessionToken, setSessionToken] = useState<string | null>(() => localStorage.getItem('supabase_token'));
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -60,52 +61,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (session) {
         localStorage.setItem('supabase_token', session.access_token);
         setSessionToken(session.access_token);
-        
-        try {
-          // Fetch current user details from profile endpoint
-          const res = await apiClient.get('/users');
-          if (res.data && res.data.length > 0) {
-            const matchedUser = res.data.find((u: any) => u.id === session.user.id);
-            if (matchedUser) {
-              setCurrentUser(matchedUser);
-              setUserRole(matchedUser.role);
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching profile on auth change:', err);
-        }
       } else {
-        localStorage.removeItem('supabase_token');
-        setSessionToken(null);
-        setCurrentUser(null);
-        setUserRole('guest');
+        const currentToken = localStorage.getItem('supabase_token');
+        if (currentToken !== 'demo_token' && !currentToken?.startsWith('demo_')) {
+          localStorage.removeItem('supabase_token');
+          setSessionToken(null);
+          setCurrentUser(null);
+          setUserRole('guest');
+        }
       }
     });
   }, []);
+
+  // Fetch current user details from profile endpoint or set demo user
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!sessionToken) return;
+      if (sessionToken === 'demo_token' || sessionToken.startsWith('demo_')) {
+        const storedRole = localStorage.getItem('eac_role') || 'client_owner';
+        setCurrentUser({
+          id: 'demo_user',
+          tenant_id: 'demo_tenant',
+          email: 'demo@eac.local',
+          full_name: 'Demo User',
+          role: storedRole as any,
+          status: 'active',
+          created_at: new Date().toISOString()
+        } as any);
+        setUserRole(storedRole);
+        return;
+      }
+      try {
+        const res = await apiClient.get('/users');
+        if (res.data && res.data.length > 0) {
+          const matchedUser = res.data[0];
+          setCurrentUser(matchedUser);
+          setUserRole(matchedUser.role);
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+    loadProfile();
+  }, [sessionToken]);
 
   const syncState = async () => {
     if (!sessionToken) return;
     try {
       const [docRes, complianceRes, taskRes, msgRes, ticketRes, auditRes, subRes, invoiceRes] = await Promise.all([
-        apiClient.get('/documents'),
-        apiClient.get('/compliance/obligations'),
-        apiClient.get('/tasks'),
-        apiClient.get('/messages'),
-        apiClient.get('/support/tickets'),
+        apiClient.get('/documents').catch(() => ({ data: { folders: [], files: [] } })),
+        apiClient.get('/compliance/obligations').catch(() => ({ data: [] })),
+        apiClient.get('/tasks').catch(() => ({ data: [] })),
+        apiClient.get('/messages').catch(() => ({ data: { messages: [] } })),
+        apiClient.get('/support/tickets').catch(() => ({ data: [] })),
         apiClient.get('/audit-logs').catch(() => ({ data: [] })),
         apiClient.get('/billing/subscription').catch(() => ({ data: null })),
         apiClient.get('/billing/invoices').catch(() => ({ data: [] }))
       ]);
 
-      setFolders(docRes.data.folders || []);
-      setFiles(docRes.data.files || []);
-      setObligations(complianceRes.data || []);
-      setTasks(taskRes.data || []);
-      setMessages(msgRes.data.messages || []);
-      setTickets(ticketRes.data || []);
-      setAuditLogs(auditRes.data || []);
+      setFolders(docRes.data?.folders || []);
+      setFiles(docRes.data?.files || []);
+      setObligations(Array.isArray(complianceRes.data) ? complianceRes.data : []);
+      setTasks(Array.isArray(taskRes.data) ? taskRes.data : []);
+      setMessages(msgRes.data?.messages || Array.isArray(msgRes.data) ? msgRes.data : []);
+      setTickets(Array.isArray(ticketRes.data) ? ticketRes.data : []);
+      setAuditLogs(Array.isArray(auditRes.data) ? auditRes.data : []);
       setSubscription(subRes.data);
-      setInvoices(invoiceRes.data || []);
+      setInvoices(Array.isArray(invoiceRes.data) ? invoiceRes.data : []);
     } catch (err) {
       console.error('Failed to synchronize app state with DB APIs:', err);
     }
@@ -195,6 +217,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         syncState,
         supabaseClient,
         sessionToken,
+        setSessionToken,
         currentUser,
         setCurrentUser,
         folders,

@@ -1,23 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import './styles/theme.css';
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 168, 150, 0.2);
+  background: var(--card-border);
   border-radius: var(--border-radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 168, 150, 0.4);
+  background: var(--accent-color);
 }
 
-/* Premium Buttons */
+/* Premium Buttons overrides */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -25,46 +24,54 @@
   gap: var(--spacing-sm);
   padding: 0.65rem 1.25rem;
   border-radius: var(--border-radius-sm);
-  font-weight: 500;
-  transition: all var(--transition-fast);
+  font-weight: 600;
+  transition: all var(--transition-normal);
   font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
 }
+
 .btn-primary {
-  background: var(--primary-navy);
+  background: var(--primary-color);
   color: #fff;
 }
 .btn-primary:hover {
-  background: var(--primary-navy-light);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
+
 .btn-teal {
-  background: var(--accent-teal);
+  background: var(--accent-color);
   color: #fff;
 }
 .btn-teal:hover {
-  background: var(--accent-teal-light);
+  background: var(--accent-color-hover);
+  transform: translateY(-1px);
 }
+
 .btn-secondary {
   background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--card-border);
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-color);
 }
+
 .btn-text {
   background: transparent;
-  color: var(--accent-teal-light);
+  color: var(--accent-color);
   padding: 0.25rem 0.5rem;
 }
 .btn-text:hover {
-  background: var(--accent-teal-transparent);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 /* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.55rem;
   border-radius: var(--border-radius-full);
   font-size: 0.75rem;
   font-weight: 600;
@@ -96,11 +103,12 @@
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.9rem;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-normal);
 }
 .form-input:focus {
   outline: none;
-  border-color: var(--accent-teal);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
 }
 
 /* Grid & Utilities */
@@ -108,7 +116,7 @@
   color: var(--text-sec);
 }
 .text-teal {
-  color: var(--accent-teal-light);
+  color: var(--accent-color);
 }
 .font-semibold {
   font-weight: 600;
