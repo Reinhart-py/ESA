@@ -27,24 +27,45 @@ if (provider === 'cloudflare_r2' || provider === 'aws_s3') {
 
 // Google Drive Auth Configuration
 let googleDriveClient: any = null;
+let oauth2ClientInstance: any = null;
+
 if (provider === 'google_drive') {
   try {
-    const oauth2Client = new google.auth.OAuth2(
+    oauth2ClientInstance = new google.auth.OAuth2(
       process.env.GOOGLE_DRIVE_CLIENT_ID,
       process.env.GOOGLE_DRIVE_CLIENT_SECRET,
       process.env.GOOGLE_DRIVE_REDIRECT_URI || 'urn:ietf:wg:oauth:2.0:oob'
     );
 
     if (process.env.GOOGLE_DRIVE_REFRESH_TOKEN) {
-      oauth2Client.setCredentials({
+      oauth2ClientInstance.setCredentials({
         refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
       });
-      googleDriveClient = google.drive({ version: 'v3', auth: oauth2Client });
+      googleDriveClient = google.drive({ version: 'v3', auth: oauth2ClientInstance });
     } else {
       console.warn('WARNING: GOOGLE_DRIVE_REFRESH_TOKEN is not defined. Google Drive integration will run in mock mode.');
     }
   } catch (err: any) {
     console.error('Error initializing Google Drive SDK client:', err.message);
+  }
+}
+
+// Function to guarantee fresh credentials prior to any Drive request
+async function ensureGoogleCredentials(): Promise<any> {
+  if (!oauth2ClientInstance) {
+    throw new Error('Google OAuth client is not initialized. Verify credentials configurations.');
+  }
+  try {
+    const tokens = await oauth2ClientInstance.getAccessToken();
+    if (!tokens.token) {
+      console.log('[Google Drive] Refreshing access credentials token...');
+      const response = await oauth2ClientInstance.refreshAccessToken();
+      oauth2ClientInstance.setCredentials(response.credentials);
+    }
+    return google.drive({ version: 'v3', auth: oauth2ClientInstance });
+  } catch (err: any) {
+    console.error('[Google Drive] Token refresh failed:', err.message);
+    throw new Error(`Google Drive token refresh failed: ${err.message}`);
   }
 }
 
@@ -116,16 +137,17 @@ export const StorageService = {
       await s3Client.send(command);
       return fileKey;
     } else if (provider === 'google_drive' && googleDriveClient) {
+      const activeDrive = await ensureGoogleCredentials();
       const bufferStream = new stream.PassThrough();
       bufferStream.end(buffer);
 
       const rootFolderId = process.env.GOOGLE_DRIVE_SHARED_FOLDER_ID || '5TB_EAC_ROOT';
       
       // Resolve/Create subdirectories dynamically for strict tenant isolation
-      const tenantFolderId = await getOrCreateFolder(googleDriveClient, tenantId, rootFolderId);
-      const categoryFolderId = await getOrCreateFolder(googleDriveClient, category, tenantFolderId);
+      const tenantFolderId = await getOrCreateFolder(activeDrive, tenantId, rootFolderId);
+      const categoryFolderId = await getOrCreateFolder(activeDrive, category, tenantFolderId);
 
-      const response = await googleDriveClient.files.create({
+      const response = await activeDrive.files.create({
         requestBody: {
           name: fileName,
           parents: [categoryFolderId],
@@ -161,7 +183,8 @@ export const StorageService = {
       return true;
     } else if (provider === 'google_drive' && googleDriveClient) {
       try {
-        await googleDriveClient.files.delete({
+        const activeDrive = await ensureGoogleCredentials();
+        await activeDrive.files.delete({
           fileId: storageKey
         });
       } catch (err: any) {
@@ -186,8 +209,9 @@ export const StorageService = {
       });
       return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
     } else if (provider === 'google_drive' && googleDriveClient) {
+      const activeDrive = await ensureGoogleCredentials();
       // Fetch link for Google Drive file
-      const response = await googleDriveClient.files.get({
+      const response = await activeDrive.files.get({
         fileId: storageKey,
         fields: 'webViewLink, webContentLink'
       });
@@ -211,7 +235,8 @@ export const StorageService = {
       }
       throw new Error('S3 body is empty');
     } else if (provider === 'google_drive' && googleDriveClient) {
-      const response = await googleDriveClient.files.get(
+      const activeDrive = await ensureGoogleCredentials();
+      const response = await activeDrive.files.get(
         { fileId: storageKey, alt: 'media' },
         { responseType: 'stream' }
       );
