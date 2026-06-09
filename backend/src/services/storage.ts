@@ -50,27 +50,47 @@ if (provider === 'google_drive') {
 
 // Helper to locate or create a specific directory under a parent directory
 async function getOrCreateFolder(drive: any, folderName: string, parentId: string): Promise<string> {
-  const query = `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and '${parentId}' in parents and trashed = false`;
-  const response = await drive.files.list({
-    q: query,
-    fields: 'files(id)'
-  });
+  try {
+    const query = `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and '${parentId}' in parents and trashed = false`;
+    const response = await drive.files.list({
+      q: query,
+      fields: 'files(id)'
+    });
 
-  const files = response.data.files;
-  if (files && files.length > 0) {
-    return files[0].id!;
+    const files = response.data.files;
+    if (files && files.length > 0) {
+      return files[0].id!;
+    }
+  } catch (err: any) {
+    console.warn(`Warning: listing folder failed for parent: ${parentId}. Retrying under root context.`, err.message);
   }
 
-  const newFolder = await drive.files.create({
-    requestBody: {
+  try {
+    const requestBody: any = {
       name: folderName,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentId]
-    },
-    fields: 'id'
-  });
+      mimeType: 'application/vnd.google-apps.folder'
+    };
+    if (parentId && parentId !== '5TB_EAC_ROOT') {
+      requestBody.parents = [parentId];
+    }
 
-  return newFolder.data.id!;
+    const newFolder = await drive.files.create({
+      requestBody,
+      fields: 'id'
+    });
+
+    return newFolder.data.id!;
+  } catch (err: any) {
+    // Ultimate fallback if parent ID is completely invalid
+    const newFolder = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder'
+      },
+      fields: 'id'
+    });
+    return newFolder.data.id!;
+  }
 }
 
 export const StorageService = {
@@ -140,9 +160,15 @@ export const StorageService = {
       await s3Client.send(command);
       return true;
     } else if (provider === 'google_drive' && googleDriveClient) {
-      await googleDriveClient.files.delete({
-        fileId: storageKey
-      });
+      try {
+        await googleDriveClient.files.delete({
+          fileId: storageKey
+        });
+      } catch (err: any) {
+        if (err.status !== 404) {
+          throw err;
+        }
+      }
       return true;
     } else {
       console.log(`[Storage Mock] Deleted ${storageKey} from storage provider ${provider}`);
