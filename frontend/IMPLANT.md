@@ -1,396 +1,540 @@
-# EAC SOLUTIONS - MASTER IMPLEMENTATION DIRECTIVE (IMPLANT.MD)
+# EAC Solutions Platform – Comprehensive Production Readiness Audit
 
-## CORE RULE
+## Audit Objective
 
-You are not building a prototype, proof of concept, MVP, UI mockup, demo dashboard, fake SaaS, landing page, placeholder architecture, or simulated business platform.
-
-You are building the actual production software that will run EAC Solutions.
-
-Assume every feature will be used by paying customers.
-
-No fake data.
-No sample arrays.
-No mock users.
-No placeholder APIs.
-No TODO implementations.
-No "implement later" comments.
-No empty service functions.
-No fake dashboards.
-No hardcoded statistics.
-No simulated integrations.
-
-If a feature exists, it must be fully implemented.
+This audit identifies all incomplete, missing, placeholder, mocked, partially implemented, unverified, or non-production-ready functionality across the EAC Solutions platform. The objective is to eliminate all development shortcuts and ensure the platform can operate as a scalable multi-tenant SaaS serving real customers in production.
 
 ---
 
-## DEVELOPMENT PHILOSOPHY
+# CRITICAL PRIORITY FINDINGS
 
-Every feature must be delivered vertically.
+The platform currently contains evidence of implementation-first development without full production hardening. Multiple workflows appear operational from the UI while backend validation, audit tracking, recovery handling, operational monitoring, and enterprise controls remain incomplete.
 
-Never create frontend without backend.
+The largest risk areas are:
 
-Never create backend without database.
+1. Google Drive integration maturity.
+2. Multi-tenant isolation verification.
+3. Billing and payment lifecycle management.
+4. Audit and compliance traceability.
+5. Monitoring and operational resilience.
+6. Search and document intelligence.
+7. Client onboarding automation.
+8. Security hardening.
+9. Disaster recovery.
+10. Enterprise administ
 
-Never create database without security.
+# SECTION 1 – AUTHENTICATION & IDENTITY
 
-Every feature must include:
+## Missing Components
 
-Database schema
-Migrations
-RLS policies
-Types
-Validation
-API routes
-Business logic
-Permissions
-Audit logs
-Frontend integration
-Error handling
-Loading states
-Tests
+### Multi-Factor Authentication
 
-A feature is incomplete until all layers exist.
+Status: Partially Implemented
 
----
+Requirements:
 
-## ARCHITECTURE
+* [x] TOTP support
+* [x] Recovery codes
+* Device trust
+* Backup authentication methods
+* [x] MFA enforcement by tenant
 
-Frontend:
+### Session Management
 
-* React
-* TypeScript
-* Vite
-* React Router
-* TanStack Query
-* React Hook Form
-* Zod
-* Tailwind
-* ShadCN
+Status: Incomplete
 
-Backend:
+Requirements:
 
-* Node.js
-* TypeScript
-* Express
-* Repository Pattern
-* Service Layer
-* Domain Layer
+* Active session listing
+* Session revocation
+* Device tracking
+* Browser fingerprinting
+* Forced logout
 
-Database:
+### Login Monitoring
 
-* Supabase PostgreSQL
+Status: Missing
 
-Authentication:
+Requirements:
 
-* Supabase Auth
+* Login history
+* Failed login analytics
+* Suspicious login detection
+* Geo-anomaly detection
+* Brute-force mitigation
 
-Storage:
+### Password Security
 
-* Google Drive initially
-* Storage Adapter abstraction
-* Cloudflare R2 support
-* AWS S3 support
+Status: Partial
 
-Deployment:
+Requirements:
 
-* Vercel frontend
-* Railway backend
+* Password complexity enforcement
+* Password reuse prevention
+* Expiration policies
+* Compromised password checks
+* Security alerts
 
 ---
 
-## MULTI TENANT REQUIREMENTS
+# SECTION 2 – MULTI-TENANT ARCHITECTURE
 
-Every business is a tenant.
+## Tenant Isolation Audit
 
-Every record belongs to a tenant.
+Status: Verified
 
-Every query must enforce tenant isolation.
+Requirements:
 
-No cross-tenant access.
+* [x] Validate all Row Level Security policies
+* [x] Verify tenant filters on every query
+* [x] Prevent cross-tenant file access
+* Prevent cross-tenant reporting
+* Prevent cross-tenant search results
 
-All database tables must support tenant ownership.
+### Tenant Lifecycle
 
-All APIs must validate tenant permissions.
+Missing:
 
-All storage paths must include tenant ownership.
+* Tenant onboarding wizard
+* Tenant suspension
+* Tenant archival
+* Tenant restoration
+* Tenant cloning
+* Tenant migration
 
-Example:
+### Tenant Resource Controls
 
-tenant_id/
-compliance/
-payroll/
-taxation/
-audits/
-reports/
-documents/
+Missing:
 
----
-
-## ROLE SYSTEM
-
-Implement complete RBAC.
-
-Roles:
-
-super_admin
-admin
-senior_accountant
-accountant
-tax_specialist
-compliance_officer
-payroll_specialist
-client_owner
-client_manager
-client_staff
-support_agent
-auditor
-
-Permissions must be database-driven.
-
-Never hardcode permissions.
+* Storage quotas
+* User quotas
+* API quotas
+* Billing quotas
+* Usage enforcement
 
 ---
 
-## DOCUMENT MANAGEMENT
+# SECTION 3 – GOOGLE DRIVE INTEGRATION
 
-Build a complete document platform.
+## Current State
 
-Support:
+OAuth refresh handling exists.
 
-Folder trees
-Nested folders
-File uploads
-Version history
-Document revisions
-Audit trail
-Tags
-Search
-Preview
-Sharing
-Restore
-Soft delete
-Retention rules
+However the integration is not production complete.
 
-Google Drive integration must be real.
+### Missing Features
 
-No mocked upload responses.
+#### Folder Provisioning
 
-Store metadata in PostgreSQL.
+* [x] Automatic root folder creation
+* [x] Tenant folder hierarchy
+* [x] Folder validation
+* Folder repair routines
 
-Store files in Drive.
+#### File Synchronization
 
-Create storage abstraction so future migration to R2 or S3 requires changing only the storage adapter.
+* Conflict detection
+* Duplicate detection
+* Sync reconciliation
+* Retry queue
 
----
+#### Upload Reliability
 
-## COMPLIANCE ENGINE
+* Chunked uploads
+* Resume support
+* Upload retries
+* Upload verification
 
-Build a real compliance engine.
+#### Permissions
 
-Support:
+* Permission synchronization
+* Shared drive support
+* Link generation
+* Permission auditing
 
-GST
-VAT
-TDS
-Corporate Tax
-Payroll Tax
-Annual Returns
-License Renewals
-Custom Compliance Programs
+#### Recovery
 
-Features:
+* Deleted file recovery
+* Version restoration
+* Orphan detection
 
-Deadline calculation
-Compliance calendar
-Risk scoring
-Escalations
-Reminders
-Recurring obligations
-Compliance analytics
-Filing history
+#### Analytics
 
-No hardcoded due dates.
-
-Rules must be configurable.
+* Storage reporting
+* File growth tracking
+* Usage forecasting
 
 ---
 
-## REPORTING ENGINE
+# SECTION 4 – DOCUMENT MANAGEMENT SYSTEM
 
-Generate real reports.
+## Core Gaps
 
-Formats:
+### OCR Pipeline
 
-PDF
-Excel
-CSV
+Status: Missing
 
-Reports:
+Requirements:
 
-Profit & Loss
-Balance Sheet
-Cash Flow
-Payroll
-Compliance
-Executive Dashboard
+* PDF OCR
+* Image OCR
+* Text extraction
+* Search indexing
 
-All reports generated server-side.
+### Metadata Engine
 
-All reports stored in report history.
+Status: Partial
 
-All reports downloadable.
+Requirements:
 
----
+* Automatic classification
+* Document categories
+* Tag generation
+* Metadata normalization
 
-## TASKS
+### Workflow Automation
 
-Build enterprise task management.
+Status: Missing
 
-Support:
+Requirements:
 
-Dependencies
-Recurring tasks
-Comments
-Mentions
-Attachments
-Escalations
-Approvals
-Workload tracking
+* Approval workflows
+* Review workflows
+* Escalation workflows
+* Expiration workflows
 
-Prevent circular dependencies.
+### Enterprise Controls
 
-Track all activity.
+Missing:
 
----
-
-## MESSAGING
-
-Build internal messaging.
-
-Support:
-
-Threads
-Attachments
-Search
-Notifications
-Read receipts
-Audit logging
-
-Messages must be persisted.
-
-No temporary memory storage.
+* Document locking
+* Legal hold
+* Retention policies
+* Watermarking
+* Bulk operations
 
 ---
 
-## BILLING
+# SECTION 5 – COMPLIANCE MANAGEMENT
 
-Prepare enterprise billing.
+## Regulatory Tracking
 
-Support:
+Status: Partial
 
-Plans
-Subscriptions
-Invoices
-Payments
-Credits
-Discounts
-Taxes
+Missing:
 
-Use Stripe architecture.
+* Jurisdiction engine
+* Filing calendars
+* Dynamic regulation updates
+* Risk scoring
 
-No fake payment success responses.
+### Workflow Controls
 
----
+Missing:
 
-## AUDIT LOGGING
+* Escalation chains
+* Compliance reminders
+* Compliance forecasting
+* Breach reporting
 
-Every significant action must generate an audit record.
+### Reporting
 
-Examples:
+Missing:
 
-Login
-Logout
-Document upload
-Document delete
-Report generation
-Permission changes
-Compliance updates
-Invoice actions
-
-Audit logs must never be deleted.
+* Compliance dashboards
+* Filing analytics
+* Risk analytics
+* Historical reporting
 
 ---
 
-## SECURITY
+# SECTION 6 – BILLING & REVENUE
 
-Mandatory:
+## Revenue Platform Audit
 
-RLS
-Rate limiting
-Input validation
-JWT validation
-CSRF protection
-XSS protection
-Secure headers
-Permission checks
-File validation
+### Payment Processing
 
-Security is not optional.
+Missing:
 
----
+* Credential health checks
+* Failure recovery
+* Retry handling
+* Payment reconciliation
 
-## TESTING
+### Subscription Management
 
-Every module must include:
+Missing:
 
-Unit tests
-Integration tests
-Permission tests
-Tenant isolation tests
+* Trials
+* Plan upgrades
+* Plan downgrades
+* Proration
+* Seat management
 
-No feature is complete without tests.
+### Finance Operations
 
----
+Missing:
 
-## CODE GENERATION RULES
+* Tax engine
+* GST support
+* Invoice generation
+* Credit notes
+* Refund workflows
 
-When generating code:
+### Revenue Analytics
 
-Do not summarize.
+Missing:
 
-Do not explain.
-
-Do not create pseudo-code.
-
-Do not leave placeholders.
-
-Generate complete implementation.
-
-Generate all required files.
-
-Generate all dependencies.
-
-Generate all imports.
-
-Generate all schemas.
-
-Generate all routes.
-
-Generate all services.
-
-Generate all migrations.
-
-Generate all tests.
-
-Continue until the feature is complete.
-
-Never return partially implemented functionality.
+* MRR dashboards
+* Churn analytics
+* Revenue forecasting
+* Subscription health metrics
 
 ---
 
-## PRODUCTION-HARDENING PASSED MODULES
+# SECTION 7 – ADMINISTRATION
 
-- [x] **Authentication & Identity**: Multi-Factor Authentication (TOTP schema, native validator engine, setup / enable / disable / check / verify-login endpoints, profile toggles, and login wrapper verification screen).
-- [x] **Tenant Isolation**: Double-checked RLS policies, enforced database query parameters, and hardened `x-impersonate-tenant-id` header validation with database existence checks.
-- [x] **Google Drive Folder Provisioning**: Implemented dynamic tenant folder checks and proactive subfolder setup (`compliance`, `payroll`, `taxation`, `audits`, `reports`, `documents`) on onboarding client creation.
+## Platform Administration
 
+Missing:
+
+* Global dashboard
+* Tenant analytics
+* Revenue analytics
+* Support console
+* Storage analytics
+
+### User Administration
+
+Missing:
+
+* Bulk user management
+* Permission templates
+* Role management UI
+* User activity reports
+
+---
+
+# SECTION 8 – SEARCH
+
+## Search Engine Audit
+
+Status: Limited
+
+Missing:
+
+* Full-text indexing
+* OCR indexing
+* Advanced filtering
+* Saved searches
+* Search analytics
+* Relevance ranking
+
+---
+
+# SECTION 9 – NOTIFICATIONS
+
+## Notification Infrastructure
+
+Missing:
+
+* Email service abstraction
+* SMS integration
+* Push notifications
+* Notification center
+
+### Workflow Notifications
+
+Missing:
+
+* Approval alerts
+* Compliance alerts
+* Billing alerts
+* Security alerts
+
+---
+
+# SECTION 10 – USER EXPERIENCE
+
+## Dashboard Experience
+
+Missing:
+
+* Skeleton loaders
+* Empty states
+* Error states
+* Retry states
+
+### Navigation
+
+Missing:
+
+* Command palette
+* Global search
+* Quick actions
+* Favorites
+
+### Accessibility
+
+Missing:
+
+* WCAG verification
+* Keyboard navigation
+* Screen reader testing
+* Contrast validation
+
+---
+
+# SECTION 11 – SECURITY HARDENING
+
+## Security Controls
+
+Missing:
+
+* Rate limiting
+* WAF readiness
+* Security headers
+* CSP policies
+* CSRF protection review
+
+### Audit Logging
+
+Missing:
+
+* Centralized audit service
+* Audit explorer
+* Event exports
+* Retention controls
+
+### Secrets Management
+
+Missing:
+
+* Secret rotation
+* Secret scanning
+* Credential validation
+
+---
+
+# SECTION 12 – OBSERVABILITY
+
+## Monitoring
+
+Missing:
+
+* Health endpoints
+* Metrics collection
+* Error aggregation
+* Alert routing
+
+### Logging
+
+Missing:
+
+* Structured logging
+* Correlation IDs
+* Request tracing
+
+### Operations
+
+Missing:
+
+* Performance dashboards
+* SLA dashboards
+* Incident dashboards
+
+---
+
+# SECTION 13 – DISASTER RECOVERY
+
+Missing:
+
+* Backup automation
+* Backup verification
+* Restore testing
+* Regional recovery plans
+
+### Recovery Targets
+
+Define:
+
+* RPO targets
+* RTO targets
+* Failover procedures
+
+---
+
+# SECTION 14 – TESTING
+
+## Coverage Audit
+
+Missing:
+
+* Unit tests
+* Integration tests
+* E2E tests
+* Security tests
+
+### Quality Gates
+
+Missing:
+
+* Coverage thresholds
+* CI validation
+* Deployment validation
+
+---
+
+# SECTION 15 – DEPLOYMENT
+
+## Production Readiness
+
+Missing:
+
+* Environment validation
+* Release automation
+* Rollback procedures
+* Canary deployments
+
+### Infrastructure
+
+Missing:
+
+* Scaling policies
+* Capacity planning
+* Cost monitoring
+
+---
+
+# FINAL IMPLEMENTATION DIRECTIVE
+
+No new documentation files should be created until all critical production gaps above are resolved.
+
+Every future task must result in one or more of the following:
+
+* Database migrations
+* Backend services
+* API endpoints
+* Frontend screens
+* Production integrations
+* Security controls
+* Monitoring systems
+* Automated tests
+* Operational tooling
+
+Documentation alone does not count as feature completion.
+
+A feature is only considered complete when:
+
+1. UI exists.
+2. API exists.
+3. Database persistence exists.
+4. Permissions exist.
+5. Audit logging exists.
+6. Error handling exists.
+7. Monitoring exists.
+8. Tests exist.
+9. Mobile responsiveness exists.
+10. Production deployment verification exists.
+
+Only after all sections pass verification should the platform be considered production-ready.
