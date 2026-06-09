@@ -985,6 +985,18 @@ app.get('/api/admin/metrics', requireAuth, requireRoles(['super_admin', 'admin']
   }
 });
 
+app.get('/api/admin/invoices', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*, tenants(name)');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/professionals/pending', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
   try {
     const pending = await AdminService.getPendingProfessionals();

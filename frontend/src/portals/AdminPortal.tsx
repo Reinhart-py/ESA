@@ -20,11 +20,14 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   const [tenants, setTenants] = useState<any[]>([]);
   const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
 
+  
   // Phase 10 States
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [pendingPros, setPendingPros] = useState<any[]>([]);
   const [prosLoading, setProsLoading] = useState(false);
+  const [globalInvoices, setGlobalInvoices] = useState<any[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
   
   // Quota editor state
   const [editingQuotaTenantId, setEditingQuotaTenantId] = useState<string | null>(null);
@@ -63,11 +66,25 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const fetchGlobalInvoices = async () => {
+    setInvoicesLoading(true);
+    try {
+      const res = await apiClient.get('/admin/invoices');
+      setGlobalInvoices(res.data || []);
+    } catch (err) {
+      console.error('Error fetching global invoices:', err);
+    } finally {
+      setInvoicesLoading(false);
+    }
+  };
+
   const loadData = () => {
     fetchTenants();
     fetchAdminMetrics();
     if (activeSubTab === 'verifications') {
       fetchPendingPros();
+    } else if (activeSubTab === 'invoices') {
+      fetchGlobalInvoices();
     }
   };
 
@@ -423,39 +440,62 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         {activeSubTab === 'invoices' && (
           <div>
             <h2 style={{ color: '#fff', marginBottom: '1.25rem' }}>Global Invoices Directory</h2>
-            <DataTable
-              columns={[
-                {
-                  key: 'id',
-                  label: 'Invoice ID',
-                  sortable: true,
-                  render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>INV-W-{row.id.slice(0, 8).toUpperCase()}</span>
-                },
-                {
-                  key: 'amount',
-                  label: 'Amount',
-                  sortable: true,
-                  render: () => <strong style={{ color: '#fff' }}>$199.00</strong>
-                },
-                {
-                  key: 'status',
-                  label: 'Status',
-                  sortable: true,
-                  render: () => (
-                    <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>Paid</span>
-                  )
-                },
-                {
-                  key: 'due_date',
-                  label: 'Due Date',
-                  sortable: true,
-                  render: () => <span>2026-07-01</span>
-                }
-              ]}
-              data={tenants}
-              searchPlaceholder="Filter global invoices..."
-              pageSize={5}
-            />
+            {invoicesLoading ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading global billing history...</div>
+            ) : globalInvoices.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                <p>No platform billing invoices generated.</p>
+              </div>
+            ) : (
+              <DataTable
+                columns={[
+                  {
+                    key: 'stripe_invoice_id',
+                    label: 'Invoice ID',
+                    sortable: true,
+                    render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{row.stripe_invoice_id || row.id.slice(0, 8).toUpperCase()}</span>
+                  },
+                  {
+                    key: 'tenant',
+                    label: 'Tenant Workspace',
+                    sortable: true,
+                    render: (row) => <strong style={{ color: '#fff' }}>{row.tenants?.name || 'Workspace'}</strong>
+                  },
+                  {
+                    key: 'amount_cents',
+                    label: 'Amount',
+                    sortable: true,
+                    render: (row) => <strong style={{ color: '#10b981' }}>${(row.amount_cents / 100).toFixed(2)}</strong>
+                  },
+                  {
+                    key: 'status',
+                    label: 'Status',
+                    sortable: true,
+                    render: (row) => (
+                      <span style={{ 
+                        background: row.status === 'paid' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                        color: row.status === 'paid' ? '#10b981' : '#ef4444', 
+                        padding: '0.2rem 0.4rem', 
+                        borderRadius: '4px', 
+                        fontSize: '0.75rem' 
+                      }}>
+                        {row.status.toUpperCase()}
+                      </span>
+                    )
+                  },
+                  {
+                    key: 'due_date',
+                    label: 'Issue/Due Date',
+                    sortable: true,
+                    render: (row) => <span>{new Date(row.due_date).toLocaleDateString()}</span>
+                  }
+                ]}
+                data={globalInvoices}
+                searchPlaceholder="Filter global invoices..."
+                searchKey="stripe_invoice_id"
+                pageSize={10}
+              />
+            )}
           </div>
         )}
 
