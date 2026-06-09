@@ -488,7 +488,7 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
     const fileBuffer = Buffer.from(fileData, 'base64');
     const contentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
-    // Duplicate check
+    // 1. Duplicate check (identical contents)
     const duplicate = await DocumentRepository.checkDuplicateHash(tenantId, contentHash);
     if (duplicate) {
       return res.status(409).json({
@@ -497,27 +497,59 @@ app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSch
       });
     }
 
+    // 2. Conflict check (name conflict in the same folder)
+    const conflictingFile = await DocumentRepository.getFileByName(tenantId, name, folderId || null);
+
     const storageKey = await StorageService.uploadFile(name, mimeType, fileBuffer, tenantId, category);
     
     // OCR & Auto Classification
     const { ocrText, suggestedCategory } = await OcrService.extractTextAndClassify(name, fileData);
 
-    // Save to Database
-    const data = await DocumentRepository.createFile({
-      tenant_id: tenantId,
-      folder_id: folderId || null,
-      name,
-      size_bytes: sizeBytes,
-      category: category || suggestedCategory,
-      uploaded_by: userId,
-      storage_provider: StorageService.getProviderName(),
-      storage_key: storageKey,
-      mime_type: mimeType,
-      content_hash: contentHash,
-      ocr_text: ocrText
-    });
+    let data;
+    if (conflictingFile) {
+      // Conflict resolution: Archive current version in file_versions first
+      const currentVersion = conflictingFile.version || 1;
+      
+      await DocumentRepository.createVersion({
+        file_id: conflictingFile.id,
+        version: currentVersion,
+        size_bytes: conflictingFile.size_bytes,
+        storage_key: conflictingFile.storage_key,
+        uploaded_by: conflictingFile.uploaded_by
+      });
 
-    await logActivity(req, 'Files', `Uploaded file: ${name}`, { fileId: data.id });
+      // Update parent file row to point to the new uploaded content
+      data = await DocumentRepository.updateFile(conflictingFile.id, {
+        size_bytes: sizeBytes,
+        category: category || suggestedCategory,
+        uploaded_by: userId,
+        storage_provider: StorageService.getProviderName(),
+        storage_key: storageKey,
+        mime_type: mimeType,
+        content_hash: contentHash,
+        version: currentVersion + 1,
+        ocr_text: ocrText
+      });
+      
+      await logActivity(req, 'Files', `Uploaded new version (v${currentVersion + 1}) for file: ${name}`, { fileId: data.id });
+    } else {
+      // Create new file
+      data = await DocumentRepository.createFile({
+        tenant_id: tenantId,
+        folder_id: folderId || null,
+        name,
+        size_bytes: sizeBytes,
+        category: category || suggestedCategory,
+        uploaded_by: userId,
+        storage_provider: StorageService.getProviderName(),
+        storage_key: storageKey,
+        mime_type: mimeType,
+        content_hash: contentHash,
+        ocr_text: ocrText
+      });
+      await logActivity(req, 'Files', `Uploaded file: ${name}`, { fileId: data.id });
+    }
+
     res.status(201).json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

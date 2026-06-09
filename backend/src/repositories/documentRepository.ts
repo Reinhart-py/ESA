@@ -177,4 +177,45 @@ export class DocumentRepository {
     if (error) throw error;
     return data || [];
   }
+
+  static async getFileByName(tenantId: string, name: string, folderId: string | null) {
+    let queryBuilder = supabase
+      .from('files')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('name', name)
+      .eq('is_deleted', false);
+    
+    if (folderId) {
+      queryBuilder = queryBuilder.eq('folder_id', folderId);
+    } else {
+      queryBuilder = queryBuilder.is('folder_id', null);
+    }
+    
+    const { data, error } = await queryBuilder.maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  static async createVersion(version: { file_id: string; version: number; size_bytes: number; storage_key: string; uploaded_by: string | null }) {
+    const { data, error } = await supabase
+      .from('file_versions')
+      .insert(version)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async updateFile(fileId: string, updates: Partial<any>) {
+    const { data, error } = await supabase
+      .from('files')
+      .update(updates)
+      .eq('id', fileId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
 }
+

@@ -133,8 +133,8 @@ However the integration is not production complete.
 
 #### File Synchronization
 
-* Conflict detection
-* Duplicate detection
+* [x] Conflict detection
+* [x] Duplicate detection
 * Sync reconciliation
 * Retry queue
 
