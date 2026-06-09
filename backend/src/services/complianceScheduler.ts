@@ -44,15 +44,23 @@ export class ComplianceSchedulerService {
         let targetDates: Date[] = [];
         if (temp.frequency === 'Monthly') {
           for (let m = 0; m < 12; m++) {
-            targetDates.push(new Date(currentYear, m, temp.day_offset));
+            const lastDay = new Date(currentYear, m + 1, 0).getDate();
+            const day = Math.min(temp.day_offset, lastDay);
+            targetDates.push(new Date(currentYear, m, day));
           }
         } else if (temp.frequency === 'Quarterly') {
           const quarters = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct offsets
           for (const q of quarters) {
-            targetDates.push(new Date(currentYear, q + (temp.month_offset || 0), temp.day_offset));
+            const targetMonth = q + (temp.month_offset || 0);
+            const lastDay = new Date(currentYear, targetMonth + 1, 0).getDate();
+            const day = Math.min(temp.day_offset, lastDay);
+            targetDates.push(new Date(currentYear, targetMonth, day));
           }
         } else {
-          targetDates.push(new Date(currentYear, temp.month_offset || 0, temp.day_offset));
+          const targetMonth = temp.month_offset || 0;
+          const lastDay = new Date(currentYear, targetMonth + 1, 0).getDate();
+          const day = Math.min(temp.day_offset, lastDay);
+          targetDates.push(new Date(currentYear, targetMonth, day));
         }
 
         for (const dueDate of targetDates) {
