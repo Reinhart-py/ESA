@@ -109,7 +109,6 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-/* Premium Card Styles */
 .premium-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -242,50 +241,3 @@ h1, h2, h3, h4, h5, h6 {
     --sidebar-width: 80px; /* Slim sidebar for tablets */
   }
 }
-
-@media (max-width: 768px) {
-  :root {
-    --sidebar-width: 0px; /* Hidden or toggleable drawer on mobile */
-  }
-}
-
-/* Keyboard Focus Ring */
-*:focus-visible {
-  outline: 3px solid var(--accent-color) !important;
-  outline-offset: 2px !important;
-}
-
-/* Screen Reader Utility class (Aria compliant) */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-/* Touch Targets Optimization */
-button, a, input, select {
-  min-height: 40px; /* Touch target baseline */
-}
-
-/* Responsive Table Wrapper */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* User preference for reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
