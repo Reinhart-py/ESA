@@ -4,7 +4,9 @@ import ClientPortal from './portals/ClientPortal.tsx';
 import AccountantPortal from './portals/AccountantPortal.tsx';
 import AdminPortal from './portals/AdminPortal.tsx';
 import MarketingLanding from './components/MarketingLanding.tsx';
-import { Shield, Lock, Mail, User } from 'lucide-react';
+
+
+import { Shield, Lock, Mail, User, Loader2 } from 'lucide-react';
 
 function App() {
   const context = useContext(AppContext);
@@ -16,6 +18,12 @@ function App() {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [mfaChecked, setMfaChecked] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState('');
 
   const [inviteToken, setInviteToken] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,6 +60,36 @@ function App() {
     }
   }, [inviteToken]);
 
+  React.useEffect(() => {
+    if (sessionToken) {
+      const checkMfa = async () => {
+        try {
+          const res = await fetch('http://localhost:5000/api/auth/mfa/check', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${sessionToken}`
+            }
+          });
+          const data = await res.json();
+          if (data.mfaRequired) {
+            const verifiedToken = localStorage.getItem('mfa_verified_token');
+            if (!verifiedToken) {
+              setMfaRequired(true);
+            }
+          }
+          setMfaChecked(true);
+        } catch (err) {
+          console.error('MFA check failed', err);
+          setMfaChecked(true);
+        }
+      };
+      checkMfa();
+    } else {
+      setMfaRequired(false);
+      setMfaChecked(false);
+    }
+  }, [sessionToken]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,6 +102,28 @@ function App() {
       if (cleanEmail.startsWith('admin') || cleanEmail === 'admin') role = 'super_admin';
       else if (cleanEmail.startsWith('accountant') || cleanEmail === 'accountant') role = 'accountant';
       
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/mfa/check', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer demo_token'
+          }
+        });
+        const data = await res.json();
+        if (data.mfaRequired) {
+          const mfaToken = localStorage.getItem('mfa_verified_token');
+          if (!mfaToken) {
+            localStorage.setItem('supabase_token', 'demo_token');
+            localStorage.setItem('eac_role', role);
+            setMfaRequired(true);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        // Ignore API failures in demo mode
+      }
+
       localStorage.setItem('supabase_token', 'demo_token');
       localStorage.setItem('eac_role', role);
       context.setSessionToken('demo_token');
@@ -166,6 +226,77 @@ function App() {
 
   // Switch portals based on verified roles
   if (sessionToken && currentUser) {
+    if (mfaRequired && !localStorage.getItem('mfa_verified_token')) {
+      return (
+        <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0B192C', color: '#fff', padding: '2rem' }}>
+          <div style={{ background: '#1E3E62', padding: '2.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '400px', width: '100%', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <Shield size={48} style={{ color: '#00a896', marginBottom: '1rem' }} />
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Two-Factor Verification</h2>
+              <p style={{ fontSize: '0.875rem', color: '#9CA3AF', marginTop: '0.5rem', textAlign: 'center' }}>
+                Please enter the 6-digit verification code from your authenticator app or a backup recovery code.
+              </p>
+            </div>
+
+            {mfaError && (
+              <div style={{ background: '#ef444415', borderLeft: '4px solid #ef4444', padding: '0.75rem', borderRadius: '6px', color: '#ef4444', fontSize: '0.85rem', marginBottom: '1rem', fontWeight: 500 }}>
+                {mfaError}
+              </div>
+            )}
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setMfaLoading(true);
+              setMfaError('');
+              try {
+                const res = await fetch('http://localhost:5000/api/auth/mfa/verify-login', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                  },
+                  body: JSON.stringify({ token: mfaCode })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Verification failed');
+                
+                localStorage.setItem('mfa_verified_token', data.mfaToken);
+                setMfaRequired(false);
+              } catch (err: any) {
+                setMfaError(err.message || 'Invalid code');
+              } finally {
+                setMfaLoading(false);
+              }
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <input 
+                type="text" 
+                value={mfaCode}
+                onChange={e => setMfaCode(e.target.value.trim())}
+                placeholder="Code or Backup Token"
+                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', textAlign: 'center', fontSize: '1.1rem', fontWeight: 600, outline: 'none' }}
+                autoFocus
+              />
+              <button 
+                type="submit" 
+                disabled={mfaLoading || !mfaCode}
+                style={{ padding: '0.75rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                {mfaLoading && <Loader2 size={16} className="animate-spin" />}
+                Verify & Access Account
+              </button>
+            </form>
+
+            <button 
+              onClick={handleLogout}
+              style={{ width: '100%', marginTop: '1rem', background: 'none', border: 'none', color: '#9CA3AF', fontSize: '0.85rem', cursor: 'pointer' }}
+            >
+              Cancel & Log Out
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (userRole === 'super_admin' || userRole === 'admin') {
       return <AdminPortal onLogout={handleLogout} />;
     } else if (['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(userRole)) {

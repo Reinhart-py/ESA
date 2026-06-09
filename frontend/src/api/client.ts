@@ -20,6 +20,10 @@ apiClient.interceptors.request.use(
     if (impersonateTenantId && config.headers) {
       config.headers['x-impersonate-tenant-id'] = impersonateTenantId;
     }
+    const mfaToken = localStorage.getItem('mfa_verified_token');
+    if (mfaToken && config.headers) {
+      config.headers['x-mfa-token'] = mfaToken;
+    }
     return config;
   },
   (error) => {

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase.js';
+import jwt from 'jsonwebtoken';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -39,6 +40,28 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 
     if (profile.status !== 'active') {
       return res.status(403).json({ error: `User account is ${profile.status}` });
+    }
+
+    // Check if user has MFA enabled in user_mfa table
+    const { data: mfaSetup } = await supabase
+      .from('user_mfa')
+      .select('is_enabled')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (mfaSetup && mfaSetup.is_enabled) {
+      const mfaToken = req.headers['x-mfa-token'] as string;
+      if (!mfaToken) {
+        return res.status(401).json({ error: 'MFA_REQUIRED', message: 'MFA verification required' });
+      }
+      try {
+        const decoded = jwt.verify(mfaToken, process.env.JWT_SECRET || 'your-super-secret-jwt-signing-key-change-in-production') as any;
+        if (decoded.userId !== user.id || !decoded.mfaVerified) {
+          return res.status(401).json({ error: 'MFA_REQUIRED', message: 'Invalid MFA verification token' });
+        }
+      } catch (err) {
+        return res.status(401).json({ error: 'MFA_REQUIRED', message: 'MFA token expired or invalid' });
+      }
     }
 
     let tenantId = profile.tenant_id;

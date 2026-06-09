@@ -33,6 +33,10 @@ import { MarketplaceRepository } from './repositories/marketplaceRepository.js';
 import { MarketplaceService } from './services/marketplaceService.js';
 import { OcrService } from './services/ocrService.js';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { MfaRepository } from './repositories/mfaRepository.js';
+import { generateSecret, verifyTOTP } from './utils/totp.js';
+
 import { getPagination, buildPaginatedResult } from './utils/pagination.js';
 import { LedgerRepository } from './repositories/ledgerRepository.js';
 import { LedgerService } from './services/ledgerService.js';
@@ -196,6 +200,186 @@ app.post('/api/auth/invite/accept', validateRequest(acceptInviteSchema), async (
   try {
     const profile = await InviteService.acceptInvitation(token, userId, fullName);
     res.status(200).json({ success: true, profile });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Setup MFA: Generate secret and backup codes
+app.post('/api/auth/mfa/setup', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const email = req.user?.email;
+  if (!userId || !email) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const secret = generateSecret();
+    const backupCodes = Array.from({ length: 8 }, () => crypto.randomBytes(4).toString('hex'));
+    
+    await MfaRepository.upsert({
+      user_id: userId,
+      secret,
+      is_enabled: false,
+      backup_codes: backupCodes
+    });
+
+    const qrCodeUrl = `otpauth://totp/EACSolutions:${email}?secret=${secret}&issuer=EACSolutions`;
+
+    await logActivity(req, 'Auth', 'Initiated MFA (TOTP) setup');
+    
+    res.json({
+      secret,
+      qrCodeUrl,
+      backupCodes
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enable MFA: Verify TOTP token to confirm setup and activate MFA
+app.post('/api/auth/mfa/enable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { token } = req.body;
+  
+  if (!userId || !token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  try {
+    const mfa = await MfaRepository.getByUserId(userId);
+    if (!mfa) {
+      return res.status(404).json({ error: 'MFA setup not found. Initiate setup first.' });
+    }
+
+    const isValid = verifyTOTP(token, mfa.secret);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid verification token' });
+    }
+
+    await MfaRepository.upsert({
+      user_id: userId,
+      is_enabled: true
+    });
+
+    await logActivity(req, 'Auth', 'MFA (TOTP) enabled successfully');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Disable MFA: Disable/remove MFA settings
+app.post('/api/auth/mfa/disable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { token } = req.body;
+
+  if (!userId || !token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  try {
+    const mfa = await MfaRepository.getByUserId(userId);
+    if (!mfa || !mfa.is_enabled) {
+      return res.status(400).json({ error: 'MFA is not enabled' });
+    }
+
+    // Verify token or backup code
+    let isValid = verifyTOTP(token, mfa.secret);
+    if (!isValid && mfa.backup_codes.includes(token)) {
+      isValid = true;
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid validation token or backup code' });
+    }
+
+    await MfaRepository.delete(userId);
+    await logActivity(req, 'Auth', 'MFA (TOTP) disabled');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Check if MFA is enabled for a logging in user
+app.post('/api/auth/mfa/check', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const mfa = await MfaRepository.getByUserId(user.id);
+    res.json({
+      mfaRequired: !!(mfa && mfa.is_enabled)
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify login with TOTP or backup code
+app.post('/api/auth/mfa/verify-login', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const { token } = req.body;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+  if (!token) {
+    return res.status(400).json({ error: 'Verification code is required' });
+  }
+  const authToken = authHeader.split(' ')[1];
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(authToken);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const mfa = await MfaRepository.getByUserId(user.id);
+    if (!mfa || !mfa.is_enabled) {
+      return res.status(400).json({ error: 'MFA is not enabled for this user' });
+    }
+
+    let isValid = verifyTOTP(token, mfa.secret);
+    let usedBackupCode = false;
+
+    if (!isValid && mfa.backup_codes.includes(token)) {
+      isValid = true;
+      usedBackupCode = true;
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+
+    if (usedBackupCode) {
+      // Remove the used backup code
+      const updatedBackupCodes = mfa.backup_codes.filter(c => c !== token);
+      await MfaRepository.upsert({
+        user_id: user.id,
+        backup_codes: updatedBackupCodes
+      });
+    }
+
+    const mfaToken = jwt.sign(
+      { userId: user.id, mfaVerified: true },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-signing-key-change-in-production',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      mfaToken
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -1,12 +1,15 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
+
+
 import { 
   Building, ShieldCheck, HelpCircle, LogOut, Database, Lock, Eye, EyeOff,
   UserCheck, DollarSign, Users, Award, HardDrive, RefreshCw, Edit2, Check, X,
-  CheckCircle
+  CheckCircle, Shield
 } from 'lucide-react';
 import DataTable from '../components/ui/DataTable.tsx';
+import ProfileSettings from './ProfileSettings.tsx';
 
 export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -171,11 +174,19 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
             <HelpCircle size={18} /> Helpdesk Tickets ({tickets.filter(t => t.status === 'Open').length})
           </button>
 
+
           <button 
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 8, color: activeSubTab === 'logs' ? '#fff' : '#94a3b8', background: activeSubTab === 'logs' ? 'rgba(59, 130, 246, 0.15)' : 'transparent', border: activeSubTab === 'logs' ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent', textAlign: 'left', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
             onClick={() => setActiveSubTab('logs')}
           >
             <Database size={18} /> System Audit Trail
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 8, color: activeSubTab === 'security' ? '#fff' : '#94a3b8', background: activeSubTab === 'security' ? 'rgba(59, 130, 246, 0.15)' : 'transparent', border: activeSubTab === 'security' ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent', textAlign: 'left', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => setActiveSubTab('security')}
+          >
+            <Shield size={18} /> Security & Profile
           </button>
         </nav>
 
@@ -563,6 +574,13 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Security & Profile Settings */}
+        {activeSubTab === 'security' && (
+          <div style={{ color: '#fff' }}>
+            <ProfileSettings />
           </div>
         )}
       </main>

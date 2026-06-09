@@ -4,11 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
+
 import { 
   LayoutDashboard, FolderOpen, CalendarClock, CreditCard, 
   MessageSquare, LogOut, Upload, Search, Trash2, FolderPlus, 
   Send, AlertCircle, FileSpreadsheet, PlusCircle, Check, Sun, Moon, Users,
-  BookOpen, Terminal, Briefcase, Sparkles
+  BookOpen, Terminal, Briefcase, Sparkles, Shield
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
@@ -19,6 +20,8 @@ import MarketplaceHub from './MarketplaceHub.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
 import ReportingDashboard from './ReportingDashboard.tsx';
 import InternalMessagingHub from './InternalMessagingHub.tsx';
+import ProfileSettings from './ProfileSettings.tsx';
+
 import CommandPalette from '../components/ui/CommandPalette.tsx';
 import DataTable from '../components/ui/DataTable.tsx';
 
@@ -319,7 +322,6 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
           >
             <Users size={18} /> Team & Permissions
           </button>
-
           <button 
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'developer' ? '#fff' : '#9CA3AF', background: activeSubTab === 'developer' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('developer')}
@@ -327,6 +329,12 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
             <Terminal size={18} /> Developer Settings
           </button>
 
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? '#fff' : '#9CA3AF', background: activeSubTab === 'security' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('security')}
+          >
+            <Shield size={18} /> Security & Profile
+          </button>
           <button 
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'marketplace' ? '#fff' : '#9CA3AF', background: activeSubTab === 'marketplace' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('marketplace')}
@@ -755,6 +763,9 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         )}
         {activeSubTab === 'developer' && (
           <DeveloperSettings />
+        )}
+        {activeSubTab === 'security' && (
+          <ProfileSettings />
         )}
         {activeSubTab === 'marketplace' && (
           <MarketplaceHub />

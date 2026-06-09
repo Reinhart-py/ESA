@@ -737,4 +737,17 @@ CREATE TABLE IF NOT EXISTS message_read_receipts (
 ALTER TABLE message_read_receipts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY read_receipts_all ON message_read_receipts FOR ALL USING (user_id = auth.uid() OR is_admin());
 
+-- MFA (Multi-Factor Authentication / TOTP Setup)
+CREATE TABLE IF NOT EXISTS user_mfa (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    secret VARCHAR(255) NOT NULL,
+    is_enabled BOOLEAN DEFAULT FALSE,
+    backup_codes TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE user_mfa ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_mfa_all ON user_mfa FOR ALL USING (user_id = auth.uid() OR is_admin());
+
+
 
