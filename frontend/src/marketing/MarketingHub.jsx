@@ -43,45 +43,45 @@ export default function MarketingHub({ onLogin }) {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-color)' }}>
       {/* Header */}
       <header style={{ 
-        background: themeMode === 'light' ? '#0B192C' : 'var(--nav-bg)', 
-        color: '#FFFFFF', 
+        background: 'var(--card-bg)', 
+        color: 'var(--text-primary)', 
         padding: '1rem 2rem', 
         position: 'sticky', 
         top: 0, 
         zIndex: 100, 
-        borderBottom: themeMode === 'light' ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--card-border)',
+        borderBottom: '1px solid var(--card-border)',
         backdropFilter: 'var(--glass-blur)',
         transition: 'background var(--transition-normal)'
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setPage('home')}>
-            <div style={{ background: '#008080', color: '#fff', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>E</div>
+            <div style={{ background: 'var(--accent-color)', color: '#fff', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>E</div>
             <div>
-              <h1 style={{ color: '#FFFFFF', fontSize: '1.4rem', margin: 0, fontWeight: 700 }}>EAC Solutions</h1>
-              <span style={{ fontSize: '0.75rem', color: '#00A896', letterSpacing: 1, textTransform: 'uppercase' }}>Financial Intelligence</span>
+              <h1 style={{ color: 'var(--text-primary)', fontSize: '1.4rem', margin: 0, fontWeight: 700 }}>EAC Solutions</h1>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', letterSpacing: 1, textTransform: 'uppercase' }}>Financial Intelligence</span>
             </div>
           </div>
           
           <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button style={{ color: page === 'home' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('home')}>Home</button>
-            <button style={{ color: page === 'services' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('services')}>Services</button>
-            <button style={{ color: page === 'pricing' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('pricing')}>Pricing</button>
-            <button style={{ color: page === 'resources' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('resources')}>Resources</button>
-            <button style={{ color: page === 'about' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('about')}>Company</button>
-            <button style={{ color: page === 'careers' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('careers')}>Careers</button>
-            <button style={{ color: page === 'contact' ? '#00A896' : '#fff', fontWeight: 500 }} onClick={() => setPage('contact')}>Contact</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'home' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('home')}>Home</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'services' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('services')}>Services</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'pricing' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('pricing')}>Pricing</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'resources' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('resources')}>Resources</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'about' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('about')}>Company</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'careers' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('careers')}>Careers</button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', outline: 'none', color: page === 'contact' ? 'var(--accent-color)' : 'var(--text-sec)', fontWeight: 600 }} onClick={() => setPage('contact')}>Contact</button>
             
             {/* Theme Toggle Button */}
             <button 
               onClick={toggleTheme} 
-              style={{ color: '#fff', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.08)', padding: '0.4rem', borderRadius: '50%' }}
+              style={{ background: 'var(--surface-color)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }}
               title={themeMode === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
             >
               {themeMode === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-
-            <button className="btn btn-teal" style={{ padding: '0.5rem 1rem' }} onClick={() => setPage('booking')}>Book Meeting</button>
-            <button className="btn btn-primary" style={{ border: '1px solid #00A896', padding: '0.5rem 1rem' }} onClick={onLogin}>Access Portal</button>
+ 
+            <button className="btn btn-teal" style={{ padding: '0.5rem 1.25rem', background: 'var(--accent-color)', color: '#fff', borderRadius: '8px' }} onClick={() => setPage('booking')}>Book Meeting</button>
+            <button className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', border: '1px solid var(--accent-color)', color: 'var(--text-primary)', background: 'transparent', borderRadius: '8px' }} onClick={onLogin}>Access Portal</button>
           </nav>
         </div>
       </header>

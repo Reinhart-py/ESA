@@ -66,9 +66,37 @@ npm start
 
 ---
 
-## 🗄️ Database Setup & Migrations
-1. Access your Supabase/PostgreSQL console.
-2. Run the SQL statements inside [schema.sql](file:///c:/Users/RGLACC15/Downloads/gravity/ESA/ESA/backend/schema.sql) to set up:
-   - Tenants, Users, Ledgers, Documents, Audit Logs, and Support Ticket tables.
    - Row Level Security (RLS) policies.
    - Auto-indexing structures.
+
+---
+
+## 🌐 Deployment & Hosting Guide
+
+The backend service is a Node.js web server. It can be hosted on containerized runtime cloud services.
+
+### 1. Railway
+1. Sign in to [Railway.app](https://railway.app) and create a new project.
+2. Select **Deploy from GitHub repo** and select your repository.
+3. Configure the Root settings:
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm start`
+4. Set Environment Variables (`Variables` tab):
+   - `PORT`: `5000` (Railway automatically configures this, but ensure it matches client references)
+   - `DATABASE_URL` / Supabase credential tokens.
+   - `STRIPE_SECRET_KEY` / `RESEND_API_KEY` API configurations.
+5. Deploy.
+
+### 2. Render
+1. Sign in to [Render](https://render.com) and click **New > Web Service**.
+2. Connect your Git repository.
+3. Configure settings:
+   - **Name:** `eac-backend-service`
+   - **Root Directory:** `backend`
+   - **Environment:** `Node`
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm start`
+4. Set Advanced Environment Variables in the configurations UI.
+5. Save and deploy.
+

@@ -49,9 +49,9 @@
   --color-info-bg: rgba(29, 78, 216, 0.15);
 
   /* Shadow & Blur */
-  --shadow-card: 0 4px 20px rgba(10, 29, 55, 0.04), 0 2px 4px rgba(10, 29, 55, 0.02);
-  --glass-blur: none;
-  --shiny-edge: none;
+  --shadow-card: 0 8px 30px rgba(10, 29, 55, 0.06), 0 2px 8px rgba(10, 29, 55, 0.03);
+  --glass-blur: blur(12px);
+  --shiny-edge: 0 0 0 1px rgba(181, 138, 43, 0.12), 0 0 10px rgba(181, 138, 43, 0.06);
 }
 
 /* --- DARK THEME (Premium Dark Slate & Gold Theme) --- */
@@ -80,9 +80,9 @@
   --color-info-bg: rgba(96, 165, 250, 0.15);
 
   /* Shadow & Blur */
-  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --glass-blur: blur(8px);
-  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 8px rgba(197, 155, 39, 0.1);
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(16px);
+  --shiny-edge: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 12px rgba(197, 155, 39, 0.15);
 }
 
 /* Base Styles */

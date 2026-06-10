@@ -1,8 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AppContext, supabaseClient } from './context/AppContext.tsx';
-import ClientPortal from './portals/ClientPortal.tsx';
-import AccountantPortal from './portals/AccountantPortal.tsx';
-import AdminPortal from './portals/AdminPortal.tsx';
+import UnifiedPortal from './portals/UnifiedPortal.tsx';
 import MarketingLanding from './components/MarketingLanding.tsx';
 
 
@@ -303,13 +301,7 @@ function App() {
       );
     }
 
-    if (userRole === 'super_admin' || userRole === 'admin') {
-      return <AdminPortal onLogout={handleLogout} />;
-    } else if (['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(userRole)) {
-      return <AccountantPortal onLogout={handleLogout} />;
-    } else {
-      return <ClientPortal onLogout={handleLogout} />;
-    }
+    return <UnifiedPortal onLogout={handleLogout} />;
   }
 
   return (
