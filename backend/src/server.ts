@@ -1825,6 +1825,126 @@ app.post('/api/billing/session', requireAuth, async (req: AuthenticatedRequest, 
   }
 });
 
+// --- ACCOUNTANT OPERATIONS & CUSTOM PRICING ---
+app.post('/api/billing/invoices', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const { tenantId, amountCents, dueDate, description } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .insert({
+        tenant_id: tenantId,
+        amount_cents: amountCents,
+        due_date: dueDate,
+        status: 'unpaid',
+        stripe_invoice_id: 'manual_' + Math.random().toString(36).substring(7),
+        notes: description || 'Professional services invoice'
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    await logActivity(req, 'Billing', `Created manual invoice of $${(amountCents / 100).toFixed(2)} for tenant ${tenantId}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/invoices/:id/void', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .update({ status: 'void' })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/invoices/:id/refund', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .update({ status: 'refunded' })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/tenants/:id/status', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    // If tenants status column is empty, we flag via business_type for visual audit
+    const { data, error } = await supabase
+      .from('tenants')
+      .update({ business_type: status === 'suspended' ? 'Suspended Enterprise' : 'Active Corporation' })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    await logActivity(req, 'System', `Updated client ${id} business active status to: ${status}`);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/pricing/packages', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const { name, code, priceCents, storageLimitBytes } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('billing_plans')
+      .insert({
+        name,
+        code,
+        price_cents: priceCents,
+        storage_limit_bytes: storageLimitBytes || 21474836480,
+        currency: 'USD'
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    await logActivity(req, 'Billing', `Accountant proposed pricing package: ${name} (${code})`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/accountants', requireAuth, requireRoles(['admin']), async (req: AuthenticatedRequest, res) => {
+  const { email, fullName } = req.body;
+  try {
+    // Insert new user profile as junior/senior accountant directly in mock DB
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        email,
+        full_name: fullName,
+        role: 'senior_accountant',
+        status: 'active',
+        tenant_id: req.user?.tenant_id || 'demo_tenant'
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    await logActivity(req, 'System', `Admin created accountant profile for email: ${email}`);
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- GLOBAL SEARCH ---
 app.get('/api/search', requireAuth, async (req: AuthenticatedRequest, res) => {
   const query = (req.query.q as string) || '';

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,15 +7,17 @@ import { apiClient } from '../api/client.ts';
 import { 
   Users, CalendarClock, MessageSquare, LogOut, Check, Send, 
   ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen, Briefcase,
-  Sparkles, Shield
+  Sparkles, Shield, CreditCard, Plus, Trash2, PlusCircle, FileText, LayoutDashboard,
+  Building, CheckCircle, HelpCircle, HardDrive, DollarSign, Award, FileUp, Video,
+  Trash, RefreshCw, BarChart3, AlertCircle
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
-import MarketplaceDesk from './MarketplaceDesk.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
-import ReportingDashboard from './ReportingDashboard.tsx';
 import InternalMessagingHub from './InternalMessagingHub.tsx';
 import ProfileSettings from './ProfileSettings.tsx';
+import DataTable from '../components/ui/DataTable.tsx';
+import ConfirmDialog from '../components/ui/ConfirmDialog.tsx';
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -27,10 +29,6 @@ const commentSchema = z.object({
   content: z.string().min(1, 'Comment content is required'),
 });
 
-const messageSchema = z.object({
-  content: z.string().min(1, 'Message content cannot be empty'),
-});
-
 export default function AccountantPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
   if (!context) return null;
@@ -39,9 +37,46 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask, syncState
   } = context;
 
-  const [activeSubTab, setActiveSubTab] = useState('portfolio');
+  const [activeSubTab, setActiveSubTab] = useState('dashboard');
   const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
   const [tenants, setTenants] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Selected client for CRM details
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+
+  // CRM client onboarding state
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientType, setNewClientType] = useState('LLC');
+  const [newClientRevenue, setNewClientRevenue] = useState('0-100k');
+
+  // Billing Dispatch state
+  const [invoiceTenantId, setInvoiceTenantId] = useState('');
+  const [invoiceAmountCents, setInvoiceAmountCents] = useState(25000); // default $250.00
+  const [invoiceDueDate, setInvoiceDueDate] = useState(new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0]);
+  const [invoiceDescription, setInvoiceDescription] = useState('');
+
+  // Custom Pricing package state
+  const [packageName, setPackageName] = useState('');
+  const [packageCode, setPackageCode] = useState('');
+  const [packagePriceCents, setPackagePriceCents] = useState(15000); // default $150
+  const [packageStorageGb, setPackageStorageGb] = useState(50);
+
+  // Vault mock filesystem state for the accountant
+  const [vaultFiles, setVaultFiles] = useState<any[]>([
+    { id: 'v1', name: 'Incorporation_Stark.pdf', size: 1024000, category: 'Corporate', date: '2026-06-01', deleted: false, version: 1 },
+    { id: 'v2', name: 'Q1_Financials_Wayne.xlsx', size: 5048000, category: 'Taxation', date: '2026-05-15', deleted: false, version: 2 },
+    { id: 'v3', name: 'LeaseAgreement_Draft.docx', size: 450000, category: 'Legal', date: '2026-06-08', deleted: true, version: 1 }
+  ]);
+  const [selectedFileForVersion, setSelectedFileForVersion] = useState<any>(null);
+  const [searchVaultQuery, setSearchVaultQuery] = useState('');
 
   const fetchTenants = async () => {
     try {
@@ -52,11 +87,47 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     }
   };
 
-  React.useEffect(() => {
-    if (currentUser?.role === 'senior_accountant') {
-      fetchTenants();
+  const fetchInvoices = async () => {
+    try {
+      const res = await apiClient.get('/billing/invoices');
+      setInvoices(res.data || []);
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
     }
-  }, [currentUser]);
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const res = await apiClient.get('/billing/plans');
+      setPlans(res.data || []);
+    } catch (err) {
+      console.error('Error fetching billing plans:', err);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await apiClient.get('/audit-logs');
+      setAuditLogs(res.data || []);
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+    }
+  };
+
+  const loadAllData = async () => {
+    setLoading(true);
+    await Promise.all([
+      fetchTenants(),
+      fetchInvoices(),
+      fetchPlans(),
+      fetchAuditLogs()
+    ]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadAllData();
+  }, [activeSubTab]);
 
   const handleImpersonate = async (tenantId: string) => {
     if (tenantId) {
@@ -69,7 +140,144 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     await syncState();
   };
 
-  // React Hook Forms
+  // Client status suspension/activation CRM handler
+  const handleToggleClientStatus = async (client: any) => {
+    const isSuspended = client.business_type === 'Suspended Enterprise';
+    const nextStatus = isSuspended ? 'active' : 'suspended';
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await apiClient.put(`/admin/tenants/${client.id}/status`, { status: nextStatus });
+      setSuccessMessage(`Client workspace '${client.name}' is now ${isSuspended ? 'Reactivated' : 'Suspended'}.`);
+      await fetchTenants();
+      if (selectedClient && selectedClient.id === client.id) {
+        setSelectedClient({
+          ...selectedClient,
+          business_type: isSuspended ? 'Active Corporation' : 'Suspended Enterprise'
+        });
+      }
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.error || 'Failed to update client active status.');
+    }
+  };
+
+  // Client onboarding submission
+  const handleOnboardClientSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim()) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await apiClient.post('/tenants', {
+        name: newClientName,
+        businessType: newClientType,
+        revenueBracket: newClientRevenue
+      });
+      setSuccessMessage(`Successfully onboarded client workspace: ${newClientName}!`);
+      setNewClientName('');
+      await fetchTenants();
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.error || 'Failed to onboard client.');
+    }
+  };
+
+  // Create manual invoice dispatcher
+  const handleCreateInvoiceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoiceTenantId) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await apiClient.post('/billing/invoices', {
+        tenantId: invoiceTenantId,
+        amountCents: invoiceAmountCents,
+        dueDate: invoiceDueDate,
+        description: invoiceDescription
+      });
+      setSuccessMessage('Successfully generated manual service invoice.');
+      setInvoiceDescription('');
+      await fetchInvoices();
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.error || 'Failed to generate invoice.');
+    }
+  };
+
+  // Void/Refund Actions
+  const handleVoidInvoice = async (invoiceId: string) => {
+    try {
+      await apiClient.post(`/billing/invoices/${invoiceId}/void`);
+      alert('Invoice Voided successfully.');
+      await fetchInvoices();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to void invoice.');
+    }
+  };
+
+  const handleRefundInvoice = async (invoiceId: string) => {
+    try {
+      await apiClient.post(`/billing/invoices/${invoiceId}/refund`);
+      alert('Invoice amount refunded successfully.');
+      await fetchInvoices();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to process refund.');
+    }
+  };
+
+  // Propose pricing package custom items
+  const handleProposePackageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!packageName.trim() || !packageCode.trim()) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await apiClient.post('/billing/pricing/packages', {
+        name: packageName,
+        code: packageCode,
+        priceCents: packagePriceCents,
+        storageLimitBytes: packageStorageGb * 1024 * 1024 * 1024
+      });
+      setSuccessMessage(`Pricing item proposed: '${packageName}'. Pending Admin activation.`);
+      setPackageName('');
+      setPackageCode('');
+      await fetchPlans();
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.error || 'Failed to propose package.');
+    }
+  };
+
+  // Vault mock operations
+  const handleSoftDeleteFile = (id: string) => {
+    setVaultFiles(prev => prev.map(f => f.id === id ? { ...f, deleted: true } : f));
+  };
+
+  const handleRestoreFile = (id: string) => {
+    setVaultFiles(prev => prev.map(f => f.id === id ? { ...f, deleted: false } : f));
+  };
+
+  const handlePermanentDelete = (id: string) => {
+    setVaultFiles(prev => prev.filter(f => f.id !== id));
+  };
+
+  const handleUploadVaultMock = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newFile = {
+      id: 'v_' + Math.random().toString(36).substring(7),
+      name: 'Uploaded_Report_' + Math.floor(Math.random() * 100) + '.pdf',
+      size: Math.floor(Math.random() * 3000000) + 500000,
+      category: 'Accounting',
+      date: new Date().toISOString().split('T')[0],
+      deleted: false,
+      version: 1
+    };
+    setVaultFiles(prev => [newFile, ...prev]);
+  };
+
+  const handleReplaceVersionMock = (id: string) => {
+    setVaultFiles(prev => prev.map(f => f.id === id ? { ...f, version: f.version + 1, date: new Date().toISOString().split('T')[0] } : f));
+    alert('Document version replaced. Previous version archived in history.');
+  };
+
+  // React Hook Forms for Tasks
   const { register: registerTask, handleSubmit: handleSubmitTask, reset: resetTask, formState: { errors: taskErrors } } = useForm({
     resolver: zodResolver(createTaskSchema),
     defaultValues: { title: '', description: '', priority: 'Medium' as const }
@@ -77,11 +285,6 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
   const { register: registerComment, handleSubmit: handleSubmitComment, reset: resetComment, formState: { errors: commentErrors } } = useForm({
     resolver: zodResolver(commentSchema),
-    defaultValues: { content: '' }
-  });
-
-  const { register: registerMessage, handleSubmit: handleSubmitMessage, reset: resetMessage, formState: { errors: messageErrors } } = useForm({
-    resolver: zodResolver(messageSchema),
     defaultValues: { content: '' }
   });
 
@@ -124,7 +327,6 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     setDepError('');
     try {
       await apiClient.post(`/tasks/${selectedTask.id}/dependencies`, { dependsOnId: selectedDepTaskId });
-      // Reload dependencies
       const depsRes = await apiClient.get(`/tasks/${selectedTask.id}/dependencies`);
       setDependencies(depsRes.data || []);
       setSelectedDepTaskId('');
@@ -134,36 +336,33 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     }
   };
 
-  const handleSendChatSubmit = async (data: { content: string }) => {
-    await sendMessage(data.content, 't1');
-    resetMessage();
-  };
-
-  const handleUpdateStatus = async (obId: string, newStatus: string) => {
-    await updateObligationStatus(obId, newStatus);
-  };
-
   const handleCreateTaskSubmit = async (data: { title: string; description?: string; priority: 'Low' | 'Medium' | 'High' | 'Urgent' }) => {
     await createTask(data.title, data.description || '', new Date().toISOString().split('T')[0], data.priority);
     resetTask();
   };
 
+  // Calculated Dashboard metrics
+  const activeClientsCount = tenants.filter(t => t.business_type !== 'Suspended Enterprise').length;
+  const unpaidInvoicesCount = invoices.filter(i => i.status === 'unpaid').length;
+  const outstandingInvoicesSum = invoices.filter(i => i.status === 'unpaid').reduce((acc, i) => acc + (i.amount_cents || 0), 0);
+  const monthlyRevenueSum = invoices.filter(i => i.status === 'paid' || i.status === 'refunded').reduce((acc, i) => acc + (i.amount_cents || 0), 0);
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8F9FA', color: '#1e293b' }}>
-      {/* Sidebar */}
-      <aside style={{ width: '260px', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
+      {/* Sidebar with 10 operational tabs */}
+      <aside style={{ width: 'var(--sidebar-width)', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <div style={{ background: '#00A896', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>A</div>
+          <div style={{ background: '#B58A2B', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>A</div>
           <div>
             <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Accountant Desk</h2>
-            <span style={{ fontSize: '0.75rem', color: '#00A896' }}>{currentUser?.full_name || 'Accountant Specialist'}</span>
+            <span style={{ fontSize: '0.75rem', color: '#B58A2B' }}>{currentUser?.full_name || 'Senior Consultant'}</span>
           </div>
         </div>
 
         {currentUser?.role === 'senior_accountant' && (
           <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <ShieldAlert size={14} style={{ color: '#00A896' }} /> Impersonate Tenant
+              <ShieldAlert size={14} style={{ color: '#B58A2B' }} /> Impersonate Tenant
             </label>
             <select
               value={impersonatingId}
@@ -178,72 +377,533 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
           </div>
         )}
 
-        <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem', overflowY: 'auto' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'portfolio' ? '#fff' : '#9CA3AF', background: activeSubTab === 'portfolio' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('portfolio')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'dashboard' ? '#fff' : '#9CA3AF', background: activeSubTab === 'dashboard' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('dashboard')}
           >
-            <Users size={18} /> Client Tasks
+            <LayoutDashboard size={16} /> Workspace Dashboard
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'filings' ? '#fff' : '#9CA3AF', background: activeSubTab === 'filings' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('filings')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'clients' ? '#fff' : '#9CA3AF', background: activeSubTab === 'clients' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('clients')}
           >
-            <CalendarClock size={18} /> Compliance Obligations
+            <Users size={16} /> CRM Clients
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ledger' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ledger' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('ledger')}
           >
-            <BookOpen size={18} /> General Ledger
+            <BookOpen size={16} /> General Ledger
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'conversations' ? '#fff' : '#9CA3AF', background: activeSubTab === 'conversations' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? '#fff' : '#9CA3AF', background: activeSubTab === 'billing' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('billing')}
+          >
+            <CreditCard size={16} /> Billing & Pricing
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'files' ? '#fff' : '#9CA3AF', background: activeSubTab === 'files' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('files')}
+          >
+            <HardDrive size={16} /> Document Vault
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'tasks' ? '#fff' : '#9CA3AF', background: activeSubTab === 'tasks' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('tasks')}
+          >
+            <Briefcase size={16} /> Task Portfolio
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'filings' ? '#fff' : '#9CA3AF', background: activeSubTab === 'filings' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('filings')}
+          >
+            <CalendarClock size={16} /> Compliance Obligations
+          </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'conversations' ? '#fff' : '#9CA3AF', background: activeSubTab === 'conversations' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('conversations')}
           >
-            <MessageSquare size={18} /> Client Direct Chat
+            <MessageSquare size={16} /> Communications
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'marketplace' ? '#fff' : '#9CA3AF', background: activeSubTab === 'marketplace' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('marketplace')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'reporting' ? '#fff' : '#9CA3AF', background: activeSubTab === 'reporting' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            onClick={() => setActiveSubTab('reporting')}
           >
-            <Briefcase size={18} /> Marketplace Desk
-          </button>
-
-
-          <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ai_assistant' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ai_assistant' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('ai_assistant')}
-          >
-            <Sparkles size={18} /> AI Co-pilot
+            <BarChart3 size={16} /> Reporting Desk
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? '#fff' : '#9CA3AF', background: activeSubTab === 'security' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? '#fff' : '#9CA3AF', background: activeSubTab === 'security' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
             onClick={() => setActiveSubTab('security')}
           >
-            <Shield size={18} /> Security & Profile
+            <Shield size={16} /> Security & Settings
           </button>
         </nav>
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <button style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#EF4444', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
-            <LogOut size={16} /> Exit Portal
+            <LogOut size={16} /> Exit Desk
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxHeight: '100vh' }}>
-        {activeSubTab === 'portfolio' && (
+        
+        {successMessage && <div style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '0.75rem 1rem', borderRadius: '8px', color: '#34d399', fontSize: '0.85rem', marginBottom: '1rem' }}>{successMessage}</div>}
+        {errorMessage && <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', padding: '0.75rem 1rem', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem', marginBottom: '1rem' }}>{errorMessage}</div>}
+
+        {/* 1. DASHBOARD TAB */}
+        {activeSubTab === 'dashboard' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Executive Summary</h1>
+              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Real-time indicators across client workspace metrics.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="premium-card" style={{ padding: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>ACTIVE MANAGED CLIENTS</span>
+                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>{activeClientsCount}</h2>
+                <span style={{ fontSize: '0.7rem', color: 'green' }}>✓ Compliance status OK</span>
+              </div>
+              <div className="premium-card" style={{ padding: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>UNPAID RECEIVABLES</span>
+                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>${(outstandingInvoicesSum / 100).toFixed(2)}</h2>
+                <span style={{ fontSize: '0.7rem', color: 'red' }}>● {unpaidInvoicesCount} invoices pending payment</span>
+              </div>
+              <div className="premium-card" style={{ padding: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>MONTHLY REVENUE</span>
+                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>${(monthlyRevenueSum / 100).toFixed(2)}</h2>
+                <span style={{ fontSize: '0.7rem', color: '#B58A2B' }}>★ Stripe & Manual total</span>
+              </div>
+              <div className="premium-card" style={{ padding: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>TASKS DUE TODAY</span>
+                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>{tasks.filter(t => t.priority === 'Urgent').length}</h2>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-sec)' }}>Priority items requiring triage</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+              <div className="premium-card">
+                <h3>Live Workspace Compliance Banners</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                  {obligations.slice(0, 3).map(ob => (
+                    <div key={ob.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid red' }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{ob.title}</span>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>Due Date: {ob.due_date}</p>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'red', textTransform: 'uppercase', fontWeight: 'bold' }}>{ob.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="premium-card">
+                <h3>System Logs Feed</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', maxHeight: '200px', overflowY: 'auto' }}>
+                  {auditLogs.slice(0, 5).map((log, index) => (
+                    <div key={log.id || index} style={{ fontSize: '0.75rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.4rem' }}>
+                      <span style={{ color: '#B58A2B' }}>[{log.category}]</span> {log.action}
+                      <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)' }}>{new Date(log.created_at || Date.now()).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. CRM CLIENT MANAGEMENT TAB */}
+        {activeSubTab === 'clients' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Client CRM Center</h1>
+                <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Maintain and modify client profile access structures.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
+              <div>
+                <DataTable
+                  columns={[
+                    {
+                      key: 'name',
+                      label: 'Client / Company Name',
+                      sortable: true,
+                      render: (row) => (
+                        <div style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setSelectedClient(row)}>
+                          🏢 {row.name}
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'business_type',
+                      label: 'Status Alignment',
+                      sortable: true,
+                      render: (row) => {
+                        const isSuspended = row.business_type === 'Suspended Enterprise';
+                        return (
+                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: isSuspended ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)', color: isSuspended ? 'red' : 'green' }}>
+                            {isSuspended ? 'SUSPENDED' : 'ACTIVE'}
+                          </span>
+                        );
+                      }
+                    },
+                    {
+                      key: 'actions',
+                      label: 'Modify Account Access',
+                      sortable: false,
+                      render: (row) => {
+                        const isSuspended = row.business_type === 'Suspended Enterprise';
+                        return (
+                          <button
+                            onClick={() => handleToggleClientStatus(row)}
+                            style={{ padding: '0.35rem 0.75rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            {isSuspended ? 'Reactivate' : 'Suspend'}
+                          </button>
+                        );
+                      }
+                    }
+                  ]}
+                  data={tenants}
+                  searchPlaceholder="Filter clients..."
+                  searchKey="name"
+                  pageSize={6}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Onboard client profile */}
+                <div className="premium-card">
+                  <h3>Onboard Client Workspace</h3>
+                  <form onSubmit={handleOnboardClientSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Organization Name"
+                      value={newClientName}
+                      onChange={e => setNewClientName(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+                    
+                    <select
+                      value={newClientType}
+                      onChange={e => setNewClientType(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="LLC">Limited Liability (LLC)</option>
+                      <option value="Corporation">C-Corp / S-Corp</option>
+                      <option value="Partnership">Partnership</option>
+                    </select>
+
+                    <select
+                      value={newClientRevenue}
+                      onChange={e => setNewClientRevenue(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="0-100k">0 - 100k Annual Revenue</option>
+                      <option value="100k-500k">100k - 500k Annual Revenue</option>
+                      <option value="500k-2m">500k - 2m Annual Revenue</option>
+                      <option value="2m+">2m+ Enterprise Bracket</option>
+                    </select>
+
+                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Generate Profile Workspace
+                    </button>
+                  </form>
+                </div>
+
+                {/* Selected CRM Profile detail */}
+                {selectedClient && (
+                  <div className="premium-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3>Selected Profile</h3>
+                      <button onClick={() => setSelectedClient(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', fontSize: '0.85rem' }}>
+                      <div><strong>Name:</strong> {selectedClient.name}</div>
+                      <div><strong>Client ID:</strong> <span style={{ fontSize: '0.7rem', fontFamily: 'monospace' }}>{selectedClient.id}</span></div>
+                      <div><strong>Active Status:</strong> {selectedClient.business_type || 'Active Corporation'}</div>
+                      <hr style={{ border: 0, borderTop: '1px solid var(--card-border)' }} />
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <strong>Historical Activity Timeline:</strong>
+                        <ul style={{ paddingLeft: '1rem', marginTop: '0.25rem' }}>
+                          <li>Onboarding recorded</li>
+                          <li>Base folder generated</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. GENERAL LEDGER TAB */}
+        {activeSubTab === 'ledger' && (
+          <LedgerManagement />
+        )}
+
+        {/* 4. BILLING & CUSTOM PRICING TAB */}
+        {activeSubTab === 'billing' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Invoices & Custom Packages</h1>
+              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Generate statements, record cash payments, and propose custom pricing packages.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
+              <div>
+                <h3>Historical Client Invoices ({invoices.length})</h3>
+                <DataTable
+                  columns={[
+                    {
+                      key: 'id',
+                      label: 'Invoice ID',
+                      sortable: true,
+                      render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{row.id.substring(0, 8)}...</span>
+                    },
+                    {
+                      key: 'amount_cents',
+                      label: 'Amount Due',
+                      sortable: true,
+                      render: (row) => <strong>${(row.amount_cents / 100).toFixed(2)}</strong>
+                    },
+                    {
+                      key: 'status',
+                      label: 'Billing Status',
+                      sortable: true,
+                      render: (row) => (
+                        <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: row.status === 'paid' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: row.status === 'paid' ? 'green' : 'red' }}>
+                          {row.status.toUpperCase()}
+                        </span>
+                      )
+                    },
+                    {
+                      key: 'actions',
+                      label: 'Actions',
+                      sortable: false,
+                      render: (row) => (
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          {row.status === 'unpaid' && (
+                            <button onClick={() => handleVoidInvoice(row.id)} style={{ padding: '0.25rem 0.5rem', background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Void</button>
+                          )}
+                          {row.status === 'paid' && (
+                            <button onClick={() => handleRefundInvoice(row.id)} style={{ padding: '0.25rem 0.5rem', background: 'rgba(239,68,68,0.1)', color: 'red', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Refund</button>
+                          )}
+                        </div>
+                      )
+                    }
+                  ]}
+                  data={invoices}
+                  pageSize={5}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Create Manual Invoice */}
+                <div className="premium-card">
+                  <h3>Generate Manual Invoice</h3>
+                  <form onSubmit={handleCreateInvoiceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    <select
+                      value={invoiceTenantId}
+                      onChange={e => setInvoiceTenantId(e.target.value)}
+                      required
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="">-- Choose Client --</option>
+                      {tenants.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+
+                    <input 
+                      type="number" 
+                      placeholder="Amount in Cents (e.g. 15000 for $150)"
+                      value={invoiceAmountCents}
+                      onChange={e => setInvoiceAmountCents(Number(e.target.value))}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <input 
+                      type="date" 
+                      value={invoiceDueDate}
+                      onChange={e => setInvoiceDueDate(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <textarea
+                      placeholder="Invoice description details"
+                      value={invoiceDescription}
+                      onChange={e => setInvoiceDescription(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Dispatch Bill Statement
+                    </button>
+                  </form>
+                </div>
+
+                {/* Propose pricing package */}
+                <div className="premium-card">
+                  <h3>Propose Custom Pricing Package</h3>
+                  <form onSubmit={handleProposePackageSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Package Name (e.g. Custom Premium)"
+                      value={packageName}
+                      onChange={e => setPackageName(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <input 
+                      type="text" 
+                      placeholder="Plan Code Identifier"
+                      value={packageCode}
+                      onChange={e => setPackageCode(e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <input 
+                      type="number" 
+                      placeholder="Price Cents per month"
+                      value={packagePriceCents}
+                      onChange={e => setPackagePriceCents(Number(e.target.value))}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <input 
+                      type="number" 
+                      placeholder="Vault Space Limit (GB)"
+                      value={packageStorageGb}
+                      onChange={e => setPackageStorageGb(Number(e.target.value))}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                    />
+
+                    <button type="submit" style={{ padding: '0.5rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Propose Package Tier
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. SECURE DOCUMENT VAULT TAB */}
+        {activeSubTab === 'files' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Document Vault</h1>
+                <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Comprehensive file tracking, version control, and backup retrieval center.</p>
+              </div>
+
+              <form onSubmit={handleUploadVaultMock}>
+                <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                  <FileUp size={16} /> Mock Upload File
+                </button>
+              </form>
+            </div>
+
+            {/* Folder / Files explorer grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+              <div>
+                <h3>Active Files</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                  {vaultFiles.filter(f => !f.deleted).map(file => (
+                    <div key={file.id} style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <FileText size={20} style={{ color: '#B58A2B' }} />
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{file.name}</div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                            {(file.size / 1024 / 1024).toFixed(2)} MB · Version: {file.version} · Uploaded: {file.date}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => setSelectedFileForVersion(file)} style={{ padding: '0.3rem 0.6rem', background: '#cbd5e1', color: '#0f172a', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>History</button>
+                        <button onClick={() => handleReplaceVersionMock(file.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(181,138,43,0.1)', color: '#B58A2B', border: '1px solid #B58A2B', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Replace</button>
+                        <button onClick={() => handleSoftDeleteFile(file.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.1)', color: 'red', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <h3 style={{ marginTop: '2rem' }}>Deleted Recovery Center (30 Days Retention)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                  {vaultFiles.filter(f => f.deleted).map(file => (
+                    <div key={file.id} style={{ background: 'var(--surface-color)', border: '1px solid var(--card-border)', padding: '1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <AlertCircle size={20} style={{ color: 'red' }} />
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{file.name}</div>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Auto deletes soon</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => handleRestoreFile(file.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(16,185,129,0.15)', color: 'green', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Restore</button>
+                        <button onClick={() => handlePermanentDelete(file.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.15)', color: 'red', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Purge</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Version details card */}
+              <div>
+                {selectedFileForVersion ? (
+                  <div className="premium-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3>Version Control Info</h3>
+                      <button onClick={() => setSelectedFileForVersion(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+                    </div>
+                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem' }}>
+                      <strong>{selectedFileForVersion.name}</strong>
+                      <div>Total iterations: {selectedFileForVersion.version}</div>
+                      <div>Latest modification: {selectedFileForVersion.date}</div>
+                      <hr style={{ border: 0, borderTop: '1px solid var(--card-border)' }} />
+                      <span>History timeline:</span>
+                      <ul style={{ paddingLeft: '1rem' }}>
+                        <li>Version {selectedFileForVersion.version} - Approved</li>
+                        {selectedFileForVersion.version > 1 && <li>Version 1 - Superseded</li>}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="premium-card" style={{ textAlign: 'center', padding: '2rem' }}>
+                    <HardDrive size={32} style={{ opacity: 0.3, margin: '0 auto 1rem' }} />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Select file history log to view database version tracking.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. TASK PORTFOLIO TAB */}
+        {activeSubTab === 'tasks' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <div>
-                <h1 style={{ fontSize: '2rem', margin: 0 }}>Task Management Portfolio</h1>
+                <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Task Management Portfolio</h1>
                 <p style={{ color: '#6B7280' }}>Track and manage active internal tasks for assigned clients.</p>
               </div>
             </div>
@@ -258,9 +918,9 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                       onClick={() => handleSelectTask(t)}
                       style={{ 
                         padding: '1rem', 
-                        background: selectedTask?.id === t.id ? '#F0F9FF' : '#fff', 
+                        background: selectedTask?.id === t.id ? '#F0F9FF' : 'var(--card-bg)', 
                         borderRadius: '8px', 
-                        border: selectedTask?.id === t.id ? '2px solid #00A896' : '1px solid #e2e8f0', 
+                        border: selectedTask?.id === t.id ? '2px solid #B58A2B' : '1px solid var(--card-border)', 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
@@ -270,16 +930,16 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                     >
                       <div>
                         <h4 style={{ margin: 0 }}>{t.title}</h4>
-                        <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>{t.description}</p>
+                        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t.description}</p>
                       </div>
-                      <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '4px', background: '#cbd5e1' }}>{t.priority}</span>
+                      <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '4px', background: '#cbd5e1', color: '#0f172a' }}>{t.priority}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {selectedTask ? (
-                <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
+                <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
                   <button 
                     onClick={() => setSelectedTask(null)}
                     style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
@@ -290,14 +950,14 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                   <h3 style={{ margin: 0, paddingRight: '2rem' }}>Task Details</h3>
                   <div>
                     <h4 style={{ margin: '0 0 0.5rem 0' }}>{selectedTask.title}</h4>
-                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569' }}>{selectedTask.description || 'No description provided.'}</p>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-sec)' }}>{selectedTask.description || 'No description provided.'}</p>
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#cbd5e1', fontWeight: 'bold' }}>{selectedTask.priority}</span>
-                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#e2e8f0' }}>Due: {selectedTask.due_date}</span>
+                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#cbd5e1', color: '#000', fontWeight: 'bold' }}>{selectedTask.priority}</span>
+                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', borderRadius: '4px', background: 'var(--surface-color)' }}>Due: {selectedTask.due_date}</span>
                     </div>
                   </div>
 
-                  <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0' }} />
+                  <hr style={{ border: '0', borderTop: '1px solid var(--card-border)', margin: '0' }} />
 
                   {/* Task Dependencies */}
                   <div>
@@ -310,35 +970,35 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                         {dependencies.map(d => {
                           const depTask = tasks.find(t => t.id === d.depends_on_task_id);
                           return (
-                            <div key={d.id} style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                            <div key={d.id} style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem', background: 'var(--surface-color)', border: '1px solid var(--card-border)', borderRadius: '6px' }}>
                               🔗 {depTask ? depTask.title : 'Unknown Task'}
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>No dependencies linked.</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.75rem 0' }}>No dependencies linked.</p>
                     )}
 
                     <form onSubmit={handleAddDependency} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <select 
                         value={selectedDepTaskId} 
                         onChange={e => setSelectedDepTaskId(e.target.value)}
-                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff' }}
+                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--card-border)', fontSize: '0.85rem', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
                       >
                         <option value="">Select task dependency...</option>
                         {tasks.filter(t => t.id !== selectedTask.id).map(t => (
                           <option key={t.id} value={t.id}>{t.title}</option>
                         ))}
                       </select>
-                      <button type="submit" style={{ padding: '0.4rem', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                      <button type="submit" style={{ padding: '0.4rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
                         Add Dependency
                       </button>
                       {depError && <p style={{ margin: 0, color: '#ef4444', fontSize: '0.8rem', fontWeight: 'bold' }}>{depError}</p>}
                     </form>
                   </div>
 
-                  <hr style={{ border: '0', borderTop: '1px solid #e2e8f0', margin: '0' }} />
+                  <hr style={{ border: '0', borderTop: '1px solid var(--card-border)', margin: '0' }} />
 
                   {/* Comments section */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px' }}>
@@ -349,13 +1009,13 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                     <div style={{ flex: 1, overflowY: 'auto', maxHeight: '180px', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.75rem', paddingRight: '0.25rem' }}>
                       {comments.length > 0 ? (
                         comments.map(c => (
-                          <div key={c.id} style={{ fontSize: '0.85rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                            <p style={{ margin: '0 0 0.25rem 0', color: '#475569' }}>{c.content}</p>
-                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{new Date(c.created_at).toLocaleString()}</span>
+                          <div key={c.id} style={{ fontSize: '0.85rem', background: 'var(--surface-color)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
+                            <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-sec)' }}>{c.content}</p>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(c.created_at).toLocaleString()}</span>
                           </div>
                         ))
                       ) : (
-                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>No comments yet.</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No comments yet.</p>
                       )}
                     </div>
 
@@ -365,9 +1025,9 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                           type="text" 
                           {...registerComment('content')}
                           placeholder="Add comment..."
-                          style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: commentErrors.content ? '1px solid #ef4444' : '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                          style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: commentErrors.content ? '1px solid #ef4444' : '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                         />
-                        <button type="submit" style={{ padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        <button type="submit" style={{ padding: '0.4rem 0.8rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
                           Post
                         </button>
                       </div>
@@ -376,26 +1036,26 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                   </div>
                 </div>
               ) : (
-                <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', height: 'fit-content' }}>
+                <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', height: 'fit-content' }}>
                   <h3>Assign New Task</h3>
                   <form onSubmit={handleSubmitTask(handleCreateTaskSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <input 
                       type="text" 
                       {...registerTask('title')}
                       placeholder="Task Title"
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: taskErrors.title ? '1px solid #ef4444' : '1px solid #cbd5e1' }}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: taskErrors.title ? '1px solid #ef4444' : '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
                     />
                     {taskErrors.title && <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>{taskErrors.title.message}</span>}
                     
                     <textarea 
                       {...registerTask('description')}
                       placeholder="Task Description"
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', minHeight: '80px' }}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', minHeight: '80px' }}
                     />
                     
                     <select
                       {...registerTask('priority')}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff' }}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
                     >
                       <option value="Low">Low Priority</option>
                       <option value="Medium">Medium Priority</option>
@@ -403,7 +1063,7 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
                       <option value="Urgent">Urgent Priority</option>
                     </select>
 
-                    <button type="submit" style={{ padding: '0.5rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                       Create Task
                     </button>
                   </form>
@@ -413,35 +1073,83 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
           </div>
         )}
 
-        {/* Compliance Filings */}
+        {/* 7. COMPLIANCE OBLIGATIONS TAB */}
         {activeSubTab === 'filings' && (
           <ComplianceFilingDashboard isAccountant={true} />
         )}
 
-        {activeSubTab === 'ledger' && (
-          <LedgerManagement />
-        )}
-
-        {/* Conversations — Real Messaging Hub */}
+        {/* 8. COMMUNICATIONS TAB — Google Chat Style */}
         {activeSubTab === 'conversations' && (
-          <div style={{ height: 'calc(100vh - 100px)' }}>
+          <div style={{ height: 'calc(100vh - 120px)' }}>
             <InternalMessagingHub
-              apiBase="http://localhost:3001"
+              apiBase="http://localhost:5000"
               authToken={localStorage.getItem('supabase_token') || undefined}
-              currentUserId={currentUser?.id || ''}
-              currentUserName={currentUser?.full_name || 'Accountant'}
+              currentUserId={currentUser?.id || 'u1'}
+              currentUserName={currentUser?.full_name || 'Accountant Specialist'}
             />
           </div>
         )}
-        {activeSubTab === 'marketplace' && (
-          <MarketplaceDesk />
+
+        {/* 9. REPORTING DESK */}
+        {activeSubTab === 'reporting' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Business Intelligence</h1>
+              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Comprehensive performance reporting graphs.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="premium-card">
+                <h3>Revenue Distribution by Client</h3>
+                <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', gap: '1.5rem', justifyContent: 'center', paddingTop: '1.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ height: '120px', width: '35px', background: 'var(--primary-color)', borderRadius: '4px' }}></div>
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Stark</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ height: '80px', width: '35px', background: '#B58A2B', borderRadius: '4px' }}></div>
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Wayne</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ height: '40px', width: '35px', background: '#cbd5e1', borderRadius: '4px' }}></div>
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Acme</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="premium-card">
+                <h3>Accountant Productivity Indicator</h3>
+                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span>Compliance Filings Resolved</span>
+                      <strong>88%</strong>
+                    </div>
+                    <div style={{ background: 'var(--surface-color)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: '88%', background: 'green', height: '100%' }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span>Audit Tasks Dispatched</span>
+                      <strong>92%</strong>
+                    </div>
+                    <div style={{ background: 'var(--surface-color)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: '92%', background: '#B58A2B', height: '100%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        {activeSubTab === 'ai_assistant' && (
-          <AICopilotPanel />
-        )}
+
+        {/* 10. SECURITY & SETTINGS TAB */}
         {activeSubTab === 'security' && (
           <ProfileSettings />
         )}
+
       </main>
     </div>
   );

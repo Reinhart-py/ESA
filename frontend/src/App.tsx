@@ -7,6 +7,8 @@ import MarketingLanding from './components/MarketingLanding.tsx';
 
 
 import { Shield, Lock, Mail, User, Loader2 } from 'lucide-react';
+// @ts-ignore
+import MarketingHub from './marketing/MarketingHub.jsx';
 
 function App() {
   const context = useContext(AppContext);
@@ -33,6 +35,9 @@ function App() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteValidated, setInviteValidated] = useState(false);
 
+  // Auth modal toggle used inside MarketingHub login trigger
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   if (!context) return null;
 
   const { userRole, setUserRole, sessionToken, currentUser } = context;
@@ -49,6 +54,7 @@ function App() {
           setInviteData(data);
           setEmail(data.email); // Auto-fill email
           setInviteValidated(true);
+          setShowAuthModal(true); // Open auth modal for validation
         })
         .catch((err) => {
           setError(err.message);
@@ -307,28 +313,52 @@ function App() {
   }
 
   return (
-    <MarketingLanding
-      email={email}
-      setEmail={setEmail}
-      password={password}
-      setPassword={setPassword}
-      fullName={fullName}
-      setFullName={setFullName}
-      businessName={businessName}
-      setBusinessName={setBusinessName}
-      businessType={businessType}
-      setBusinessType={setBusinessType}
-      isRegister={isRegister}
-      setIsRegister={setIsRegister}
-      error={error}
-      loading={loading}
-      handleLogin={handleLogin}
-      handleRegister={handleRegister}
-      inviteToken={inviteToken}
-      inviteValidated={inviteValidated}
-      inviteData={inviteData}
-      handleAcceptInviteSubmit={handleAcceptInviteSubmit}
-    />
+    <>
+      <MarketingHub onLogin={() => setShowAuthModal(true)} />
+      {showAuthModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--card-bg, #fff)', border: '1px solid var(--card-border, #ccc)', padding: '2rem', borderRadius: '12px', width: '400px', position: 'relative', color: 'var(--text-primary, #000)' }}>
+            <button onClick={() => { setShowAuthModal(false); setInviteToken(''); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-sec)' }}>✕</button>
+            
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.4rem' }}>
+              {inviteToken ? 'Accept Invitation Workspace' : (isRegister ? 'Register EAC Account' : 'Sign In To Portal')}
+            </h3>
+            
+            <form onSubmit={inviteToken ? handleAcceptInviteSubmit : (isRegister ? handleRegister : handleLogin)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {isRegister && !inviteToken && (
+                <>
+                  <input type="text" required placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+                  <input type="text" required placeholder="Company Name" value={businessName} onChange={e => setBusinessName(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+                  <input type="text" required placeholder="Business Type (e.g. LLC)" value={businessType} onChange={e => setBusinessType(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+                </>
+              )}
+
+              {inviteToken && (
+                <input type="text" required placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+              )}
+
+              <input type="email" required placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+              <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+
+              {error && <span style={{ color: 'red', fontSize: '0.8rem' }}>{error}</span>}
+
+              <button type="submit" disabled={loading} style={{ padding: '0.6rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold' }}>
+                {loading ? 'Processing Workspace...' : (inviteToken ? 'Accept & Access' : (isRegister ? 'Register & Trial' : 'Sign In'))}
+              </button>
+            </form>
+
+            {!inviteToken && (
+              <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem' }}>
+                <span style={{ color: 'var(--text-sec)' }}>{isRegister ? 'Already registered?' : 'No active workspace?'}</span>{' '}
+                <button onClick={() => setIsRegister(!isRegister)} style={{ background: 'none', border: 'none', color: '#B58A2B', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline' }}>
+                  {isRegister ? 'Log In' : 'Register Free Trial'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

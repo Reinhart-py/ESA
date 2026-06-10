@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EasyVitta Noir | Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#3c4947",
+                        "on-tertiary-container": "#494d55",
+                        "surface-container-low": "#191c22",
+                        "surface-dim": "#10131a",
+                        "secondary-container": "#af8d11",
+                        "on-tertiary": "#2d3038",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0b0e14",
+                        "on-primary": "#003733",
+                        "on-secondary": "#3c2f00",
+                        "primary-container": "#4fd1c5",
+                        "tertiary-fixed-dim": "#c3c6d0",
+                        "surface-container": "#1d2026",
+                        "inverse-surface": "#e1e2eb",
+                        "surface-container-high": "#272a31",
+                        "secondary-fixed": "#ffe088",
+                        "tertiary-container": "#bbbec8",
+                        "primary-fixed": "#79f7ea",
+                        "secondary": "#e9c349",
+                        "on-background": "#e1e2eb",
+                        "secondary-fixed-dim": "#e9c349",
+                        "surface-variant": "#32353c",
+                        "surface-container-highest": "#32353c",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005",
+                        "on-primary-fixed-variant": "#00504a",
+                        "surface": "#10131a",
+                        "inverse-primary": "#006a63",
+                        "error-container": "#93000a",
+                        "background": "#10131a",
+                        "on-primary-fixed": "#00201d",
+                        "on-secondary-fixed": "#241a00",
+                        "primary-fixed-dim": "#5adace",
+                        "outline": "#869491",
+                        "tertiary": "#d7d9e4",
+                        "on-tertiary-fixed-variant": "#43474f",
+                        "on-secondary-container": "#342800",
+                        "on-surface": "#e1e2eb",
+                        "surface-tint": "#5adace",
+                        "inverse-on-surface": "#2e3037",
+                        "on-secondary-fixed-variant": "#574500",
+                        "primary": "#6feee1",
+                        "tertiary-fixed": "#dfe2ec",
+                        "on-tertiary-fixed": "#181c23",
+                        "surface-bright": "#363940",
+                        "on-primary-container": "#005750",
+                        "on-surface-variant": "#bbc9c7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "container-max-width": "1440px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(29, 32, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+        .glow-teal {
+            box-shadow: 0 0 20px 0 rgba(111, 238, 225, 0.15);
+        }
+        .glow-line-primary {
+            filter: drop-shadow(0 0 4px rgba(111, 238, 225, 0.8));
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            background-color: #10131a;
+            color: #e1e2eb;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop py-4 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-white/10 shadow-sm shadow-primary/5">
+<div class="flex items-center gap-8">
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary">EasyVitta Noir</span>
+<div class="hidden md:flex bg-surface-container-high/50 rounded-full px-4 py-2 border border-white/5 items-center gap-3 w-96">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-label-md w-full text-on-surface" placeholder="Search platform analytics..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors duration-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors duration-300">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<button class="bg-primary text-on-primary-container px-6 py-2.5 rounded-full font-label-md hover:scale-95 transition-transform glow-teal">
+                New Transaction
+            </button>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 overflow-hidden">
+<img alt="Accountant profile" class="w-full h-full object-cover" data-alt="A professional headshot of a senior financial executive in a sharp charcoal suit. The lighting is dramatic and low-key, with a slight cool-toned rim light that highlights the sophisticated, high-end corporate atmosphere. The background is a soft-focus office with deep obsidian tones and metallic accents, matching the EasyVitta Noir aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr7_lb5-IShm7TMVRcG_JJ1fKse-fjFKq72paR49MBuUHd03aVXHLh5A8der6DMYb1IjG-GWMnpb13GykxsShb1qn53a4S2DGCWyHjeT51dXu71-pHKrLTl3YiLX6ckyrYZZyNpYcZoisrWQ5IT5PMUd4JYXR59AbTW0aa7nX_bpwYiJd0GDcop9A755srl2eJnQcn5mj0scuWGm7gacUOthiflCVST7tV6j6ws6jDVp3a3pREDBUxbDjx-4pdkuB7uR-VXsgpBMn3"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full pt-24 w-64 bg-surface-container/70 dark:bg-surface-container/70 backdrop-blur-xl border-r border-white/10 shadow-xl flex flex-col z-40 hidden md:flex">
+<div class="px-6 mb-8">
+<h2 class="text-headline-sm font-headline-sm text-primary">Management Portal</h2>
+<p class="text-label-sm text-on-surface-variant opacity-70">Premium Access</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="bg-primary/15 text-primary border-r-2 border-primary flex items-center gap-3 px-4 py-3 rounded-lg mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md">Clients</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md">Tax Filings</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-label-md">Documents</span>
+</a>
+</nav>
+<div class="p-4 mx-4 mb-6 glass-card border-primary/20">
+<p class="text-label-sm text-primary mb-2">Enterprise Plan</p>
+<button class="w-full py-2 bg-primary/10 border border-primary/30 text-primary text-label-sm rounded-lg hover:bg-primary/20 transition-colors">Upgrade Plan</button>
+</div>
+<div class="border-t border-white/5 pt-4 pb-8">
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md">Support</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 rounded-lg text-error" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-28 pb-12 px-margin-desktop min-h-screen relative">
+<!-- Background Animation Overlay -->
+<div class="fixed inset-0 pointer-events-none opacity-20">
+
+</div>
+<div class="max-w-[1440px] mx-auto relative z-10">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<h1 class="text-display-lg font-display-lg text-on-surface">Platform Overview</h1>
+<p class="text-body-lg text-on-surface-variant">Real-time performance metrics and system health monitoring.</p>
+</div>
+<div class="flex gap-4">
+<div class="glass-card px-4 py-2 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-label-sm text-primary">Live Updates Enabled</span>
+</div>
+</div>
+</div>
+<!-- Stats Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-10">
+<div class="glass-card p-6 col-span-1 md:col-span-2">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Total Revenue</p>
+<h3 class="text-headline-lg font-headline-lg text-primary">$4,281,092.45</h3>
+</div>
+<div class="bg-primary/10 text-primary p-2 rounded-lg">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+</div>
+<div class="h-32 flex items-end gap-1">
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[60%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[45%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[80%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[70%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[90%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[65%]"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t h-[85%]"></div>
+</div>
+</div>
+<div class="glass-card p-6">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Active Users</p>
+<h3 class="text-headline-lg font-headline-lg text-on-surface">12,842</h3>
+<div class="mt-4 flex items-center gap-2 text-primary font-label-md">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+<span>12% this month</span>
+</div>
+<div class="mt-8">
+<div class="flex justify-between text-label-sm mb-2">
+<span class="text-on-surface-variant">Capacity</span>
+<span class="text-on-surface">82%</span>
+</div>
+<div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%] glow-teal"></div>
+</div>
+</div>
+</div>
+<div class="glass-card p-6">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Compliance Rate</p>
+<h3 class="text-headline-lg font-headline-lg text-secondary">99.8%</h3>
+<div class="mt-4 flex items-center gap-2 text-secondary font-label-md">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span>Highest Grade (AAA)</span>
+</div>
+<div class="mt-8 flex justify-center">
+<!-- Simple visual indicator -->
+<div class="relative w-20 h-20">
+<svg class="w-full h-full transform -rotate-90">
+<circle cx="40" cy="40" fill="none" r="36" stroke="rgba(255,255,255,0.05)" stroke-width="8"></circle>
+<circle class="text-secondary" cx="40" cy="40" fill="none" r="36" stroke="currentColor" stroke-dasharray="226.2" stroke-dashoffset="0.45" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">shield</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Interactive Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- User Management Table -->
+<div class="lg:col-span-2 glass-card overflow-hidden">
+<div class="p-6 border-b border-white/5 flex justify-between items-center">
+<h4 class="text-headline-md font-headline-md text-on-surface">Recent User Activity</h4>
+<button class="text-primary text-label-md hover:underline">View All Users</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-white/2">
+<tr class="text-label-sm text-on-surface-variant border-b border-white/5">
+<th class="px-6 py-4 font-semibold uppercase tracking-wider">User</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider">Plan</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider">Activity</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/2 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A close-up portrait of a young male professional with glasses, smiling confidently against a minimalist dark gray architectural background. The image has a sophisticated, high-contrast aesthetic with deep shadows and clean highlights, matching the premium EasyVitta Noir style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGYA7uKst9usZX19HIRljjUi4Sq1OBk4ZFkmFxaB6EOHNi3lUukJiBqr4FIuNep4m4yuKfFDCeV3kUOHNfvoDET1bW8tYXUQewaiArNsXgO0SStLo1w01DmEJpChCk227XXbCz2Ha8XUVcHF-uMUfjfwf1JO2cDHm78lX9WkPZ9aAgER6NvBhyH-Srzojzb6X52p7KzNEPvtzDf7wu9W4wchmaGn_8D4Oj8tSkjyrjvsUBWR1KBwVcJHoQJhXuA3sj6M5NIsrh-Vuv"/>
+</div>
+<span class="text-on-surface font-label-md">Julian Thorne</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/20">Verified</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">Enterprise Plus</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">2m ago</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-white/2 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A cinematic portrait of a professional woman in a dark executive office setting. She has a thoughtful expression, lit by the warm glow of a desk lamp, creating a soft amber light on one side of her face against a dark, moody background. The high-quality photography style is sharp and elegant." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVlhn8fQ4Ox4ZXHBZkT51jOCMQg35G565EsabomafpW4ivTZ6CWQhfSFFDZI9JejxpwkOG0yQqELzES35XDFH6nPXLN9T0x65yi9VXy4pvLUtmZ3RUam9Rx-Q3-jOQzdilhjJqNAV1QkD9mjdaa4mCAewicOZSM7M2w-UiegH5-C3ZN_3-ZLRe02WxmXmJAk1bRYV9FQnahhHUQLJTTW8hNDS5-CqtBGLT37knjwVh3XtSi69t5pMSnlzX7VdihcSUJDZHm8fzokzl"/>
+</div>
+<span class="text-on-surface font-label-md">Elena Rodriguez</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-secondary/20 text-secondary border border-secondary/20">Pending</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">Premium Individual</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">15m ago</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-white/2 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A portrait of a mature male executive with silver hair, dressed in a dark turtle neck. He is standing in a modern gallery-like space with cool blue and charcoal tones. The lighting is diffused and professional, conveying authority and calmness in the signature EasyVitta Noir aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTJpy-4wBCWFBHGOWyiGNLen_-9ekCMN7HzwySuN6etpa6Qy6KNTuxrKFQPStt77ugyvPDbwk8przisabpE4ytjinbYOCERAQNl_eGzLGI-iHGmHo-fApRC_cmpyAMeVlIwrPRefaLL1uKTj_4IPQf7mZc8Ss-_VjMcpaevlR_GmE7QuzXAEnyRPaXMepnAlD_rVku6Q-EodBePiF6PChCEwn3PbbPaoYl7-_RnVinepLNDjz-0ih80m-y2k9zSAT_mCNkaet64ujP"/>
+</div>
+<span class="text-on-surface font-label-md">Arthur Vance</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/20">Verified</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">Corporate Tier 1</td>
+<td class="px-6 py-4 text-on-surface-variant font-label-sm">1h ago</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Marketplace & Health -->
+<div class="flex flex-col gap-gutter">
+<div class="glass-card p-6">
+<h4 class="text-headline-md font-headline-md text-on-surface mb-6">Marketplace Metrics</h4>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-label-sm mb-2">
+<span class="text-on-surface-variant">Asset Liquidity</span>
+<span class="text-primary">$12.4B</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full">
+<div class="h-full bg-primary w-[75%] glow-teal"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-label-sm mb-2">
+<span class="text-on-surface-variant">Transaction Velocity</span>
+<span class="text-secondary">High</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-white/2 rounded-xl border border-white/5">
+<p class="text-label-sm text-on-surface-variant mb-1">Top Performing Sector</p>
+<p class="text-label-md text-on-surface font-semibold">Real Estate Tokenization</p>
+<p class="text-[10px] text-primary mt-1">+24.5% Growth</p>
+</div>
+</div>
+<div class="glass-card p-6">
+<h4 class="text-headline-md font-headline-md text-on-surface mb-6">System Health</h4>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-white/2 rounded-lg border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-1">memory</span>
+<span class="text-label-sm text-on-surface">Core CPU</span>
+<span class="text-label-md font-bold text-primary">14%</span>
+</div>
+<div class="p-3 bg-white/2 rounded-lg border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-1">database</span>
+<span class="text-label-sm text-on-surface">DB Node</span>
+<span class="text-label-md font-bold text-primary">Healthy</span>
+</div>
+<div class="p-3 bg-white/2 rounded-lg border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-secondary mb-1">wifi_tethering</span>
+<span class="text-label-sm text-on-surface">API Latency</span>
+<span class="text-label-md font-bold text-secondary">24ms</span>
+</div>
+<div class="p-3 bg-white/2 rounded-lg border border-white/5 flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-1">security</span>
+<span class="text-label-sm text-on-surface">Firewall</span>
+<span class="text-label-md font-bold text-primary">Active</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 px-margin-desktop mt-auto flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md border-t border-white/5 relative z-10">
+<div class="mb-4 md:mb-0">
+<span class="text-label-md font-label-md font-bold text-on-surface">EasyVitta Noir</span>
+<span class="text-label-sm text-on-tertiary-container ml-4">© 2024 EasyVitta Noir. All rights reserved.</span>
+</div>
+<div class="flex gap-8">
+<a class="text-label-sm text-on-tertiary-container hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="text-label-sm text-on-tertiary-container hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="text-label-sm text-on-tertiary-container hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Security</a>
+<a class="text-label-sm text-on-tertiary-container hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Contact</a>
+</div>
+</footer>
+<script>
+        // Micro-interactions and atmospheric effects
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hover effect for glass cards
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                });
+            });
+
+            // Smooth scale on click for primary buttons
+            const primaryButtons = document.querySelectorAll('.bg-primary');
+            primaryButtons.forEach(btn => {
+                btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+                btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+                btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+            });
+        });
+    </script>
+</body></html>

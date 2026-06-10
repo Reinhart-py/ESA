@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EasyVitta Noir - Accountant Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#3c4947",
+                      "on-tertiary-container": "#494d55",
+                      "surface-container-low": "#191c22",
+                      "surface-dim": "#10131a",
+                      "secondary-container": "#af8d11",
+                      "on-tertiary": "#2d3038",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-lowest": "#0b0e14",
+                      "on-primary": "#003733",
+                      "on-secondary": "#3c2f00",
+                      "primary-container": "#4fd1c5",
+                      "tertiary-fixed-dim": "#c3c6d0",
+                      "surface-container": "#1d2026",
+                      "inverse-surface": "#e1e2eb",
+                      "surface-container-high": "#272a31",
+                      "secondary-fixed": "#ffe088",
+                      "tertiary-container": "#bbbec8",
+                      "primary-fixed": "#79f7ea",
+                      "secondary": "#e9c349",
+                      "on-background": "#e1e2eb",
+                      "secondary-fixed-dim": "#e9c349",
+                      "surface-variant": "#32353c",
+                      "surface-container-highest": "#32353c",
+                      "error": "#ffb4ab",
+                      "on-error": "#690005",
+                      "on-primary-fixed-variant": "#00504a",
+                      "surface": "#10131a",
+                      "inverse-primary": "#006a63",
+                      "error-container": "#93000a",
+                      "background": "#10131a",
+                      "on-primary-fixed": "#00201d",
+                      "on-secondary-fixed": "#241a00",
+                      "primary-fixed-dim": "#5adace",
+                      "outline": "#869491",
+                      "tertiary": "#d7d9e4",
+                      "on-tertiary-fixed-variant": "#43474f",
+                      "on-secondary-container": "#342800",
+                      "on-surface": "#e1e2eb",
+                      "surface-tint": "#5adace",
+                      "inverse-on-surface": "#2e3037",
+                      "on-secondary-fixed-variant": "#574500",
+                      "primary": "#6feee1",
+                      "tertiary-fixed": "#dfe2ec",
+                      "on-tertiary-fixed": "#181c23",
+                      "surface-bright": "#363940",
+                      "on-primary-container": "#005750",
+                      "on-surface-variant": "#bbc9c7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "container-max-width": "1440px",
+                      "margin-desktop": "64px",
+                      "gutter": "24px",
+                      "unit": "8px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "label-md": ["Inter"],
+                      "display-lg": ["Manrope"],
+                      "headline-lg": ["Manrope"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Manrope"]
+              },
+              "fontSize": {
+                      "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(29, 32, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+        .glow-teal {
+            box-shadow: 0 0 20px 0 rgba(111, 238, 225, 0.15);
+        }
+        .glow-line {
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary/30 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop py-4 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-white/10 shadow-sm shadow-primary/5">
+<div class="flex items-center gap-8">
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary">EasyVitta Noir</span>
+<div class="hidden md:flex items-center bg-surface-container-high/50 rounded-full px-4 py-2 border border-white/5">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-label-md text-on-surface-variant w-64 placeholder:text-on-tertiary-container" placeholder="Search clients or transactions..." type="text"/>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-8 h-full">
+<a class="text-primary border-b-2 border-primary pb-1 font-label-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-md" href="#">Reports</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-md" href="#">Audit Log</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-md flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 glow-teal">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                New Transaction
+            </button>
+<div class="flex items-center gap-3 ml-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="settings">settings</span>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10 ml-2">
+<img alt="Accountant profile" class="w-full h-full object-cover" data-alt="A professional headshot of a high-end financial accountant in a sleek dark studio setting. The lighting is dramatic, high-contrast, and sophisticated, reflecting a prestigious brand identity. The background is a blurred dark office with hints of obsidian and primary teal accents. The overall aesthetic is minimalist, modern, and secure." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_hWciI73W42SKia2keQAKH_1jzH8Yher7hTKxqhotIG1yvLjKZvF_uwLrFkpo3KyPMt2q2K3MQpjCfeM6o-nm4dNRlJ-nL-ODWGjxD5aEH_jUKV1xZfzeEEC-UPj2Aerk4a389rebY8e_26Xq3n6azkk7x-Pz2Ixw9nAsGf6AQtA4r_TBEUsybungaEi550CyS-ff4stftjiI_HMFUnEAch8qXgSt4BiLeUWjKfVOyhpSKeoOGK_5j2itEzVqgDKvGP5eisq1-Vby"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Layout -->
+<div class="flex flex-1 pt-20">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full pt-20 flex flex-col bg-surface-container/70 dark:bg-surface-container/70 backdrop-blur-xl border-r border-white/10 shadow-xl w-64 hidden xl:flex">
+<div class="px-6 py-8 flex items-center gap-4">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary" data-icon="shield">shield</span>
+</div>
+<div>
+<h3 class="text-label-md font-label-md text-primary">Management Portal</h3>
+<p class="text-[10px] uppercase tracking-widest text-secondary font-bold">Premium Access</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="bg-primary/15 text-primary border-r-2 border-primary flex items-center gap-3 px-4 py-3 rounded-lg mx-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="dashboard">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="groups">groups</span>
+<span class="font-label-md">Clients</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="description">description</span>
+<span class="font-label-md">Tax Filings</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="insights">insights</span>
+<span class="font-label-md">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="folder_open">folder_open</span>
+<span class="font-label-md">Documents</span>
+</a>
+</nav>
+<div class="p-4 mx-2 mb-8 glass-card bg-secondary/5 border-secondary/10">
+<p class="text-label-sm text-secondary mb-2">Upgrade to Enterprise</p>
+<button class="w-full py-2 bg-secondary text-on-secondary rounded-lg text-label-sm font-bold hover:opacity-90 transition-opacity">Upgrade Plan</button>
+</div>
+<div class="mt-auto border-t border-white/5 pt-4 pb-8 space-y-1">
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md">Support</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-all mx-2 group" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 xl:ml-64 p-6 md:p-12 transition-all duration-300">
+<!-- Hero Stats Bento -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<div class="glass-card p-6 border-l-4 border-primary/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="account_balance">account_balance</span>
+</div>
+<p class="text-on-tertiary-container font-label-md mb-2">Total Managed Assets</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">$14.2M</h2>
+<div class="flex items-center gap-2 mt-4 text-primary text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>+12.5% this month</span>
+</div>
+</div>
+<div class="glass-card p-6 border-l-4 border-secondary/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="pending_actions">pending_actions</span>
+</div>
+<p class="text-on-tertiary-container font-label-md mb-2">Active Compliance</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">98.2%</h2>
+<div class="flex items-center gap-2 mt-4 text-on-surface-variant text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+<span>2 Filings pending today</span>
+</div>
+</div>
+<div class="glass-card p-6 border-l-4 border-primary-fixed-dim/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="person_add">person_add</span>
+</div>
+<p class="text-on-tertiary-container font-label-md mb-2">New Clients (MTD)</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">12</h2>
+<div class="flex items-center gap-2 mt-4 text-primary text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="verified">verified</span>
+<span>Tier 1 expansion</span>
+</div>
+</div>
+<div class="glass-card p-6 border-l-4 border-error/50 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" data-icon="warning">warning</span>
+</div>
+<p class="text-on-tertiary-container font-label-md mb-2">Critical Tasks</p>
+<h2 class="text-headline-lg font-headline-lg text-error">04</h2>
+<div class="flex items-center gap-2 mt-4 text-error text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="priority_high">priority_high</span>
+<span>Immediate action required</span>
+</div>
+</div>
+</div>
+<!-- Bento Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Compliance Calendar (Span 7) -->
+<div class="lg:col-span-7 glass-card p-8 flex flex-col h-[500px]">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Compliance Calendar</h3>
+<p class="text-on-surface-variant text-body-md">Upcoming tax and filing deadlines</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-white/5 rounded-full text-on-surface-variant"><span class="material-symbols-outlined">chevron_left</span></button>
+<span class="font-label-md py-2 px-4">October 2024</span>
+<button class="p-2 hover:bg-white/5 rounded-full text-on-surface-variant"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-4 mb-4 text-center">
+<div class="text-label-sm text-on-tertiary-container">MON</div>
+<div class="text-label-sm text-on-tertiary-container">TUE</div>
+<div class="text-label-sm text-on-tertiary-container">WED</div>
+<div class="text-label-sm text-on-tertiary-container">THU</div>
+<div class="text-label-sm text-on-tertiary-container">FRI</div>
+<div class="text-label-sm text-on-tertiary-container">SAT</div>
+<div class="text-label-sm text-on-tertiary-container">SUN</div>
+</div>
+<div class="grid grid-cols-7 grid-rows-5 gap-4 flex-1">
+<!-- Simplified Calendar Visualization -->
+<div class="p-2 rounded-lg text-center text-on-tertiary-container text-body-md opacity-30">27</div>
+<div class="p-2 rounded-lg text-center text-on-tertiary-container text-body-md opacity-30">28</div>
+<div class="p-2 rounded-lg text-center text-on-tertiary-container text-body-md opacity-30">29</div>
+<div class="p-2 rounded-lg text-center text-on-tertiary-container text-body-md opacity-30">30</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">1</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">2</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">3</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">4</div>
+<div class="p-2 rounded-lg text-center border border-primary/40 bg-primary/10 text-primary font-bold cursor-pointer glow-teal relative group">
+                            5
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-32 p-2 bg-surface text-[10px] rounded border border-primary/20 z-10 shadow-2xl">Quarterly VAT Filing</div>
+</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">6</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">7</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">8</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">9</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">10</div>
+<div class="p-2 rounded-lg text-center border border-error/40 bg-error/10 text-error font-bold cursor-pointer relative group">
+                            11
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-32 p-2 bg-surface text-[10px] rounded border border-error/20 z-10 shadow-2xl">Corporate Tax Submission</div>
+</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">12</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">13</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">14</div>
+<div class="p-2 rounded-lg text-center border border-secondary/40 bg-secondary/10 text-secondary font-bold cursor-pointer">15</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">16</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">17</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">18</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">19</div>
+<div class="p-2 rounded-lg text-center border border-white/5 hover:bg-white/5 transition-all text-on-surface font-medium cursor-pointer">20</div>
+<!-- ... and so on ... -->
+</div>
+</div>
+<!-- Recent Submissions / Tasks (Span 5) -->
+<div class="lg:col-span-5 glass-card p-8 flex flex-col h-[500px]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Queue Management</h3>
+<span class="text-label-sm text-primary flex items-center gap-1 cursor-pointer hover:underline">View All Tasks <span class="material-symbols-outlined text-sm">open_in_new</span></span>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-4">
+<!-- Task Item -->
+<div class="p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/5 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest bg-secondary/10 px-2 py-1 rounded">High Priority</span>
+<span class="text-label-sm text-on-tertiary-container">2h ago</span>
+</div>
+<h4 class="text-body-md font-medium text-on-surface group-hover:text-primary transition-colors">Audit Preparation: Aris Group Ltd</h4>
+<p class="text-label-sm text-on-surface-variant mt-1">Review ledger for Q3 reconciliation discrepancies.</p>
+<div class="flex items-center gap-4 mt-4">
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full border border-surface bg-surface-variant" data-alt="A small circular avatar placeholder with initials representing a professional team member in a luxury corporate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5LzJadL9ZxwKSJanMtIORSKzqu80ALfTU2n927d1QmVgRCrfKcDizFJe8XgsYbyhdZAIkQ0saza9bbbzHoN64TuHhw8bs-WJNGuGFzexoKX-ei9ZXhV_m3HJeHdKCFDuoMklIVTEcQ9cM_gKt3mw04amvyoWVizWcED-w-o8vk5cmeBbv8SDElhPvUvoxdtNP3YmD1l6vgcRecjjZDrs_RQgRpalZLDQr5CaOjHINQ604t3Q5TpozLL2YV5apnkEwalAWUGkKzsGw"/>
+<img alt="Avatar" class="w-6 h-6 rounded-full border border-surface bg-surface-variant" data-alt="A small circular avatar placeholder with initials representing a professional team member in a luxury corporate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV_AFpFGRjqxqF1KD0QR8mtpeZzf1eNo-uPZd5QRwRlcOemI5MIGMaertT1kgzBCLZE0Pc-hB0hQIoiQ7FOkz72nVh2Gl9JoRuyNZ7-PZQ9wgBvJWigtKWqbby-nU1cLPGs_LIlQubEq_iK-kZdXWAFTrR7XuSbh7Ie_CdoEBoZZE3rmMzfhG1OmrRElElb4QzWgqgOdzhoD-M86nqzazAV4IpGrplnO1yXO3emfX6kb-K7YE4TK0jWzrHvRHt_X7_oN6rgviTU2HL"/>
+</div>
+<div class="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary glow-line" style="width: 65%;"></div>
+</div>
+<span class="text-[10px] text-on-tertiary-container">65%</span>
+</div>
+</div>
+<!-- Task Item -->
+<div class="p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/5 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-primary-fixed-dim uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">Standard</span>
+<span class="text-label-sm text-on-tertiary-container">5h ago</span>
+</div>
+<h4 class="text-body-md font-medium text-on-surface group-hover:text-primary transition-colors">Payroll Processing: Vesper Logistics</h4>
+<p class="text-label-sm text-on-surface-variant mt-1">Generate payslips for 120 employees for current cycle.</p>
+<div class="flex items-center gap-4 mt-4">
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full border border-surface bg-surface-variant" data-alt="A small circular avatar placeholder with initials representing a professional team member in a luxury corporate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADXDRx-9hR7bM-6oqYoZPym60mlAxN_zs1R4XmQRlW1u5WIYYklTdjSNW7QhwmKYyARvZM8_21lHLsXE2xbgv1IYcrDVF4TADtNMVELVv2RBy5nSkYidndnlK0I0BK6_OuaZilC8ajyrehY5wI6L-t8pzA3c9_KACqYrPmbnAJfrzT_A_izUpjgw_VTDEJp9iSUBIVHF91NhM43WX4fBwxl7GmOT9869GSuUOmV_3z3sp-eiKm0JEYkSzN3yp9koE-A4WqC37soWlQ"/>
+</div>
+<div class="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary glow-line" style="width: 20%;"></div>
+</div>
+<span class="text-[10px] text-on-tertiary-container">20%</span>
+</div>
+</div>
+<!-- Task Item -->
+<div class="p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/5 transition-all cursor-pointer group opacity-60">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-on-tertiary-container uppercase tracking-widest bg-white/5 px-2 py-1 rounded">Recurring</span>
+<span class="text-label-sm text-on-tertiary-container">Yesterday</span>
+</div>
+<h4 class="text-body-md font-medium text-on-surface group-hover:text-primary transition-colors">Monthly Financial Summary</h4>
+<p class="text-label-sm text-on-surface-variant mt-1">Export summary reports for board review.</p>
+<div class="flex items-center gap-4 mt-4">
+<div class="h-1 flex-1 bg-primary/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary glow-line" style="width: 100%;"></div>
+</div>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Client Portfolio Section -->
+<div class="mt-12">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Client Portfolio Summary</h3>
+<p class="text-on-surface-variant text-body-md">Real-time status of your top-tier accounts</p>
+</div>
+<div class="flex gap-4">
+<button class="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-lg font-label-md border border-white/5 hover:text-on-surface transition-colors">All Clients</button>
+<button class="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-lg font-label-md border border-white/5 hover:text-on-surface transition-colors">Risk Assessment</button>
+</div>
+</div>
+<div class="glass-card overflow-hidden">
+<table class="w-full text-left">
+<thead class="bg-white/5 border-b border-white/10">
+<tr>
+<th class="px-6 py-4 text-label-sm text-on-tertiary-container">CLIENT NAME</th>
+<th class="px-6 py-4 text-label-sm text-on-tertiary-container">PLAN</th>
+<th class="px-6 py-4 text-label-sm text-on-tertiary-container">TAX STATUS</th>
+<th class="px-6 py-4 text-label-sm text-on-tertiary-container">LAST ACTIVITY</th>
+<th class="px-6 py-4 text-label-sm text-on-tertiary-container">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">AG</div>
+<div>
+<p class="text-on-surface font-medium">Aris Group Ltd</p>
+<p class="text-[10px] text-on-tertiary-container uppercase">Industrial Logistics</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase">Elite Plus</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-primary">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-label-md">Audit Ready</span>
+</div>
+</td>
+<td class="px-6 py-4 text-label-md text-on-surface-variant">24 mins ago</td>
+<td class="px-6 py-4">
+<button class="p-2 rounded-lg hover:bg-primary/20 text-on-surface-variant group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary font-bold text-[10px]">VL</div>
+<div>
+<p class="text-on-surface font-medium">Vesper Logistics</p>
+<p class="text-[10px] text-on-tertiary-container uppercase">Supply Chain</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Standard</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-label-md">Pending Review</span>
+</div>
+</td>
+<td class="px-6 py-4 text-label-md text-on-surface-variant">4 hours ago</td>
+<td class="px-6 py-4">
+<button class="p-2 rounded-lg hover:bg-primary/20 text-on-surface-variant group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-outline-variant flex items-center justify-center text-on-surface font-bold text-[10px]">HC</div>
+<div>
+<p class="text-on-surface font-medium">Helios Capital</p>
+<p class="text-[10px] text-on-tertiary-container uppercase">Asset Management</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase">Elite Plus</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-error">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-label-md">Filing Overdue</span>
+</div>
+</td>
+<td class="px-6 py-4 text-label-md text-on-surface-variant">Yesterday</td>
+<td class="px-6 py-4">
+<button class="p-2 rounded-lg hover:bg-primary/20 text-on-surface-variant group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="w-full py-8 px-margin-desktop mt-auto flex flex-col md:flex-row justify-between items-center bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md border-t border-white/5">
+<div class="flex flex-col items-center md:items-start gap-2 mb-4 md:mb-0">
+<span class="text-label-md font-label-md font-bold text-on-surface">EasyVitta Noir</span>
+<p class="text-label-sm text-on-tertiary-container">© 2024 EasyVitta Noir. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-on-tertiary-container hover:text-secondary transition-colors text-label-sm" href="#">Privacy Policy</a>
+<a class="text-on-tertiary-container hover:text-secondary transition-colors text-label-sm" href="#">Terms of Service</a>
+<a class="text-on-tertiary-container hover:text-secondary transition-colors text-label-sm" href="#">Security</a>
+<a class="text-on-tertiary-container hover:text-secondary transition-colors text-label-sm" href="#">Contact</a>
+</div>
+</footer>
+<!-- Interactive Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ripple effect or micro-interactions could be added here
+            console.log('EasyVitta Noir Dashboard Initialized');
+            
+            // Simulating real-time data shifts
+            const stats = document.querySelectorAll('h2');
+            stats.forEach(stat => {
+                stat.addEventListener('mouseenter', () => {
+                    stat.style.transform = 'translateY(-2px)';
+                    stat.style.transition = 'transform 0.2s ease';
+                });
+                stat.addEventListener('mouseleave', () => {
+                    stat.style.transform = 'translateY(0px)';
+                });
+            });
+        });
+    </script>
+</body></html>
