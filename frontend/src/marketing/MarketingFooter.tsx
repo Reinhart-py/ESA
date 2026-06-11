@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Shield } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 
 interface MarketingFooterProps {
   themeMode: 'light' | 'dark';
@@ -10,6 +11,9 @@ export default function MarketingFooter({
   themeMode,
   onOpenTopic
 }: MarketingFooterProps) {
+  const context = useContext(AppContext);
+  const title = context?.webConfig?.WEBSITE_TITLE || 'EAC Solutions';
+
   return (
     <footer style={{
       background: themeMode === 'light' ? '#0A1D37' : '#070A10',
@@ -23,7 +27,7 @@ export default function MarketingFooter({
             <div style={{ background: '#B58A2B', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Shield size={18} color="#fff" />
             </div>
-            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>EAC Solutions</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{title}</span>
           </div>
           <p style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>Managed bookkeeping & compliance prepared for modern businesses.</p>
         </div>
@@ -55,7 +59,7 @@ export default function MarketingFooter({
       </div>
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8rem' }}>
-        <span>&copy; {new Date().getFullYear()} EAC Solutions LLC. All rights reserved.</span>
+        <span>&copy; {new Date().getFullYear()} {title} LLC. All rights reserved.</span>
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <span>Privacy Policy</span>
           <span>Terms of Use</span>

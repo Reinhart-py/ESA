@@ -140,7 +140,7 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 800 }}>Client Workspaces Directory</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Provision new tenants, adjust storage constraints, and manage suspension locks.</p>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Provision new tenants, adjust storage constraints, and manage suspension locks.</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -150,7 +150,7 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
             gap: '0.5rem',
             padding: '0.5rem 1rem',
             background: '#b58a2b',
-            color: '#fff',
+            color: 'var(--text-primary)',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -166,19 +166,19 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
       {/* Filters bar */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search organizations by name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', width: '100%', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', width: '100%', fontSize: '0.85rem' }}
           />
         </div>
         <select
           value={businessType}
           onChange={e => setBusinessType(e.target.value)}
-          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', minWidth: '150px', fontSize: '0.85rem' }}
+          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', minWidth: '150px', fontSize: '0.85rem' }}
         >
           <option value="">All Business Types</option>
           <option value="LLC">LLC</option>
@@ -188,17 +188,17 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
       </div>
 
       {/* Table grid */}
-      <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: '#94a3b8' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
             <RefreshCw size={24} className="animate-spin" />
           </div>
         ) : tenants.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No tenant workspaces identified matching active search criteria.</div>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No tenant workspaces identified matching active search criteria.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8', fontSize: '0.85rem' }}>
+              <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)', fontSize: '0.85rem' }}>
                 <th style={{ padding: '0.75rem' }}>Tenant Details</th>
                 <th style={{ padding: '0.75rem' }}>Country</th>
                 <th style={{ padding: '0.75rem' }}>Storage Allocated</th>
@@ -210,10 +210,10 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
               {tenants.map(tenant => {
                 const isSuspended = !!tenant.suspension;
                 return (
-                  <tr key={tenant.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#e2e8f0', fontSize: '0.85rem' }}>
+                  <tr key={tenant.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                     <td style={{ padding: '0.75rem' }}>
-                      <strong style={{ display: 'block', color: '#fff', fontSize: '0.9rem' }}>{tenant.name}</strong>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{tenant.business_type} · ID: {tenant.id.substring(0,8)}...</span>
+                      <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{tenant.name}</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{tenant.business_type} · ID: {tenant.id.substring(0,8)}...</span>
                     </td>
                     <td style={{ padding: '0.75rem' }}>
                       <span style={{ fontSize: '0.75rem', background: '#3b82f620', color: '#3b82f6', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
@@ -227,11 +227,11 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                             type="number"
                             value={newQuotaGb}
                             onChange={e => setNewQuotaGb(Number(e.target.value))}
-                            style={{ width: '70px', padding: '0.25rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.8rem' }}
+                            style={{ width: '70px', padding: '0.25rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                           />
                           <span style={{ fontSize: '0.8rem' }}>GB</span>
-                          <button onClick={() => handleUpdateQuota(tenant.id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '0.25rem', borderRadius: '4px', cursor: 'pointer' }}><Check size={14} /></button>
-                          <button onClick={() => setEditingQuotaId(null)} style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '0.25rem', borderRadius: '4px', cursor: 'pointer' }}><X size={14} /></button>
+                          <button onClick={() => handleUpdateQuota(tenant.id)} style={{ background: '#10b981', border: 'none', color: 'var(--text-primary)', padding: '0.25rem', borderRadius: '4px', cursor: 'pointer' }}><Check size={14} /></button>
+                          <button onClick={() => setEditingQuotaId(null)} style={{ background: '#ef4444', border: 'none', color: 'var(--text-primary)', padding: '0.25rem', borderRadius: '4px', cursor: 'pointer' }}><X size={14} /></button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -241,7 +241,7 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                               setEditingQuotaId(tenant.id);
                               setNewQuotaGb(Math.floor(tenant.storage_limit_bytes / (1024 * 1024 * 1024)));
                             }}
-                            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                           >
                             <Edit2 size={12} />
                           </button>
@@ -308,29 +308,29 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
       {/* Onboard Tenant Modal Overlay */}
       {showCreateModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', width: '450px', color: '#fff' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--card-border)', width: '450px', color: 'var(--text-primary)' }}>
             <h3 style={{ margin: '0 0 1.5rem 0', fontWeight: 'bold', fontSize: '1.25rem' }}>Onboard Client Workspace</h3>
             
             <form onSubmit={handleCreateTenant} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Organization Name</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Organization Name</label>
                 <input 
                   type="text" 
                   required 
                   placeholder="e.g. Stark Industries" 
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Business Type</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Business Type</label>
                   <select
                     value={newType}
                     onChange={e => setNewType(e.target.value)}
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="LLC">LLC</option>
                     <option value="Corporation">Corporation</option>
@@ -338,7 +338,7 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                   </select>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Country Jurisdiction</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Country Jurisdiction</label>
                   <input 
                     type="text" 
                     maxLength={2}
@@ -346,20 +346,20 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                     placeholder="US" 
                     value={newCountry}
                     onChange={e => setNewCountry(e.target.value.toUpperCase())}
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   />
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Initial Storage Quota (GB)</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Initial Storage Quota (GB)</label>
                 <input 
                   type="number" 
                   required 
                   min={1}
                   value={newLimitGb}
                   onChange={e => setNewLimitGb(Number(e.target.value))}
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
 
@@ -367,14 +367,14 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                 <button 
                   type="button" 
                   onClick={() => setShowCreateModal(false)}
-                  style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}
+                  style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--card-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={savingTenant}
-                  style={{ padding: '0.5rem 1rem', background: '#b58a2b', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ padding: '0.5rem 1rem', background: '#b58a2b', border: 'none', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   {savingTenant ? 'Provisioning...' : 'Provision Tenant'}
                 </button>
@@ -387,26 +387,26 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
       {/* Lock Workspace Modal Overlay */}
       {suspendingTenantId && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', width: '450px', color: '#fff' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--card-border)', width: '450px', color: 'var(--text-primary)' }}>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', color: '#ef4444', marginBottom: '1rem' }}>
               <ShieldAlert size={20} />
               <h3 style={{ margin: 0, fontWeight: 'bold', fontSize: '1.2rem' }}>Lock Tenant Workspace</h3>
             </div>
             
             <form onSubmit={handleSuspendTenant} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-sec)', lineHeight: 1.5 }}>
                 Locking this workspace will suspend all user log-ins and API request gates associated with this tenant immediately.
               </p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Suspension Reason / Note</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Suspension Reason / Note</label>
                 <textarea 
                   required 
                   rows={3}
                   placeholder="e.g. Delinquent account subscription renewal balance unpaid..." 
                   value={suspensionReason}
                   onChange={e => setSuspensionReason(e.target.value)}
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                 />
               </div>
 
@@ -417,14 +417,14 @@ export default function TenantManager({ onImpersonate, impersonatingId }: Tenant
                     setSuspendingTenantId(null);
                     setSuspensionReason('');
                   }}
-                  style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}
+                  style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--card-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={suspending}
-                  style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   {suspending ? 'Locking...' : 'Lock Workspace'}
                 </button>

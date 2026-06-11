@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { 
-  Users, Building, Briefcase, PlusCircle, Trash2, 
+  Users, User, Building, Briefcase, PlusCircle, Trash2, 
   Search, Check, ShieldAlert, Sparkles, X, Activity,
   Phone, Mail, Calendar, DollarSign, RefreshCw, BarChart2
 } from 'lucide-react';
@@ -458,8 +458,8 @@ export default function CrmManagement() {
                   label: 'Lead Name',
                   sortable: true,
                   render: (row) => (
-                    <div style={{ cursor: 'pointer', fontWeight: 600 }} onClick={() => setSelectedLead(row)}>
-                      👤 {row.first_name} {row.last_name}
+                    <div style={{ cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={() => setSelectedLead(row)}>
+                      <User size={14} style={{ color: 'var(--accent-color)' }} /> {row.first_name} {row.last_name}
                     </div>
                   )
                 },
@@ -590,7 +590,7 @@ export default function CrmManagement() {
                 key: 'name',
                 label: 'Name',
                 sortable: true,
-                render: (row) => <strong>👤 {row.first_name} {row.last_name}</strong>
+                render: (row) => <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={14} style={{ color: 'var(--accent-color)' }} /> <strong>{row.first_name} {row.last_name}</strong></span>
               },
               {
                 key: 'job_title',
@@ -668,7 +668,7 @@ export default function CrmManagement() {
                         style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '0.75rem', borderRadius: 6, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
                       >
                         <strong style={{ fontSize: '0.85rem' }}>{deal.title}</strong>
-                        <div style={{ color: 'var(--text-sec)' }}>🏢 {deal.account?.name || 'Private Corp'}</div>
+                        <div style={{ color: 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Building size={14} style={{ color: 'var(--accent-color)' }} /> {deal.account?.name || 'Private Corp'}</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                           <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>
                             ${((deal.amount_cents || 0) / 100).toLocaleString()}
@@ -707,7 +707,7 @@ export default function CrmManagement() {
                   key: 'name',
                   label: 'Workspace / Organization Name',
                   sortable: true,
-                  render: (row) => <strong>🏢 {row.name}</strong>
+                  render: (row) => <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Building size={14} style={{ color: 'var(--accent-color)' }} /> <strong>{row.name}</strong></span>
                 },
                 {
                   key: 'business_type',

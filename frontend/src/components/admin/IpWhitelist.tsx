@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../api/client.ts';
-import { Globe, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
+import { Globe, PlusCircle, Trash2, RefreshCw, Building } from 'lucide-react';
 
 interface IpEntry {
   id: string;
@@ -68,7 +68,7 @@ export default function IpWhitelist() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 800 }}>Admin Route IP Whitelisting</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Enforce network access constraints restricting super-admin login requests to whitelisted IP blocks.</p>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Enforce network access constraints restricting super-admin login requests to whitelisted IP blocks.</p>
         </div>
         <button
           onClick={fetchIps}
@@ -78,9 +78,9 @@ export default function IpWhitelist() {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.5rem 1rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            color: '#fff',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'var(--bg-color)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--card-border)',
             borderRadius: '6px',
             cursor: 'pointer',
             fontSize: '0.85rem',
@@ -94,19 +94,19 @@ export default function IpWhitelist() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
         {/* Whitelist table */}
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
           {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: '#94a3b8' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
               <RefreshCw size={24} className="animate-spin" />
             </div>
           ) : ips.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
               No IP restrictions configured. The platform is accessible globally.
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8', fontSize: '0.85rem' }}>
+                <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)', fontSize: '0.85rem' }}>
                   <th style={{ padding: '0.75rem' }}>Whitelisted IP Address</th>
                   <th style={{ padding: '0.75rem' }}>Description / Scope</th>
                   <th style={{ padding: '0.75rem' }}>Added Date</th>
@@ -115,20 +115,20 @@ export default function IpWhitelist() {
               </thead>
               <tbody>
                 {ips.map(entry => (
-                  <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                    <td style={{ padding: '0.75rem', fontFamily: 'monospace', color: '#fff', fontWeight: 'bold' }}>
-                      🏢 {entry.ip_address}
+                  <tr key={entry.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                    <td style={{ padding: '0.75rem', fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Building size={14} /> {entry.ip_address}
                     </td>
-                    <td style={{ padding: '0.75rem', color: '#e2e8f0' }}>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-sec)' }}>
                       {entry.description || 'N/A'}
                     </td>
-                    <td style={{ padding: '0.75rem', color: '#94a3b8' }}>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>
                       {new Date(entry.created_at).toLocaleDateString()}
                     </td>
                     <td style={{ padding: '0.75rem', textAlign: 'right' }}>
                       <button
                         onClick={() => handleDeleteIp(entry.id)}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -141,30 +141,30 @@ export default function IpWhitelist() {
         </div>
 
         {/* Add whitelist record Form */}
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', height: 'fit-content' }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 'bold', fontSize: '1rem', color: '#fff' }}>Whitelist Access IP</h3>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', height: 'fit-content' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-primary)' }}>Whitelist Access IP</h3>
           
           <form onSubmit={handleAddIp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>IP Address Range</label>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)' }}>IP Address Range</label>
               <input 
                 type="text" 
                 required 
                 placeholder="e.g. 192.168.1.1 or 0.0.0.0" 
                 value={ipAddress}
                 onChange={e => setIpAddress(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Scope Description</label>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)' }}>Scope Description</label>
               <input 
                 type="text" 
                 placeholder="e.g. Headquarters Office" 
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
               />
             </div>
 
@@ -177,8 +177,8 @@ export default function IpWhitelist() {
                 justifyContent: 'center',
                 gap: '0.5rem',
                 padding: '0.55rem',
-                background: '#b58a2b',
-                color: '#fff',
+                background: 'var(--accent-color)',
+                color: 'var(--text-primary)',
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 'bold',

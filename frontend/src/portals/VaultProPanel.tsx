@@ -743,7 +743,7 @@ export default function VaultProPanel({
               {currentFolderId && (
                 <button 
                   onClick={() => setCurrentFolderId(null)}
-                  style={{ padding: '0.5rem 1rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  style={{ padding: '0.5rem 1rem', background: '#334155', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
                 >
                   ← Up Folder
                 </button>
@@ -761,9 +761,9 @@ export default function VaultProPanel({
                   placeholder="New folder name"
                   value={newFolderName}
                   onChange={e => setNewFolderName(e.target.value)}
-                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff' }}
+                  style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
                 />
-                <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <FolderPlus size={16} /> Create
                 </button>
               </form>
@@ -771,13 +771,13 @@ export default function VaultProPanel({
 
             {/* Bulk Actions */}
             {selectedIds.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', background: '#1e293b', padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--card-bg)', padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-sec)', display: 'flex', alignItems: 'center' }}>
                   {selectedIds.length} Selected
                 </span>
                 <button 
                   onClick={handleBulkDownload}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
                 >
                   <Download size={14} /> Bulk Download (.ZIP)
                 </button>
@@ -786,7 +786,7 @@ export default function VaultProPanel({
           </div>
 
           {/* Folders & Files Grid */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
             {folders.length === 0 && files.length === 0 ? (
               <EmptyState 
                 icon={<FolderOpen size={44} />}
@@ -796,11 +796,11 @@ export default function VaultProPanel({
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8' }}>
+                  <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)' }}>
                     <th style={{ padding: '0.75rem', width: '40px' }}>
                     <button 
                       onClick={toggleSelectAll} 
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
                     >
                       {selectedIds.length === files.length && files.length > 0 ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
@@ -815,13 +815,13 @@ export default function VaultProPanel({
               </thead>
               <tbody>
                 {folders.map(f => (
-                  <tr key={f.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                  <tr key={f.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
                     <td style={{ padding: '0.75rem' }}></td>
                     <td 
                       style={{ padding: '0.75rem', cursor: 'pointer', color: '#3b82f6', fontWeight: 'bold' }} 
                       onClick={() => setCurrentFolderId(f.id)}
                     >
-                      📁 {f.name}
+                      {f.name}
                     </td>
                     <td>-</td>
                     <td>Folder</td>
@@ -832,18 +832,18 @@ export default function VaultProPanel({
                 ))}
                 
                 {files.map(file => (
-                  <tr key={file.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#cbd5e1' }}>
+                  <tr key={file.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-sec)' }}>
                     <td style={{ padding: '0.75rem' }}>
                       <button 
                         onClick={() => toggleSelectFile(file.id)}
-                        style={{ background: 'none', border: 'none', color: '#00a896', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer' }}
                       >
                         {selectedIds.includes(file.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
                     </td>
                     <td style={{ padding: '0.75rem' }}>
                       <span onClick={() => handleOpenPreview(file)} style={{ cursor: 'pointer', color: '#60a5fa', textDecoration: 'underline' }}>
-                        📄 {file.name}
+                        {file.name}
                       </span>
                     </td>
                     <td>{(file.size_bytes / 1024 / 1024).toFixed(2)} MB</td>
@@ -862,7 +862,7 @@ export default function VaultProPanel({
                     <td>
                       <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                         {file.is_legal_hold && (
-                          <span style={{ fontSize: '0.7rem', background: '#ef4444', color: '#fff', padding: '0.15rem 0.35rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
+                          <span style={{ fontSize: '0.7rem', background: '#ef4444', color: 'var(--text-primary)', padding: '0.15rem 0.35rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
                             <Scale size={10} /> Hold
                           </span>
                         )}
@@ -872,7 +872,7 @@ export default function VaultProPanel({
                           </span>
                         )}
                         {!file.is_legal_hold && !file.retention_until && (
-                          <span style={{ color: '#64748b', fontSize: '0.8rem' }}>None</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>
                         )}
                       </div>
                     </td>
@@ -880,7 +880,7 @@ export default function VaultProPanel({
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                         <button 
                           onClick={() => handleOpenPreview(file)}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#10b981', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: '#10b981', cursor: 'pointer' }}
                           title="Preview document"
                         >
                           <Eye size={14} />
@@ -888,7 +888,7 @@ export default function VaultProPanel({
 
                         <button 
                           onClick={() => handleOpenCompliance(file)}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#f59e0b', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: '#f59e0b', cursor: 'pointer' }}
                           title="Compliance & Retention"
                         >
                           <Scale size={14} />
@@ -896,7 +896,7 @@ export default function VaultProPanel({
 
                         <button 
                           onClick={() => { setActiveFile(file); setShowShareModal(true); }}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#3b82f6', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: '#3b82f6', cursor: 'pointer' }}
                           title="Share link"
                         >
                           <Share2 size={14} />
@@ -904,7 +904,7 @@ export default function VaultProPanel({
                         
                         <button 
                           onClick={() => { setActiveFile(file); setShowSignModal(true); }}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#00a896', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: 'var(--accent-color)', cursor: 'pointer' }}
                           title="E-Sign document"
                         >
                           <PenTool size={14} />
@@ -912,7 +912,7 @@ export default function VaultProPanel({
 
                         <button 
                           onClick={() => handleOpenVersions(file)}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#8b5cf6', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: '#8b5cf6', cursor: 'pointer' }}
                           title="Version History"
                         >
                           <History size={14} />
@@ -920,7 +920,7 @@ export default function VaultProPanel({
 
                         <button 
                           onClick={() => setDeleteConfirmId(file.id)}
-                          style={{ padding: '0.35rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
+                          style={{ padding: '0.35rem', background: 'var(--bg-color)', border: '1px solid var(--card-border)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
                           title="Delete file"
                         >
                           <Trash2 size={14} />
@@ -935,8 +935,8 @@ export default function VaultProPanel({
           </div>
 
           {/* Secure Document Upload Dropzone */}
-          <div style={{ marginTop: '1rem', padding: '1.5rem', background: '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem' }}>Secure Document Vault Upload</h3>
+          <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>Secure Document Vault Upload</h3>
             {uploadError && (
               <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
                 <AlertTriangle size={16} /> {uploadError}
@@ -950,7 +950,7 @@ export default function VaultProPanel({
               onClick={() => fileInputRef.current?.click()}
               style={{
                 border: isDragging ? '2px dashed #10b981' : '2px dashed rgba(255,255,255,0.1)',
-                background: isDragging ? 'rgba(16, 185, 129, 0.05)' : '#0f172a',
+                background: isDragging ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-color)',
                 padding: '2rem',
                 borderRadius: '8px',
                 textAlign: 'center',
@@ -965,16 +965,16 @@ export default function VaultProPanel({
                 onChange={handleFileChange} 
                 style={{ display: 'none' }} 
               />
-              <div style={{ color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+              <div style={{ color: 'var(--text-sec)', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
                 <FolderOpen size={36} style={{ color: isDragging ? '#10b981' : '#64748b' }} />
                 {uploadName ? (
                   <div>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{uploadName}</span>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>({(uploadSize / 1024).toFixed(1)} KB)</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{uploadName}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>({(uploadSize / 1024).toFixed(1)} KB)</span>
                   </div>
                 ) : (
                   <div>
-                    <strong style={{ color: '#fff' }}>Drag & drop files here</strong> or <span style={{ color: '#10b981' }}>browse records</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>Drag & drop files here</strong> or <span style={{ color: '#10b981' }}>browse records</span>
                     <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '0.25rem' }}>Max file size: 50MB. Supported: PDF, DOCX, XLSX, CSV, TXT, PNG, JPEG.</span>
                   </div>
                 )}
@@ -986,7 +986,7 @@ export default function VaultProPanel({
                 <button
                   type="button"
                   onClick={() => { setUploadName(''); setUploadBase64(''); setUploadSize(0); }}
-                  style={{ padding: '0.5rem 1rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  style={{ padding: '0.5rem 1rem', background: '#334155', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
                 >
                   Cancel
                 </button>
@@ -995,7 +995,7 @@ export default function VaultProPanel({
               <select 
                 value={uploadCategory} 
                 onChange={e => setUploadCategory(e.target.value)}
-                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
               >
                 <option value="General">General</option>
                 <option value="Taxation">Taxation</option>
@@ -1006,7 +1006,7 @@ export default function VaultProPanel({
               <button 
                 type="submit" 
                 disabled={!uploadName}
-                style={{ padding: '0.5rem 1.5rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: uploadName ? 1 : 0.6 }}
+                style={{ padding: '0.5rem 1.5rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: uploadName ? 1 : 0.6 }}
               >
                 Upload to Vault
               </button>
@@ -1017,28 +1017,28 @@ export default function VaultProPanel({
 
       {/* RENDER TRASH TAB */}
       {activeTab === 'trash' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, color: '#fff' }}>Compliance Trash Bin (Soft-Deleted Files)</h3>
+            <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Compliance Trash Bin (Soft-Deleted Files)</h3>
             <button 
               onClick={fetchTrashFiles}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', background: '#334155', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', background: '#334155', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
             >
               <RefreshCw size={12} className={trashLoading ? 'animate-spin' : ''} /> Refresh Trash
             </button>
           </div>
 
           {trashLoading ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading compliance vault logs...</div>
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-sec)' }}>Loading compliance vault logs...</div>
           ) : trashFiles.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               <CheckCircle size={32} style={{ color: '#10b981', marginBottom: '0.5rem' }} />
               <p style={{ margin: 0 }}>The trash bin is currently empty. All documents conform to active compliance states.</p>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8' }}>
+                <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)' }}>
                   <th>Name</th>
                   <th>Category</th>
                   <th>Compliance Status</th>
@@ -1047,13 +1047,13 @@ export default function VaultProPanel({
               </thead>
               <tbody>
                 {trashFiles.map(file => (
-                  <tr key={file.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#cbd5e1' }}>
-                    <td style={{ padding: '0.75rem' }}>📄 {file.name}</td>
+                  <tr key={file.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-sec)' }}>
+                    <td style={{ padding: '0.75rem' }}>{file.name}</td>
                     <td>{file.category}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.35rem' }}>
                         {file.is_legal_hold && (
-                          <span style={{ fontSize: '0.7rem', background: '#ef4444', color: '#fff', padding: '0.15rem 0.35rem', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', background: '#ef4444', color: 'var(--text-primary)', padding: '0.15rem 0.35rem', borderRadius: '4px' }}>
                             Legal Hold Active
                           </span>
                         )}
@@ -1070,7 +1070,7 @@ export default function VaultProPanel({
                     <td style={{ padding: '0.75rem' }}>
                       <button
                         onClick={() => handleRestoreFile(file.id)}
-                        style={{ padding: '0.35rem 0.75rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                        style={{ padding: '0.35rem 0.75rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                       >
                         Restore File
                       </button>
@@ -1088,11 +1088,11 @@ export default function VaultProPanel({
         <div style={{ display: 'flex', gap: '1.5rem', width: '100%', flexDirection: 'row', flexWrap: 'wrap' }}>
           {/* Main Search Column */}
           <div style={{ flex: '3 1 600px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Search size={20} style={{ color: '#10b981' }} /> AI OCR Advanced Search Engine
               </h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
                 Search across all uploaded files, full-text digitized OCR indexes, client tasks, and compliance obligations.
               </p>
 
@@ -1104,25 +1104,25 @@ export default function VaultProPanel({
                     placeholder="Enter keywords (e.g., 'invoice', 'payroll', 'irs')..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.95rem' }}
+                    style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
                   />
                   <button 
                     id="search-btn-trigger"
                     type="submit" 
-                    style={{ padding: '0.75rem 2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', transition: 'background-color 0.2s' }}
+                    style={{ padding: '0.75rem 2rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', transition: 'background-color 0.2s' }}
                   >
                     <Search size={18} /> Search
                   </button>
                 </div>
 
                 {/* Filters Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Category</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Category</label>
                     <select
                       value={searchFilters.category}
                       onChange={e => setSearchFilters(prev => ({ ...prev, category: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     >
                       <option value="">All Categories</option>
                       <option value="General">General</option>
@@ -1132,11 +1132,11 @@ export default function VaultProPanel({
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Status</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Status</label>
                     <select
                       value={searchFilters.status}
                       onChange={e => setSearchFilters(prev => ({ ...prev, status: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     >
                       <option value="">All Statuses</option>
                       <option value="Reviewing">Reviewing</option>
@@ -1145,41 +1145,41 @@ export default function VaultProPanel({
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Min Size (KB)</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Min Size (KB)</label>
                     <input
                       type="number"
                       placeholder="Min KB"
                       value={searchFilters.minSize}
                       onChange={e => setSearchFilters(prev => ({ ...prev, minSize: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Max Size (KB)</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Max Size (KB)</label>
                     <input
                       type="number"
                       placeholder="Max KB"
                       value={searchFilters.maxSize}
                       onChange={e => setSearchFilters(prev => ({ ...prev, maxSize: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Start Date</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Start Date</label>
                     <input
                       type="date"
                       value={searchFilters.startDate}
                       onChange={e => setSearchFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>End Date</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>End Date</label>
                     <input
                       type="date"
                       value={searchFilters.endDate}
                       onChange={e => setSearchFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                     />
                   </div>
                 </div>
@@ -1188,12 +1188,12 @@ export default function VaultProPanel({
 
             {/* Results sections */}
             {searchLoading ? (
-              <div style={{ background: '#1e293b', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: '#94a3b8' }}>
+              <div style={{ background: 'var(--card-bg)', padding: '3rem', borderRadius: '12px', border: '1px solid var(--card-border)', textAlign: 'center', color: 'var(--text-sec)' }}>
                 <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 1rem', display: 'block', color: '#10b981' }} />
                 Analyzing indexes and ranking relevant documents...
               </div>
             ) : (searchResults.length === 0 && searchTasksResults.length === 0 && searchObligationsResults.length === 0) ? (
-              <div style={{ background: '#1e293b', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: '#64748b' }}>
+              <div style={{ background: 'var(--card-bg)', padding: '3rem', borderRadius: '12px', border: '1px solid var(--card-border)', textAlign: 'center', color: 'var(--text-muted)' }}>
                 No records found. Try adjusting filters or searching for terms like "invoice", "payroll", or "compliance".
               </div>
             ) : (
@@ -1201,32 +1201,32 @@ export default function VaultProPanel({
                 
                 {/* 1. Digitized Files */}
                 {searchResults.length > 0 && (
-                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <FileText size={18} style={{ color: '#3b82f6' }} /> Digitized Vault Documents ({searchResults.length})
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {searchResults.map((result: any) => (
-                        <div key={result.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                        <div key={result.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>📄 {result.name}</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-sec)' }}>{result.name}</span>
                               <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: result.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: result.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
                                 Relevance: {result.relevanceScore}%
                               </span>
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sec)', marginTop: '0.25rem' }}>
                               Category: {result.category} | Size: {(result.size_bytes / 1024).toFixed(1)} KB | Status: {result.status || 'Reviewing'}
                             </div>
                             {result.ocr_text && (
-                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '4px', borderLeft: '3px solid #10b981' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '4px', borderLeft: '3px solid #10b981' }}>
                                 Snippet: {result.ocr_text.length > 150 ? result.ocr_text.slice(0, 150) + '...' : result.ocr_text}
                               </div>
                             )}
                           </div>
                           <button 
                             onClick={() => handleOpenPreview(result)}
-                            style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                            style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                           >
                             Inspect Indexes
                           </button>
@@ -1238,25 +1238,25 @@ export default function VaultProPanel({
 
                 {/* 2. Tasks */}
                 {searchTasksResults.length > 0 && (
-                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <CheckSquare size={18} style={{ color: '#a855f7' }} /> Client Tasks & Workflow Requests ({searchTasksResults.length})
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {searchTasksResults.map((task: any) => (
-                        <div key={task.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                        <div key={task.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>🔧 {task.title}</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-sec)' }}>🔧 {task.title}</span>
                               <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: task.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: task.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
                                 Relevance: {task.relevanceScore}%
                               </span>
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sec)', marginTop: '0.25rem' }}>
                               Status: {task.status || 'Pending'} | Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}
                             </div>
                             {task.description && (
-                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#cbd5e1' }}>{task.description}</p>
+                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-sec)' }}>{task.description}</p>
                             )}
                           </div>
                         </div>
@@ -1267,25 +1267,25 @@ export default function VaultProPanel({
 
                 {/* 3. Compliance Obligations */}
                 {searchObligationsResults.length > 0 && (
-                  <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h4 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <Scale size={18} style={{ color: '#eab308' }} /> Compliance Obligations & Deadlines ({searchObligationsResults.length})
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {searchObligationsResults.map((ob: any) => (
-                        <div key={ob.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                        <div key={ob.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontWeight: 'bold', color: '#cbd5e1' }}>⚖️ {ob.title}</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-sec)' }}>⚖️ {ob.title}</span>
                               <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: ob.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: ob.relevanceScore >= 80 ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
                                 Relevance: {ob.relevanceScore}%
                               </span>
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sec)', marginTop: '0.25rem' }}>
                               Frequency: {ob.frequency} | Due: {ob.due_date ? new Date(ob.due_date).toLocaleDateString() : 'N/A'}
                             </div>
                             {ob.notes && (
-                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#cbd5e1' }}>{ob.notes}</p>
+                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-sec)' }}>{ob.notes}</p>
                             )}
                           </div>
                         </div>
@@ -1301,20 +1301,20 @@ export default function VaultProPanel({
           {/* Sidebar Column */}
           <div style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Save Query Card */}
-            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem' }}>Save Search Query</h4>
+            <div style={{ background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Save Search Query</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <input 
                   type="text" 
                   placeholder="Query nickname (e.g. Q3 Audits)..."
                   value={newSearchSaveName}
                   onChange={e => setNewSearchSaveName(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                 />
                 <button 
                   onClick={handleSaveSearch}
                   disabled={!searchQuery.trim()}
-                  style={{ width: '100%', padding: '0.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: searchQuery.trim() ? 1 : 0.6 }}
+                  style={{ width: '100%', padding: '0.5rem', background: '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem', opacity: searchQuery.trim() ? 1 : 0.6 }}
                 >
                   Save Active Search
                 </button>
@@ -1322,24 +1322,24 @@ export default function VaultProPanel({
             </div>
 
             {/* Saved Queries List */}
-            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <History size={16} style={{ color: '#3b82f6' }} /> Saved Searches
               </h4>
               {savedSearches.length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>No saved searches found.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>No saved searches found.</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {savedSearches.map(saved => (
                     <button
                       key={saved.id}
                       onClick={() => handleApplySavedSearch(saved)}
-                      style={{ width: '100%', textAlign: 'left', background: '#0f172a', padding: '0.6rem 0.75rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.8rem', transition: 'border-color 0.2s' }}
+                      style={{ width: '100%', textAlign: 'left', background: 'var(--bg-color)', padding: '0.6rem 0.75rem', border: '1px solid var(--card-border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-sec)', fontSize: '0.8rem', transition: 'border-color 0.2s' }}
                       onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)'}
                       onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
                     >
-                      <div style={{ fontWeight: 'bold', color: '#fff' }}>{saved.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{saved.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-sec)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         Query: "{saved.query}"
                       </div>
                     </button>
@@ -1349,17 +1349,17 @@ export default function VaultProPanel({
             </div>
 
             {/* Top Searches / Analytics Card */}
-            <div style={{ background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <BarChart2 size={16} style={{ color: '#10b981' }} /> Top Searches
               </h4>
               {searchAnalytics.length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>No analytics data available yet.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>No analytics data available yet.</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {searchAnalytics.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.02)' }}>
-                      <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>"{item.query}"</span>
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-color)', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', border: '1px solid var(--card-border)' }}>
+                      <span style={{ color: 'var(--text-sec)', fontWeight: 'bold' }}>"{item.query}"</span>
                       <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
                         {item.count} searches
                       </span>
@@ -1374,22 +1374,22 @@ export default function VaultProPanel({
 
       {/* RENDER DRIVE SYNC & MAINTENANCE TAB */}
       {activeTab === 'maintenance' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <RefreshCw size={20} style={{ color: '#f59e0b' }} /> Google Drive Sync & Folder Repairs
             </h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: 0 }}>
               Verify integrity of physical Google Drive folders and reconcile file metadata records against the database ledger.
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
             {/* Folder repair */}
-            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Folder Hierarchy Repair Routine</h4>
-                <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Folder Hierarchy Repair Routine</h4>
+                <p style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
                   Scans the Google Drive shared space to ensure the tenant root folder and all specific category subdirectories (compliance, payroll, etc.) exist. Missing directories are auto-provisioned.
                 </p>
               </div>
@@ -1414,7 +1414,7 @@ export default function VaultProPanel({
 
                 {repairResults && (
                   <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: '6px', fontSize: '0.8rem', color: '#fca5a5' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#fff' }}>Status: {repairResults.status}</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Status: {repairResults.status}</div>
                     <div>{repairResults.details}</div>
                   </div>
                 )}
@@ -1422,10 +1422,10 @@ export default function VaultProPanel({
             </div>
 
             {/* Sync reconciliation */}
-            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>File Sync & Reconciliation Run</h4>
-                <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>File Sync & Reconciliation Run</h4>
+                <p style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
                   Performs a checksum validation of database files against actual cloud storage files. Automatically recovers orphaned storage uploads and corrects size/metadata anomalies.
                 </p>
               </div>
@@ -1437,7 +1437,7 @@ export default function VaultProPanel({
                     width: '100%',
                     padding: '0.6rem',
                     background: '#10b981',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     border: 'none',
                     borderRadius: '6px',
                     fontWeight: 'bold',
@@ -1449,15 +1449,15 @@ export default function VaultProPanel({
                 </button>
 
                 {reconcileResults && (
-                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '6px', fontSize: '0.8rem', color: '#cbd5e1' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: '#fff' }}>Status: {reconcileResults.status}</div>
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--text-sec)' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Status: {reconcileResults.status}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', margin: '0.5rem 0' }}>
                       <div>DB Files: {reconcileResults.totalDbFiles}</div>
                       <div>Cloud Files: {reconcileResults.totalStorageFiles}</div>
                       <div>Missing: {reconcileResults.missingCount}</div>
                       <div>Orphans Registered: {reconcileResults.orphansCount}</div>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-sec)', borderTop: '1px solid var(--card-border)', paddingTop: '0.5rem' }}>
                       {reconcileResults.details}
                     </div>
                   </div>
@@ -1470,50 +1470,50 @@ export default function VaultProPanel({
 
       {/* RENDER DRIVE STORAGE ANALYTICS TAB */}
       {activeTab === 'analytics' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <BarChart2 size={20} style={{ color: '#8b5cf6' }} /> Drive Storage Insights & Forecasting
               </h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+              <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: 0 }}>
                 Real-time metrics tracking storage consumption, category distribution, historical file growth, and next-month forecasting.
               </p>
             </div>
             <button 
               onClick={fetchStorageAnalytics}
-              style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+              style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
             >
               Refresh Stats
             </button>
           </div>
 
           {loadingAnalytics ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Gathering workspace storage diagnostics...</div>
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-sec)' }}>Gathering workspace storage diagnostics...</div>
           ) : !analyticsData ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>No analytics records loaded. Click Refresh to query database ledger.</div>
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>No analytics records loaded. Click Refresh to query database ledger.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {/* Metric Summary Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Storage Consumed</div>
-                  <div style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ color: 'var(--text-sec)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Storage Consumed</div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
                     {(analyticsData.totalSizeBytes / 1024 / 1024).toFixed(2)} MB
                   </div>
-                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Across all active directories</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Across all active directories</div>
                 </div>
 
-                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total File Count</div>
-                  <div style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ color: 'var(--text-sec)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Total File Count</div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
                     {analyticsData.totalFilesCount} Files
                   </div>
-                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Indexed in compliance ledger</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Indexed in compliance ledger</div>
                 </div>
 
-                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Forecasted Usage (Next Month)</div>
+                <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ color: 'var(--text-sec)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Forecasted Usage (Next Month)</div>
                   <div style={{ color: '#8b5cf6', fontSize: '1.75rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
                     {(analyticsData.forecasting.predictedNextMonthSizeBytes / 1024 / 1024).toFixed(2)} MB
                   </div>
@@ -1525,21 +1525,21 @@ export default function VaultProPanel({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
                 {/* Category distribution */}
-                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>Distribution by Category</h4>
+                <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>Distribution by Category</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.keys(analyticsData.categories).length === 0 ? (
-                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No file categories classified yet.</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No file categories classified yet.</div>
                     ) : (
                       Object.entries(analyticsData.categories).map(([category, stats]: [string, any]) => {
                         const percent = analyticsData.totalSizeBytes > 0 ? (stats.size / analyticsData.totalSizeBytes) * 100 : 0;
                         return (
                           <div key={category}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '0.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>
                               <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{category} ({stats.count} files)</span>
                               <span>{(stats.size / 1024 / 1024).toFixed(2)} MB ({percent.toFixed(1)}%)</span>
                             </div>
-                            <div style={{ width: '100%', height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: '100%', height: '8px', background: 'var(--card-bg)', borderRadius: '4px', overflow: 'hidden' }}>
                               <div style={{ width: `${percent}%`, height: '100%', background: '#8b5cf6', borderRadius: '4px' }} />
                             </div>
                           </div>
@@ -1550,15 +1550,15 @@ export default function VaultProPanel({
                 </div>
 
                 {/* Growth over time */}
-                <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>Storage Growth History</h4>
+                <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>Storage Growth History</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {analyticsData.growth.length === 0 ? (
-                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No historical growth data found.</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No historical growth data found.</div>
                     ) : (
                       analyticsData.growth.slice(-6).map((m: any) => (
-                        <div key={m.month} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#cbd5e1', background: '#1e293b', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
-                          <span>📅 Month: {m.month}</span>
+                        <div key={m.month} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-sec)', background: 'var(--card-bg)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                          <span>Month: {m.month}</span>
                           <span style={{ color: '#10b981', fontWeight: 'bold' }}>+{(m.addedBytes / 1024 / 1024).toFixed(2)} MB added</span>
                         </div>
                       ))
@@ -1574,29 +1574,29 @@ export default function VaultProPanel({
       {/* COMPLIANCE & RETENTION POLICY MODAL */}
       {showComplianceModal && activeFile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '450px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', width: '450px', border: '1px solid var(--card-border)', position: 'relative' }}>
             <button 
               onClick={() => { setShowComplianceModal(false); setActiveFile(null); }}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ color: '#fff', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Scale size={20} style={{ color: '#f59e0b' }} /> Document Retention Rules
             </h3>
-            <p style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Configuring policy constraints for: <strong>{activeFile.name}</strong></p>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem' }}>Configuring policy constraints for: <strong>{activeFile.name}</strong></p>
 
             <form onSubmit={handleSaveCompliance} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem' }}>Retention Period (Until Date)</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-sec)', marginBottom: '0.5rem' }}>Retention Period (Until Date)</label>
                 <input 
                   type="date"
                   value={retentionDate}
                   onChange={e => setRetentionDate(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '0.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.25rem' }}>
                   Document cannot be purged or deleted permanently until this date has elapsed.
                 </span>
               </div>
@@ -1610,7 +1610,7 @@ export default function VaultProPanel({
                   style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                 />
                 <div>
-                  <label htmlFor="legalHold" style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer' }}>Apply Legal Hold</label>
+                  <label htmlFor="legalHold" style={{ color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer' }}>Apply Legal Hold</label>
                   <span style={{ fontSize: '0.75rem', color: '#fca5a5', display: 'block' }}>
                     Mandatory restriction override. Suspends normal scheduled deletion logs.
                   </span>
@@ -1632,25 +1632,25 @@ export default function VaultProPanel({
       {/* DOCUMENT & IMAGE PREVIEW OVERLAY MODAL */}
       {previewFile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', width: '800px', maxWidth: '90%', height: '80vh', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', width: '800px', maxWidth: '90%', height: '80vh', border: '1px solid var(--card-border)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
             <button 
               onClick={() => { setPreviewFile(null); setPreviewData(null); }}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Vault Intelligence Viewer</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>📄 {previewFile.name}</p>
+            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>Vault Intelligence Viewer</h3>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>{previewFile.name}</p>
 
             {/* Tab select inside preview */}
-            <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
               <button
                 onClick={() => setPreviewTab('document')}
                 style={{
                   padding: '0.35rem 0.75rem',
                   background: previewTab === 'document' ? '#334155' : 'transparent',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1664,7 +1664,7 @@ export default function VaultProPanel({
                 style={{
                   padding: '0.35rem 0.75rem',
                   background: previewTab === 'ocr' ? '#334155' : 'transparent',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1678,9 +1678,9 @@ export default function VaultProPanel({
             <div style={{ flex: 1, display: 'flex', gap: '1.25rem', overflow: 'hidden', marginTop: '0.5rem' }}>
               
               {/* Left Side: Document Preview or OCR */}
-              <div style={{ flex: 2, display: 'flex', flexDirection: 'column', background: '#0f172a', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', overflowY: 'auto' }}>
+              <div style={{ flex: 2, display: 'flex', flexDirection: 'column', background: 'var(--bg-color)', borderRadius: '8px', border: '1px solid var(--card-border)', padding: '1rem', overflowY: 'auto' }}>
                 {previewLoading ? (
-                  <div style={{ color: '#94a3b8', margin: 'auto' }}>Acquiring storage authorization tokens...</div>
+                  <div style={{ color: 'var(--text-sec)', margin: 'auto' }}>Acquiring storage authorization tokens...</div>
                 ) : previewData ? (
                   previewTab === 'document' ? (
                     // Document visual preview
@@ -1692,14 +1692,14 @@ export default function VaultProPanel({
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', margin: 'auto' }}
                       />
                     ) : (
-                      <div style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem', margin: 'auto' }}>
+                      <div style={{ color: 'var(--text-sec)', textAlign: 'center', padding: '2rem', margin: 'auto' }}>
                         <FileText size={48} style={{ margin: '0 auto 1rem', display: 'block', color: '#3b82f6' }} />
                         <p style={{ margin: '0 0 1rem 0' }}>Inline preview is not supported for file format: <strong>{previewData.mime_type || 'Unknown'}</strong></p>
                         <a 
                           href={previewData.url.startsWith('/') ? `http://localhost:5000${previewData.url}` : previewData.url} 
                           target="_blank" 
                           rel="noreferrer"
-                          style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold' }}
+                          style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#3b82f6', color: 'var(--text-primary)', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold' }}
                         >
                           Download & Open File
                         </a>
@@ -1711,7 +1711,7 @@ export default function VaultProPanel({
                       <div style={{ fontSize: '0.8rem', color: '#10b981', marginBottom: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>
                         ⚡ Extracted by EAC Solutions Document Intelligence (OCR) Engine
                       </div>
-                      <pre style={{ flex: 1, overflow: 'auto', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '6px', color: '#34d399', fontSize: '0.85rem', fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
+                      <pre style={{ flex: 1, overflow: 'auto', background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '1rem', borderRadius: '6px', color: '#34d399', fontSize: '0.85rem', fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
                         {previewData.ocr_text || 'No machine-readable OCR text extracted for this document.'}
                       </pre>
                     </div>
@@ -1722,9 +1722,9 @@ export default function VaultProPanel({
               </div>
 
               {/* Right Side: Workflow review, approval and assignment */}
-              <div style={{ flex: 1, background: '#1e293b', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
+              <div style={{ flex: 1, background: 'var(--card-bg)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
                  <div>
-                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Workflow Status</h4>
+                   <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Workflow Status</h4>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                      <span style={{
                        fontSize: '0.8rem',
@@ -1741,11 +1741,11 @@ export default function VaultProPanel({
 
                  {/* Assign Reviewer */}
                  <div>
-                   <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Assigned Reviewer</label>
+                   <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Assigned Reviewer</label>
                    <select 
                      value={previewFile.assigned_reviewer_id || ''} 
                      onChange={e => handleAssignReviewer(previewFile.id, e.target.value)}
-                     style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                     style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                    >
                      <option value="">Unassigned</option>
                      {tenantUsers.map(u => (
@@ -1756,11 +1756,11 @@ export default function VaultProPanel({
 
                  {/* Actions */}
                  {previewFile.status !== 'Approved' && (
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-                     <h4 style={{ margin: 0, color: '#fff', fontSize: '0.9rem' }}>Workflow Actions</h4>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
+                     <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Workflow Actions</h4>
                      <button
                        onClick={() => handleApprove(previewFile.id)}
-                       style={{ width: '100%', padding: '0.6rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                       style={{ width: '100%', padding: '0.6rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                      >
                        Approve Document
                      </button>
@@ -1768,7 +1768,7 @@ export default function VaultProPanel({
                      {!showRejectForm ? (
                        <button
                          onClick={() => setShowRejectForm(true)}
-                         style={{ width: '100%', padding: '0.6rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                         style={{ width: '100%', padding: '0.6rem', background: '#ef4444', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                        >
                          Reject Document
                        </button>
@@ -1778,18 +1778,18 @@ export default function VaultProPanel({
                            placeholder="Specify rejection reason..."
                            value={rejectionReason}
                            onChange={e => setRejectionReason(e.target.value)}
-                           style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.8rem', resize: 'vertical' }}
+                           style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.8rem', resize: 'vertical' }}
                          />
                          <div style={{ display: 'flex', gap: '0.5rem' }}>
                            <button
                              onClick={() => handleReject(previewFile.id)}
-                             style={{ flex: 1, padding: '0.4rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                             style={{ flex: 1, padding: '0.4rem', background: '#ef4444', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
                            >
                              Submit Reject
                            </button>
                            <button
                              onClick={() => setShowRejectForm(false)}
-                             style={{ flex: 1, padding: '0.4rem', background: '#475569', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                             style={{ flex: 1, padding: '0.4rem', background: '#475569', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
                            >
                              Cancel
                            </button>
@@ -1802,7 +1802,7 @@ export default function VaultProPanel({
                  {previewFile.status === 'Rejected' && previewFile.rejection_reason && (
                    <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '0.75rem', borderRadius: '6px' }}>
                      <h5 style={{ margin: '0 0 0.25rem 0', color: '#fca5a5' }}>Rejection Reason</h5>
-                     <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1' }}>{previewFile.rejection_reason}</p>
+                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-sec)' }}>{previewFile.rejection_reason}</p>
                    </div>
                  )}
               </div>
@@ -1814,30 +1814,30 @@ export default function VaultProPanel({
       {/* VERSION HISTORY MODAL */}
       {showVersionsModal && activeFile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--card-border)', position: 'relative' }}>
             <button 
               onClick={() => { setShowVersionsModal(false); setActiveFile(null); }}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ color: '#fff', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <History size={20} style={{ color: '#8b5cf6' }} /> Version History
             </h3>
-            <p style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Archived version records for: <strong>{activeFile.name}</strong></p>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem' }}>Archived version records for: <strong>{activeFile.name}</strong></p>
 
             <div style={{ marginTop: '1.5rem', maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {loadingVersions ? (
-                <div style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>Loading archived file history...</div>
+                <div style={{ color: 'var(--text-sec)', textAlign: 'center', padding: '1rem' }}>Loading archived file history...</div>
               ) : fileVersions.length === 0 ? (
-                <div style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>No previous versions archived for this document.</div>
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No previous versions archived for this document.</div>
               ) : (
                 fileVersions.map(v => (
-                  <div key={v.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={v.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ color: '#fff', fontWeight: 'bold' }}>Version v{v.version}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                      <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>Version v{v.version}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-sec)', marginTop: '0.25rem' }}>
                         Size: {(v.size_bytes / 1024).toFixed(1)} KB | Uploaded: {new Date(v.created_at).toLocaleString()}
                       </div>
                     </div>
@@ -1846,7 +1846,7 @@ export default function VaultProPanel({
                       style={{
                         padding: '0.4rem 0.8rem',
                         background: '#8b5cf6',
-                        color: '#fff',
+                        color: 'var(--text-primary)',
                         border: 'none',
                         borderRadius: '6px',
                         fontWeight: 'bold',
@@ -1867,25 +1867,25 @@ export default function VaultProPanel({
       {/* Share Modal */}
       {showShareModal && activeFile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '450px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', width: '450px', border: '1px solid var(--card-border)', position: 'relative' }}>
             <button 
               onClick={() => { setShowShareModal(false); setGeneratedLink(''); setActiveFile(null); }}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ color: '#fff', margin: '0 0 1rem 0' }}>Share Document Guest Link</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>📄 {activeFile.name}</p>
+            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>Share Document Guest Link</h3>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem' }}>{activeFile.name}</p>
 
             {!generatedLink ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Link Expiry Time</label>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Link Expiry Time</label>
                   <select 
                     value={shareHours} 
                     onChange={e => setShareHours(Number(e.target.value))}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value={1}>1 Hour</option>
                     <option value={24}>24 Hours (1 Day)</option>
@@ -1895,19 +1895,19 @@ export default function VaultProPanel({
                 </div>
                 <button 
                   onClick={handleCreateShareLink}
-                  style={{ padding: '0.6rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                  style={{ padding: '0.6rem', background: '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                   Generate Share Key
                 </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', background: '#0f172a', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-color)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
                   <input 
                     type="text" 
                     readOnly 
                     value={generatedLink}
-                    style={{ flex: 1, background: 'none', border: 'none', color: '#cbd5e1', fontSize: '0.85rem' }}
+                    style={{ flex: 1, background: 'none', border: 'none', color: 'var(--text-sec)', fontSize: '0.85rem' }}
                   />
                   <button 
                     onClick={handleCopyLink}
@@ -1928,28 +1928,28 @@ export default function VaultProPanel({
       {/* E-Sign request / Sign modal */}
       {showSignModal && activeFile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--card-border)', position: 'relative' }}>
             <button 
               onClick={() => { setShowSignModal(false); setActiveFile(null); }}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ color: '#fff', margin: '0 0 1rem 0' }}>E-Signature Verification Desk</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>📄 {activeFile.name}</p>
+            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 1rem 0' }}>E-Signature Verification Desk</h3>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>{activeFile.name}</p>
 
             {/* List active requests for this file */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Active Signing Requests</h4>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>Active Signing Requests</h4>
               {esignRequests.filter(r => r.file_id === activeFile.id).length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>No signature requests created.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>No signature requests created.</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {esignRequests.filter(r => r.file_id === activeFile.id).map(req => (
-                    <div key={req.id} style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                    <div key={req.id} style={{ background: 'var(--bg-color)', padding: '0.75rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
                       <div>
-                        <div style={{ color: '#fff' }}>{req.signer_email}</div>
+                        <div style={{ color: 'var(--text-primary)' }}>{req.signer_email}</div>
                         {req.status === 'Signed' ? (
                           <span style={{ color: '#10b981', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                             <ShieldCheck size={12} /> SHA-256 Hash: {req.signature_hash.slice(0, 10)}...
@@ -1966,12 +1966,12 @@ export default function VaultProPanel({
                             placeholder="Type full name to sign" 
                             value={signatureText} 
                             onChange={e => setSignatureText(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff', fontSize: '0.8rem' }}
+                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                           />
                           <button 
                             onClick={() => handleExecuteSignature(req.id)}
                             disabled={loadingSign}
-                            style={{ padding: '0.35rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                            style={{ padding: '0.35rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
                           >
                             Sign Now
                           </button>
@@ -1984,8 +1984,8 @@ export default function VaultProPanel({
             </div>
 
             {/* Request form */}
-            <form onSubmit={handleSendESignRequest} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-              <h4 style={{ color: '#fff', margin: 0 }}>Request New E-Signature</h4>
+            <form onSubmit={handleSendESignRequest} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
+              <h4 style={{ color: 'var(--text-primary)', margin: 0 }}>Request New E-Signature</h4>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input 
                   type="email" 
@@ -1993,12 +1993,12 @@ export default function VaultProPanel({
                   value={signerEmail} 
                   onChange={e => setSignerEmail(e.target.value)}
                   required
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                  style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                 />
                 <button 
                   type="submit" 
                   disabled={loadingSign}
-                  style={{ padding: '0.5rem 1rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+                  style={{ padding: '0.5rem 1rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
                 >
                   Send
                 </button>

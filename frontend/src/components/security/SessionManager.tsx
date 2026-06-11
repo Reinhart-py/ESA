@@ -67,31 +67,31 @@ export default function SessionManager() {
   };
 
   return (
-    <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Monitor size={18} style={{ color: '#00a896' }} /> Active Browser Sessions
+        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Monitor size={18} style={{ color: 'var(--accent-color)' }} /> Active Browser Sessions
         </h3>
         <button
           onClick={fetchSessions}
           disabled={loading}
-          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           Refresh
         </button>
       </div>
-      <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+      <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: 0 }}>
         Review and manage browser sessions connected to your account. Terminating a session will revoke its tokens.
       </p>
 
       {loading && sessions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-          <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#00a896' }} />
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
+          <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: 'var(--accent-color)' }} />
           Syncing sessions list...
         </div>
       ) : sessions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.85rem' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           No active sessions retrieved.
         </div>
       ) : (
@@ -99,21 +99,21 @@ export default function SessionManager() {
           {sessions.map((s, index) => {
             const isCurrent = index === 0; // The first session is usually the active one or we highlight it
             return (
-              <div key={s.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={s.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <div style={{ background: isCurrent ? 'rgba(0,168,150,0.1)' : 'rgba(255,255,255,0.02)', color: isCurrent ? '#00a896' : '#94a3b8', padding: '0.5rem', borderRadius: '50%' }}>
+                  <div style={{ background: isCurrent ? 'rgba(0,168,150,0.1)' : 'rgba(255,255,255,0.02)', color: isCurrent ? 'var(--accent-color)' : '#94a3b8', padding: '0.5rem', borderRadius: '50%' }}>
                     <Globe size={20} />
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{getDeviceDetails(s.user_agent)}</strong>
+                      <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>{getDeviceDetails(s.user_agent)}</strong>
                       {isCurrent && (
                         <span style={{ fontSize: '0.65rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '0.1rem 0.35rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.15rem', fontWeight: 'bold' }}>
                           <CheckCircle2 size={10} /> Active Session
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                       <span>IP Address: {s.ip_address || '127.0.0.1'}</span>
                       <span>•</span>
                       <span>Connected: {new Date(s.created_at).toLocaleString()}</span>

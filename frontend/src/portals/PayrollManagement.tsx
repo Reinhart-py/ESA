@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import {
-  Users, Calendar, Clock, DollarSign, CreditCard,
+  Users, User, Calendar, Clock, DollarSign, CreditCard,
   PlusCircle, X, Check, Sparkles, TrendingUp, BarChart2,
   AlertCircle, ShieldCheck, Plus, Trash2, Briefcase
 } from 'lucide-react';
@@ -489,7 +489,7 @@ export default function PayrollManagement() {
                       style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--primary-color)' }}
                       onClick={() => handleViewEmployee(row)}
                     >
-                      👤 {row.first_name} {row.last_name}
+                      <User size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle', color: 'var(--accent-color)' }} /> {row.first_name} {row.last_name}
                     </span>
                   )
                 },

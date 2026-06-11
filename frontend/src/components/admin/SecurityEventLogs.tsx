@@ -62,7 +62,7 @@ export default function SecurityEventLogs() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 800 }}>Security Incident & Audit Trail Logs</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Immutable ledger tracking RLS exceptions, failed log-ins, session overrides, and key creations.</p>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Immutable ledger tracking RLS exceptions, failed log-ins, session overrides, and key creations.</p>
         </div>
         <button
           onClick={fetchEvents}
@@ -73,8 +73,8 @@ export default function SecurityEventLogs() {
             gap: '0.5rem',
             padding: '0.5rem 1rem',
             background: 'rgba(255, 255, 255, 0.05)',
-            color: '#fff',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--card-border)',
             borderRadius: '6px',
             cursor: 'pointer',
             fontSize: '0.85rem',
@@ -89,20 +89,20 @@ export default function SecurityEventLogs() {
       {/* Filter panel */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search events by message, triggering email, or IP address..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', width: '100%', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', width: '100%', fontSize: '0.85rem' }}
           />
         </div>
         
         <select
           value={eventType}
           onChange={e => setEventType(e.target.value)}
-          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', minWidth: '150px', fontSize: '0.85rem' }}
+          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', minWidth: '150px', fontSize: '0.85rem' }}
         >
           <option value="">All Event Types</option>
           <option value="tenant.suspended">Tenant Suspended</option>
@@ -116,7 +116,7 @@ export default function SecurityEventLogs() {
         <select
           value={severity}
           onChange={e => setSeverity(e.target.value)}
-          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', minWidth: '150px', fontSize: '0.85rem' }}
+          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', minWidth: '150px', fontSize: '0.85rem' }}
         >
           <option value="">All Severities</option>
           <option value="low">Low</option>
@@ -127,17 +127,17 @@ export default function SecurityEventLogs() {
       </div>
 
       {/* Events logs table */}
-      <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: '#94a3b8' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
             <RefreshCw size={24} className="animate-spin" />
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No security incidents logged.</div>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No security incidents logged.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8', fontSize: '0.85rem' }}>
+              <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)', fontSize: '0.85rem' }}>
                 <th style={{ padding: '0.75rem' }}>Timestamp</th>
                 <th style={{ padding: '0.75rem' }}>Severity</th>
                 <th style={{ padding: '0.75rem' }}>Event Category</th>
@@ -148,8 +148,8 @@ export default function SecurityEventLogs() {
             </thead>
             <tbody>
               {filteredEvents.map(event => (
-                <tr key={event.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap', color: '#94a3b8' }}>
+                <tr key={event.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                  <td style={{ padding: '0.75rem', whiteSpace: 'nowrap', color: 'var(--text-sec)' }}>
                     {new Date(event.created_at).toLocaleString()}
                   </td>
                   <td style={{ padding: '0.75rem' }}>
@@ -163,10 +163,10 @@ export default function SecurityEventLogs() {
                   <td style={{ padding: '0.75rem', lineHeight: 1.4 }}>
                     {event.message}
                   </td>
-                  <td style={{ padding: '0.75rem', color: '#94a3b8' }}>
+                  <td style={{ padding: '0.75rem', color: 'var(--text-sec)' }}>
                     {event.user_identity || 'Anonymous'}
                   </td>
-                  <td style={{ padding: '0.75rem', fontFamily: 'monospace', color: '#94a3b8' }}>
+                  <td style={{ padding: '0.75rem', fontFamily: 'monospace', color: 'var(--text-sec)' }}>
                     {event.ip_address || 'N/A'}
                   </td>
                 </tr>

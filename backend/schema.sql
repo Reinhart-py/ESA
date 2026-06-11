@@ -1123,6 +1123,14 @@ CREATE TABLE IF NOT EXISTS admin_system_parameters (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Seed default whitelabel parameters
+INSERT INTO admin_system_parameters (key, value, description) VALUES
+('WEBSITE_TITLE', 'EAC Solutions', 'The public facing whitelabel title of the platform website'),
+('WEBSITE_LOGO', '/favicon.svg', 'The main platform whitelabel logo image path or URL'),
+('CONTACT_EMAIL', 'support@eacsolutions.com', 'The contact email address displayed on public portals'),
+('CONTACT_PHONE', '+1 (555) 019-2834', 'The contact telephone number displayed on the landing page')
+ON CONFLICT (key) DO NOTHING;
+
 -- 5. Tenant Suspensions Tracking
 CREATE TABLE IF NOT EXISTS admin_tenant_suspensions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

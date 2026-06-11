@@ -133,21 +133,20 @@ h1, h2, h3, h4, h5, h6 {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--border-radius-lg);
-  box-shadow: 0 10px 30px -10px rgba(10, 29, 55, 0.08), 0 1px 3px rgba(10, 29, 55, 0.02);
+  box-shadow: var(--shadow-card), var(--shiny-edge);
   padding: var(--spacing-lg);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-  outline: var(--shiny-edge);
   overflow: hidden;
 }
 
 .premium-card:hover {
   transform: translateY(-5px) scale(1.01);
-  box-shadow: 0 20px 40px -15px rgba(10, 29, 55, 0.15), 0 0 1px rgba(181, 138, 27, 0.2);
+  box-shadow: var(--shadow-card), 0 0 25px rgba(181, 138, 43, 0.35);
   border-color: var(--accent-color);
 }
 
 [data-theme='dark'] .premium-card:hover {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(226, 184, 87, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 25px rgba(226, 184, 87, 0.45);
   border-color: var(--accent-color);
 }
 

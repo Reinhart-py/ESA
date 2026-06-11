@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../api/client.ts';
-import { Users, Eye, EyeOff, Search, RefreshCw } from 'lucide-react';
+import { Users, Eye, EyeOff, Search, RefreshCw, Building, AlertTriangle } from 'lucide-react';
 
 interface User {
   id: string;
@@ -88,7 +88,7 @@ export default function ImpersonatorConsole() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 800 }}>User Impersonation Console</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Bypass authorization rules to inspect client dashboards and troubleshoot tenant workspaces directly.</p>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Bypass authorization rules to inspect client dashboards and troubleshoot tenant workspaces directly.</p>
         </div>
         
         {originalAdminToken && (
@@ -100,7 +100,7 @@ export default function ImpersonatorConsole() {
               gap: '0.5rem',
               padding: '0.5rem 1rem',
               background: '#ef4444',
-              color: '#fff',
+              color: 'var(--text-primary)',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -114,28 +114,28 @@ export default function ImpersonatorConsole() {
       </div>
 
       {originalAdminToken && (
-        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', lineHeight: 1.5 }}>
-          ⚠️ <strong>Active Impersonation Mode:</strong> You are currently logged in as user ID: <code>{activeImpersonationUserId}</code> ({localStorage.getItem('impersonated_user_name')}). All RLS queries and document actions will be performed as this identity.
+        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <AlertTriangle size={16} /> <span><strong>Active Impersonation Mode:</strong> You are currently logged in as user ID: <code>{activeImpersonationUserId}</code> ({localStorage.getItem('impersonated_user_name')}). All RLS queries and document actions will be performed as this identity.</span>
         </div>
       )}
 
       {/* Search filters */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+          <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search system users by name or email address..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', width: '100%', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 0.55rem 0.55rem 2.25rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', width: '100%', fontSize: '0.85rem' }}
           />
         </div>
         
         <select
           value={roleFilter}
           onChange={e => setRoleFilter(e.target.value)}
-          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', background: '#1e293b', color: '#fff', minWidth: '150px', fontSize: '0.85rem' }}
+          style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', minWidth: '150px', fontSize: '0.85rem' }}
         >
           <option value="">All Security Roles</option>
           <option value="client_owner">Client Owner</option>
@@ -146,17 +146,17 @@ export default function ImpersonatorConsole() {
       </div>
 
       {/* Directory Grid */}
-      <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: '#94a3b8' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
             <RefreshCw size={24} className="animate-spin" />
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No system user accounts matching active filters found.</div>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No system user accounts matching active filters found.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8', fontSize: '0.85rem' }}>
+              <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left', color: 'var(--text-sec)', fontSize: '0.85rem' }}>
                 <th style={{ padding: '0.75rem' }}>Full User Identity</th>
                 <th style={{ padding: '0.75rem' }}>Email Address</th>
                 <th style={{ padding: '0.75rem' }}>Assigned Role</th>
@@ -166,8 +166,8 @@ export default function ImpersonatorConsole() {
             </thead>
             <tbody>
               {filteredUsers.map(user => (
-                <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                  <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#fff' }}>
+                <tr key={user.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                  <td style={{ padding: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                     {user.full_name}
                   </td>
                   <td style={{ padding: '0.75rem' }}>
@@ -178,8 +178,8 @@ export default function ImpersonatorConsole() {
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td style={{ padding: '0.75rem', color: '#94a3b8' }}>
-                    🏢 {user.tenants?.name || 'Platform (Super Admin)'}
+                  <td style={{ padding: '0.75rem', color: 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Building size={14} /> {user.tenants?.name || 'Platform (Super Admin)'}
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'right' }}>
                     <button

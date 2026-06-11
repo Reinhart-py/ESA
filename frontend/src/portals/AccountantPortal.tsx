@@ -10,7 +10,7 @@ import {
   ShieldAlert, TrendingUp, X, MessageSquareText, Link, BookOpen, Briefcase,
   Sparkles, Shield, CreditCard, Plus, Trash2, PlusCircle, FileText, LayoutDashboard,
   Building, CheckCircle, HelpCircle, HardDrive, DollarSign, Award, FileUp, Video,
-  Trash, RefreshCw, BarChart3, AlertCircle
+  Trash, RefreshCw, BarChart3, AlertCircle, Moon, Sun
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
 import CrmManagement from './CrmManagement.tsx';
@@ -38,7 +38,7 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
   if (!context) return null;
 
   const { 
-    obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask, syncState
+    obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask, syncState, themeMode, toggleTheme
   } = context;
 
   const navigate = useNavigate();
@@ -480,7 +480,14 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
           </button>
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-sec)', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }}
+            onClick={toggleTheme}
+          >
+            {themeMode === 'light' ? <><Moon size={16} /> Dark Mode</> : <><Sun size={16} /> Light Mode</>}
+          </button>
+
           <button style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#EF4444', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
             <LogOut size={16} /> Exit Desk
           </button>
@@ -501,21 +508,21 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
               <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Real-time indicators across client workspace metrics.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <div className="premium-card" style={{ padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>ACTIVE MANAGED CLIENTS</span>
                 <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>{activeClientsCount}</h2>
-                <span style={{ fontSize: '0.7rem', color: 'green' }}>✓ Compliance status OK</span>
+                <span style={{ fontSize: '0.7rem', color: 'green', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><CheckCircle size={12} /> Compliance status OK</span>
               </div>
               <div className="premium-card" style={{ padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>UNPAID RECEIVABLES</span>
                 <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>${(outstandingInvoicesSum / 100).toFixed(2)}</h2>
-                <span style={{ fontSize: '0.7rem', color: 'red' }}>● {unpaidInvoicesCount} invoices pending payment</span>
+                <span style={{ fontSize: '0.7rem', color: 'red', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><AlertCircle size={12} /> {unpaidInvoicesCount} invoices pending payment</span>
               </div>
               <div className="premium-card" style={{ padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>MONTHLY REVENUE</span>
                 <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>${(monthlyRevenueSum / 100).toFixed(2)}</h2>
-                <span style={{ fontSize: '0.7rem', color: '#B58A2B' }}>★ Stripe & Manual total</span>
+                <span style={{ fontSize: '0.7rem', color: '#B58A2B', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Award size={12} /> Stripe & Manual total</span>
               </div>
               <div className="premium-card" style={{ padding: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>TASKS DUE TODAY</span>

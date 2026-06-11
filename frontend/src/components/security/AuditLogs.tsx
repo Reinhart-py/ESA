@@ -65,24 +65,24 @@ export default function AuditLogs() {
   };
 
   return (
-    <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Shield size={20} style={{ color: '#00a896' }} /> Platform Audit Trails
+        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Shield size={20} style={{ color: 'var(--accent-color)' }} /> Platform Audit Trails
         </h3>
         
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={handleExportCSV}
             disabled={filteredLogs.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
           >
             <Download size={14} /> Export CSV
           </button>
           <button
             onClick={fetchLogs}
             disabled={loading}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: 'none', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: 'none', color: 'var(--text-sec)', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             Sync Logs
@@ -93,7 +93,7 @@ export default function AuditLogs() {
       {/* Filters bar */}
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search by actor email, action, or client IP..."
@@ -102,19 +102,19 @@ export default function AuditLogs() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            style={{ width: '100%', padding: '0.55rem 0.55rem 0.55rem 2.2rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+            style={{ width: '100%', padding: '0.55rem 0.55rem 0.55rem 2.2rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
           />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Filter size={16} style={{ color: '#64748b' }} />
+          <Filter size={16} style={{ color: 'var(--text-muted)' }} />
           <select
             value={selectedCategory}
             onChange={(e) => {
               setSelectedCategory(e.target.value);
               setCurrentPage(1);
             }}
-            style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>
@@ -129,7 +129,7 @@ export default function AuditLogs() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+            <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
               <th style={{ padding: '0.75rem 0.5rem' }}>Timestamp</th>
               <th style={{ padding: '0.75rem 0.5rem' }}>Actor</th>
               <th style={{ padding: '0.75rem 0.5rem' }}>Category</th>
@@ -140,29 +140,29 @@ export default function AuditLogs() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                  <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#00a896' }} />
+                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
+                  <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: 'var(--accent-color)' }} />
                   Loading audit database...
                 </td>
               </tr>
             ) : paginatedLogs.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: '#64748b', fontSize: '0.9rem' }}>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                   No audit logs found matching criteria.
                 </td>
               </tr>
             ) : (
               paginatedLogs.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.02)', fontSize: '0.85rem', color: '#e2e8f0' }}>
-                  <td style={{ padding: '0.75rem 0.5rem', color: '#94a3b8' }}>{new Date(l.created_at).toLocaleString()}</td>
+                <tr key={l.id} style={{ borderBottom: '1px solid var(--card-border)', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                  <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-sec)' }}>{new Date(l.created_at).toLocaleString()}</td>
                   <td style={{ padding: '0.75rem 0.5rem', fontWeight: 'bold' }}>{l.user_identity}</td>
                   <td style={{ padding: '0.75rem 0.5rem' }}>
-                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'rgba(0,168,150,0.1)', color: '#00a896', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'rgba(0,168,150,0.1)', color: 'var(--accent-color)', fontFamily: 'monospace' }}>
                       {l.category}
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem 0.5rem' }}>{l.action}</td>
-                  <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace', color: '#94a3b8' }}>{l.ip_address || 'Internal'}</td>
+                  <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace', color: 'var(--text-sec)' }}>{l.ip_address || 'Internal'}</td>
                 </tr>
               ))
             )}
@@ -172,23 +172,23 @@ export default function AuditLogs() {
 
       {/* Pagination Footer */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', fontSize: '0.8rem', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           <span>Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredLogs.length)} of {filteredLogs.length} entries</span>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              style={{ padding: '0.35rem 0.75rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '0.35rem 0.75rem', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '4px', cursor: 'pointer' }}
             >
               Previous
             </button>
-            <span style={{ display: 'flex', alignItems: 'center', padding: '0 0.5rem', color: '#fff', fontWeight: 'bold' }}>
+            <span style={{ display: 'flex', alignItems: 'center', padding: '0 0.5rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              style={{ padding: '0.35rem 0.75rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '0.35rem 0.75rem', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '4px', cursor: 'pointer' }}
             >
               Next
             </button>

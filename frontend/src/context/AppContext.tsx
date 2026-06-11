@@ -30,6 +30,7 @@ interface AppContextType {
   createTask: (title: string, description: string, dueDate: string, priority: string, assignedTo?: string) => Promise<void>;
   createTicket: (subject: string, description: string, category: string, priority: string) => Promise<void>;
   updateObligationStatus: (obligationId: string, status: string) => Promise<void>;
+  webConfig: { WEBSITE_TITLE: string; WEBSITE_LOGO: string; CONTACT_EMAIL: string; CONTACT_PHONE: string };
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
@@ -41,9 +42,15 @@ export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('eac_role') || 'guest');
-  const [themeMode, setThemeMode] = useState<string>('light');
+  const [themeMode, setThemeMode] = useState<string>(() => localStorage.getItem('eac_theme') || 'light');
   const [sessionToken, setSessionToken] = useState<string | null>(() => localStorage.getItem('supabase_token'));
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [webConfig, setWebConfig] = useState<any>({
+    WEBSITE_TITLE: 'EAC Solutions',
+    WEBSITE_LOGO: '/favicon.svg',
+    CONTACT_EMAIL: 'support@eacsolutions.com',
+    CONTACT_PHONE: '+1 (555) 019-2834'
+  });
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [files, setFiles] = useState<FileDocument[]>([]);
@@ -54,6 +61,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+
+  // Fetch whitelabel configuration on mount
+  useEffect(() => {
+    apiClient.get('/public/config')
+      .then(res => {
+        if (res.data) setWebConfig(res.data);
+      })
+      .catch(err => console.error('Failed to load website config:', err));
+  }, []);
 
   // Monitor Supabase Auth State
   useEffect(() => {
@@ -108,7 +124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncState = async () => {
     if (!sessionToken) return;
     try {
-      const [docRes, complianceRes, taskRes, msgRes, ticketRes, auditRes, subRes, invoiceRes] = await Promise.all([
+      const [docRes, complianceRes, taskRes, msgRes, ticketRes, auditRes, subRes, invoiceRes, configRes] = await Promise.all([
         apiClient.get('/documents').catch(() => ({ data: { folders: [], files: [] } })),
         apiClient.get('/compliance/obligations').catch(() => ({ data: [] })),
         apiClient.get('/tasks').catch(() => ({ data: [] })),
@@ -116,7 +132,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         apiClient.get('/support/tickets').catch(() => ({ data: [] })),
         apiClient.get('/audit-logs').catch(() => ({ data: [] })),
         apiClient.get('/billing/subscription').catch(() => ({ data: null })),
-        apiClient.get('/billing/invoices').catch(() => ({ data: [] }))
+        apiClient.get('/billing/invoices').catch(() => ({ data: [] })),
+        apiClient.get('/public/config').catch(() => null)
       ]);
 
       setFolders(docRes.data?.folders || []);
@@ -128,6 +145,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAuditLogs(Array.isArray(auditRes.data) ? auditRes.data : []);
       setSubscription(subRes.data);
       setInvoices(Array.isArray(invoiceRes.data) ? invoiceRes.data : []);
+      if (configRes && configRes.data) {
+        setWebConfig(configRes.data);
+      }
     } catch (err) {
       console.error('Failed to synchronize app state with DB APIs:', err);
     }
@@ -236,6 +256,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createTask,
         createTicket,
         updateObligationStatus,
+        webConfig,
       }}
     >
       {children}

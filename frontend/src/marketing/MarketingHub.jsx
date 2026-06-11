@@ -13,7 +13,7 @@ import { Sun, Moon } from 'lucide-react';
 
 export default function MarketingHub({ onLogin }) {
   const [page, setPage] = useState('home');
-  const { themeMode, toggleTheme } = useContext(AppContext);
+  const { themeMode, toggleTheme, webConfig } = useContext(AppContext);
 
   const renderPage = () => {
     switch (page) {
@@ -55,9 +55,9 @@ export default function MarketingHub({ onLogin }) {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setPage('home')}>
-            <div style={{ background: 'var(--accent-color)', color: '#fff', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>E</div>
+            <div style={{ background: 'var(--accent-color)', color: '#fff', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>{webConfig?.WEBSITE_TITLE?.charAt(0) || 'E'}</div>
             <div>
-              <h1 style={{ color: 'var(--text-primary)', fontSize: '1.4rem', margin: 0, fontWeight: 700 }}>EAC Solutions</h1>
+              <h1 style={{ color: 'var(--text-primary)', fontSize: '1.4rem', margin: 0, fontWeight: 700 }}>{webConfig?.WEBSITE_TITLE || 'EAC Solutions'}</h1>
               <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', letterSpacing: 1, textTransform: 'uppercase' }}>Financial Intelligence</span>
             </div>
           </div>
@@ -92,14 +92,14 @@ export default function MarketingHub({ onLogin }) {
       </main>
 
       {/* Footer */}
-      <footer style={{ background: '#0B192C', color: '#9CA3AF', padding: '4rem 2rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <footer style={{ background: 'var(--card-bg)', color: 'var(--text-sec)', padding: '4rem 2rem', borderTop: '1px solid var(--card-border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2.5rem' }}>
           <div>
-            <h3 style={{ color: '#FFF', fontSize: '1.2rem', marginBottom: '1rem' }}>EAC Solutions</h3>
+            <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '1rem' }}>{webConfig?.WEBSITE_TITLE || 'EAC Solutions'}</h3>
             <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>Enterprise financial operating system simplifying compliance, accounting, audit support, and advisory management.</p>
           </div>
           <div>
-            <h4 style={{ color: '#FFF', fontSize: '0.95rem', marginBottom: '1rem' }}>Solutions</h4>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1rem' }}>Solutions</h4>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
               <li><a href="#" onClick={(e) => { e.preventDefault(); setPage('services'); }}>GST & TDS Filings</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); setPage('services'); }}>Corporate Bookkeeping</a></li>
@@ -108,7 +108,7 @@ export default function MarketingHub({ onLogin }) {
             </ul>
           </div>
           <div>
-            <h4 style={{ color: '#FFF', fontSize: '0.95rem', marginBottom: '1rem' }}>Resources</h4>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1rem' }}>Resources</h4>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
               <li><a href="#" onClick={(e) => { e.preventDefault(); setPage('resources'); }}>Filing Deadlines</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); setPage('pricing'); }}>Tax Calculators</a></li>
@@ -116,12 +116,12 @@ export default function MarketingHub({ onLogin }) {
             </ul>
           </div>
           <div>
-            <h4 style={{ color: '#FFF', fontSize: '0.95rem', marginBottom: '1rem' }}>Contact Info</h4>
-            <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>corporate@eacsolutions.com<br />+1 (555) 019-0000<br />Financial District, Suite 400</p>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '1rem' }}>Contact Info</h4>
+            <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>{webConfig?.CONTACT_EMAIL || 'support@eacsolutions.com'}<br />{webConfig?.CONTACT_PHONE || '+1 (555) 019-2834'}<br />Financial District, Suite 400</p>
           </div>
         </div>
-        <div style={{ maxWidth: 1200, margin: '3rem auto 0 auto', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem' }}>
-          <span>&copy; 2026 EAC Solutions. All rights reserved.</span>
+        <div style={{ maxWidth: 1200, margin: '3rem auto 0 auto', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem' }}>
+          <span>&copy; 2026 {webConfig?.WEBSITE_TITLE || 'EAC Solutions'}. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <a href="#" onClick={(e) => { e.preventDefault(); setPage('legal'); }}>Privacy Policy</a>
             <a href="#" onClick={(e) => { e.preventDefault(); setPage('legal'); }}>Terms of Service</a>

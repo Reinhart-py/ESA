@@ -253,19 +253,19 @@ export default function LedgerManagement() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
       {/* Top Header Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff' }}>
-            <Scale size={24} style={{ color: '#00a896' }} /> Double-Entry General Ledger
+          <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+            <Scale size={24} style={{ color: 'var(--accent-color)' }} /> Double-Entry General Ledger
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
             Real-time compliance tracking, trial balance audit registers, and chart of accounts tree structure.
           </p>
         </div>
         <button 
           onClick={reloadAll} 
           disabled={loading}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           Sync Ledger
@@ -288,7 +288,7 @@ export default function LedgerManagement() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
         {[
           { id: 'accounts', name: 'Chart of Accounts', icon: <ChevronDown size={16} /> },
           { id: 'journal', name: 'New Journal Entry', icon: <PlusCircle size={16} /> },
@@ -306,7 +306,7 @@ export default function LedgerManagement() {
               padding: '0.6rem 1.2rem',
               borderRadius: '6px',
               border: 'none',
-              background: activeTab === t.id ? '#00a896' : 'transparent',
+              background: activeTab === t.id ? 'var(--accent-color)' : 'transparent',
               color: activeTab === t.id ? '#fff' : '#94a3b8',
               cursor: 'pointer',
               fontWeight: activeTab === t.id ? 'bold' : 'normal',
@@ -323,18 +323,18 @@ export default function LedgerManagement() {
       {activeTab === 'accounts' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
           {/* Chart list */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Interactive Chart of Accounts</h3>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Interactive Chart of Accounts</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'].map(type => {
                 const groupAccounts = accounts.filter(a => a.type === type);
                 return (
-                  <div key={type} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
-                    <h4 style={{ color: '#00a896', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>
+                  <div key={type} style={{ borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent-color)', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>
                       {type} Accounts ({groupAccounts.length})
                     </h4>
                     {groupAccounts.length === 0 ? (
-                      <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>No {type.toLowerCase()} accounts set up yet.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>No {type.toLowerCase()} accounts set up yet.</p>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         {groupAccounts.map(acc => (
@@ -347,15 +347,15 @@ export default function LedgerManagement() {
                               padding: '0.5rem 0.75rem', 
                               background: 'rgba(255,255,255,0.02)', 
                               borderRadius: '6px',
-                              borderLeft: acc.parent_id ? '3px solid #64748b' : '3px solid #00a896',
+                              borderLeft: acc.parent_id ? '3px solid #64748b' : '3px solid var(--accent-color)',
                               paddingLeft: acc.parent_id ? '1.5rem' : '0.75rem'
                             }}
                           >
-                            <span style={{ color: '#fff', fontSize: '0.9rem' }}>
-                              <strong style={{ color: '#94a3b8', marginRight: '0.5rem' }}>{acc.account_number}</strong>
+                            <span style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                              <strong style={{ color: 'var(--text-sec)', marginRight: '0.5rem' }}>{acc.account_number}</strong>
                               {acc.name}
                             </span>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                               {acc.parent_id ? 'Sub-account' : 'Control Account'}
                             </span>
                           </div>
@@ -369,37 +369,37 @@ export default function LedgerManagement() {
           </div>
 
           {/* Add Account form */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', height: 'fit-content' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Configure Account</h3>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', height: 'fit-content' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Configure Account</h3>
             <form onSubmit={handleCreateAccount} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Account Code (e.g. 1010)</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Account Code (e.g. 1010)</label>
                 <input 
                   type="text"
                   placeholder="Code"
                   value={newAccount.accountNumber}
                   onChange={e => setNewAccount({ ...newAccount, accountNumber: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Account Name</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Account Name</label>
                 <input 
                   type="text"
                   placeholder="e.g. Operating Expenses"
                   value={newAccount.name}
                   onChange={e => setNewAccount({ ...newAccount, name: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Account Category</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Account Category</label>
                 <select
                   value={newAccount.type}
                   onChange={e => setNewAccount({ ...newAccount, type: e.target.value as any })}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 >
                   <option value="Asset">Asset</option>
                   <option value="Liability">Liability</option>
@@ -410,11 +410,11 @@ export default function LedgerManagement() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Parent Account (Optional)</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Parent Account (Optional)</label>
                 <select
                   value={newAccount.parentId}
                   onChange={e => setNewAccount({ ...newAccount, parentId: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 >
                   <option value="">No Parent (Root Control Account)</option>
                   {accounts.filter(a => a.type === newAccount.type && !a.parent_id).map(acc => (
@@ -427,7 +427,7 @@ export default function LedgerManagement() {
 
               <button 
                 type="submit" 
-                style={{ width: '100%', padding: '0.7rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ width: '100%', padding: '0.7rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               >
                 <PlusCircle size={16} /> Add to Ledger Chart
               </button>
@@ -437,36 +437,36 @@ export default function LedgerManagement() {
       )}
 
       {activeTab === 'journal' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Post Double-Entry Journal Entry</h3>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Post Double-Entry Journal Entry</h3>
           <form onSubmit={handlePostJournalEntry} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Date</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Date</label>
                 <input 
                   type="date"
                   value={journalDate}
                   onChange={e => setJournalDate(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Transaction Description</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Transaction Description</label>
                 <input 
                   type="text"
                   placeholder="e.g. Rent Payment Q3"
                   value={journalDescription}
                   onChange={e => setJournalDescription(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 50px', gap: '1rem', paddingBottom: '0.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Account selection</span>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Type</span>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Amount ($ USD)</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 50px', gap: '1rem', paddingBottom: '0.25rem', borderBottom: '1px solid var(--card-border)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Account selection</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Type</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Amount ($ USD)</span>
                 <span></span>
               </div>
 
@@ -475,7 +475,7 @@ export default function LedgerManagement() {
                   <select
                     value={line.accountId}
                     onChange={e => updateJournalLine(idx, 'accountId', e.target.value)}
-                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="">Select Ledger Account...</option>
                     {accounts.map(acc => (
@@ -488,7 +488,7 @@ export default function LedgerManagement() {
                   <select
                     value={line.entryType}
                     onChange={e => updateJournalLine(idx, 'entryType', e.target.value)}
-                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="debit">DEBIT</option>
                     <option value="credit">CREDIT</option>
@@ -500,7 +500,7 @@ export default function LedgerManagement() {
                     placeholder="0.00"
                     value={line.amount}
                     onChange={e => updateJournalLine(idx, 'amount', e.target.value)}
-                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   />
 
                   <button 
@@ -514,19 +514,19 @@ export default function LedgerManagement() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '1rem', background: '#0f172a', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '1rem', background: 'var(--bg-color)', borderRadius: '8px' }}>
               <button 
                 type="button" 
                 onClick={addJournalLine}
-                style={{ padding: '0.5rem 1rem', background: 'transparent', color: '#00a896', border: '1px dashed #00a896', borderRadius: '6px', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', color: 'var(--accent-color)', border: '1px dashed var(--accent-color)', borderRadius: '6px', cursor: 'pointer' }}
               >
                 + Add Transaction Line
               </button>
 
               <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                <div style={{ textAlign: 'right', fontSize: '0.85rem', color: '#94a3b8' }}>
-                  <div>Total Debits: <strong style={{ color: '#fff' }}>${totals.debits.toFixed(2)}</strong></div>
-                  <div>Total Credits: <strong style={{ color: '#fff' }}>${totals.credits.toFixed(2)}</strong></div>
+                <div style={{ textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-sec)' }}>
+                  <div>Total Debits: <strong style={{ color: 'var(--text-primary)' }}>${totals.debits.toFixed(2)}</strong></div>
+                  <div>Total Credits: <strong style={{ color: 'var(--text-primary)' }}>${totals.credits.toFixed(2)}</strong></div>
                 </div>
 
                 {isBalanced ? (
@@ -544,8 +544,8 @@ export default function LedgerManagement() {
                   disabled={!isBalanced}
                   style={{
                     padding: '0.6rem 1.5rem',
-                    background: isBalanced ? '#00a896' : '#64748b',
-                    color: '#fff',
+                    background: isBalanced ? 'var(--accent-color)' : '#64748b',
+                    color: 'var(--text-primary)',
                     border: 'none',
                     borderRadius: '8px',
                     fontWeight: 'bold',
@@ -562,25 +562,25 @@ export default function LedgerManagement() {
       )}
 
       {activeTab === 'register' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>General Ledger Register</h3>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>General Ledger Register</h3>
           {entries.length === 0 ? (
-            <p style={{ color: '#94a3b8' }}>No ledger entries found. Post a journal entry to get started.</p>
+            <p style={{ color: 'var(--text-sec)' }}>No ledger entries found. Post a journal entry to get started.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {entries.map(entry => (
-                <div key={entry.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+                <div key={entry.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
                     <div>
-                      <strong style={{ color: '#fff' }}>{entry.description}</strong>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: '1rem' }}>ID: {entry.id.slice(0, 8)}</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{entry.description}</strong>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '1rem' }}>ID: {entry.id.slice(0, 8)}</span>
                     </div>
-                    <span style={{ color: '#00a896', fontSize: '0.9rem' }}>{new Date(entry.date).toLocaleDateString()}</span>
+                    <span style={{ color: 'var(--accent-color)', fontSize: '0.9rem' }}>{new Date(entry.date).toLocaleDateString()}</span>
                   </div>
 
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <thead>
-                      <tr style={{ color: '#94a3b8', textAlign: 'left' }}>
+                      <tr style={{ color: 'var(--text-sec)', textAlign: 'left' }}>
                         <th style={{ padding: '0.25rem 0' }}>Account</th>
                         <th style={{ textAlign: 'right' }}>Debit</th>
                         <th style={{ textAlign: 'right' }}>Credit</th>
@@ -588,7 +588,7 @@ export default function LedgerManagement() {
                     </thead>
                     <tbody>
                       {entry.lines.map(line => (
-                        <tr key={line.id} style={{ color: '#cbd5e1' }}>
+                        <tr key={line.id} style={{ color: 'var(--text-sec)' }}>
                           <td style={{ padding: '0.25rem 0' }}>
                             {line.account ? `${line.account.account_number} - ${line.account.name}` : `Account ID: ${line.account_id}`}
                           </td>
@@ -610,14 +610,14 @@ export default function LedgerManagement() {
       )}
 
       {activeTab === 'trial' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Audit Trial Balance</h3>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Audit Trial Balance</h3>
           {trialBalance.length === 0 ? (
-            <p style={{ color: '#94a3b8' }}>No trial balance data available.</p>
+            <p style={{ color: 'var(--text-sec)' }}>No trial balance data available.</p>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#cbd5e1' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-sec)' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#94a3b8' }}>
+                <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.05)', textAlign: 'left', color: 'var(--text-sec)' }}>
                   <th style={{ padding: '0.75rem' }}>Account Code</th>
                   <th>Account Name</th>
                   <th>Type</th>
@@ -628,7 +628,7 @@ export default function LedgerManagement() {
               </thead>
               <tbody>
                 {trialBalance.map(line => (
-                  <tr key={line.accountId} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                  <tr key={line.accountId} style={{ borderBottom: '1px solid var(--card-border)' }}>
                     <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{line.accountNumber}</td>
                     <td>{line.name}</td>
                     <td>{line.type}</td>
@@ -646,25 +646,25 @@ export default function LedgerManagement() {
       )}
 
       {activeTab === 'balance_sheet' && (
-        <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 1.5rem 0', color: '#fff' }}>System-Compiled Balance Sheet</h3>
+        <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)' }}>System-Compiled Balance Sheet</h3>
           {!balanceSheet ? (
-            <p style={{ color: '#94a3b8' }}>No balance sheet data available.</p>
+            <p style={{ color: 'var(--text-sec)' }}>No balance sheet data available.</p>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
               {/* Assets column */}
               <div>
-                <h4 style={{ color: '#00a896', borderBottom: '2px solid #00a896', paddingBottom: '0.5rem', margin: '0 0 1rem 0' }}>ASSETS</h4>
+                <h4 style={{ color: 'var(--accent-color)', borderBottom: '2px solid var(--accent-color)', paddingBottom: '0.5rem', margin: '0 0 1rem 0' }}>ASSETS</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {balanceSheet.assets.map(a => (
                     <div key={a.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
                       <span>{a.name}</span>
-                      <strong style={{ color: '#fff' }}>${(a.balance / 100).toFixed(2)}</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>${(a.balance / 100).toFixed(2)}</strong>
                     </div>
                   ))}
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem', fontSize: '1.05rem' }}>
-                    <span style={{ color: '#fff' }}>Total Assets</span>
-                    <strong style={{ color: '#00a896' }}>${(balanceSheet.totalAssets / 100).toFixed(2)}</strong>
+                    <span style={{ color: 'var(--text-primary)' }}>Total Assets</span>
+                    <strong style={{ color: 'var(--accent-color)' }}>${(balanceSheet.totalAssets / 100).toFixed(2)}</strong>
                   </div>
                 </div>
               </div>
@@ -677,12 +677,12 @@ export default function LedgerManagement() {
                     {balanceSheet.liabilities.map(l => (
                       <div key={l.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
                         <span>{l.name}</span>
-                        <strong style={{ color: '#fff' }}>${(l.balance / 100).toFixed(2)}</strong>
+                        <strong style={{ color: 'var(--text-primary)' }}>${(l.balance / 100).toFixed(2)}</strong>
                       </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
                       <span>Total Liabilities</span>
-                      <strong style={{ color: '#fff' }}>${(balanceSheet.totalLiabilities / 100).toFixed(2)}</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>${(balanceSheet.totalLiabilities / 100).toFixed(2)}</strong>
                     </div>
                   </div>
                 </div>
@@ -693,19 +693,19 @@ export default function LedgerManagement() {
                     {balanceSheet.equity.map(e => (
                       <div key={e.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
                         <span>{e.name}</span>
-                        <strong style={{ color: '#fff' }}>${(e.balance / 100).toFixed(2)}</strong>
+                        <strong style={{ color: 'var(--text-primary)' }}>${(e.balance / 100).toFixed(2)}</strong>
                       </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
                       <span>Total Equity</span>
-                      <strong style={{ color: '#fff' }}>${(balanceSheet.totalEquity / 100).toFixed(2)}</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>${(balanceSheet.totalEquity / 100).toFixed(2)}</strong>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid rgba(255,255,255,0.2)', paddingTop: '0.75rem', fontSize: '1.05rem' }}>
-                  <span style={{ color: '#fff' }}>Total Liabilities & Equity</span>
-                  <strong style={{ color: '#00a896' }}>${((balanceSheet.totalLiabilities + balanceSheet.totalEquity) / 100).toFixed(2)}</strong>
+                  <span style={{ color: 'var(--text-primary)' }}>Total Liabilities & Equity</span>
+                  <strong style={{ color: 'var(--accent-color)' }}>${((balanceSheet.totalLiabilities + balanceSheet.totalEquity) / 100).toFixed(2)}</strong>
                 </div>
               </div>
             </div>

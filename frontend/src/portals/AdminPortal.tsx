@@ -4,9 +4,9 @@ import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
   Building, ShieldCheck, HelpCircle, LogOut, Database, Lock, Eye, EyeOff,
-  UserCheck, DollarSign, Users, Award, HardDrive, RefreshCw, Edit2, Check, X,
+  UserCheck, DollarSign, Users, User, Award, HardDrive, RefreshCw, Edit2, Check, X,
   CheckCircle, Shield, PlusCircle, Trash2, UserPlus, Settings, Layers, Activity,
-  FileText, Globe, AlertCircle
+  FileText, Globe, AlertCircle, Moon, Sun
 } from 'lucide-react';
 import DataTable from '../components/ui/DataTable.tsx';
 import SecurityLayout from '../components/security/SecurityLayout.tsx';
@@ -25,7 +25,7 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   if (!context) return null;
 
   const { 
-    tickets, auditLogs, syncState
+    tickets, auditLogs, syncState, themeMode, toggleTheme
   } = context;
 
   const navigate = useNavigate();
@@ -356,7 +356,14 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
           </button>
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-sec)', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }}
+            onClick={toggleTheme}
+          >
+            {themeMode === 'light' ? <><Moon size={16} /> Dark Mode</> : <><Sun size={16} /> Light Mode</>}
+          </button>
+
           <button style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#EF4444', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
             <LogOut size={16} /> Exit Control
           </button>
@@ -392,7 +399,7 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
                       key: 'full_name',
                       label: 'Accountant Name',
                       sortable: true,
-                      render: (row) => <strong>👤 {row.full_name}</strong>
+                      render: (row) => <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={14} style={{ color: 'var(--accent-color)' }} /> <strong>{row.full_name}</strong></span>
                     },
                     {
                       key: 'email',

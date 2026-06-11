@@ -166,6 +166,36 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+app.get('/api/public/config', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('admin_system_parameters')
+      .select('key, value');
+    if (error) throw error;
+    
+    const config: Record<string, string> = {};
+    if (data) {
+      data.forEach((item: any) => {
+        config[item.key] = item.value;
+      });
+    }
+    
+    res.json({
+      WEBSITE_TITLE: config.WEBSITE_TITLE || 'EAC Solutions',
+      WEBSITE_LOGO: config.WEBSITE_LOGO || '/favicon.svg',
+      CONTACT_EMAIL: config.CONTACT_EMAIL || 'support@eacsolutions.com',
+      CONTACT_PHONE: config.CONTACT_PHONE || '+1 (555) 019-2834',
+    });
+  } catch (err: any) {
+    res.json({
+      WEBSITE_TITLE: 'EAC Solutions',
+      WEBSITE_LOGO: '/favicon.svg',
+      CONTACT_EMAIL: 'support@eacsolutions.com',
+      CONTACT_PHONE: '+1 (555) 019-2834',
+    });
+  }
+});
+
 // --- AUTHENTICATION & USERS ---
 app.post('/api/auth/register', validateRequest(registerSchema), async (req, res) => {
   const { email, fullName, businessName, businessType } = req.body;
@@ -2572,6 +2602,15 @@ app.get('/api/admin/telemetry/storage', requireAuth, requireRoles(['super_admin'
       .order('storage_used_bytes', { ascending: false });
     if (error) throw error;
     res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/parameters', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const params = await AdminRepository.getSystemParameters();
+    res.json(params);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

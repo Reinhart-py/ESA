@@ -46,40 +46,40 @@ export default function IncidentReports() {
 
   const getSeverityStyle = (severity: string) => {
     switch (severity) {
-      case 'low': return { bg: 'rgba(100, 116, 139, 0.1)', color: '#94a3b8' };
+      case 'low': return { bg: 'rgba(100, 116, 139, 0.1)', color: 'var(--text-sec)' };
       case 'medium': return { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' };
       case 'high': return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
       case 'critical': return { bg: 'rgba(185, 28, 28, 0.25)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.4)' };
-      default: return { bg: 'rgba(100, 116, 139, 0.1)', color: '#94a3b8' };
+      default: return { bg: 'rgba(100, 116, 139, 0.1)', color: 'var(--text-sec)' };
     }
   };
 
   return (
-    <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ShieldAlert size={18} style={{ color: '#ef4444' }} /> Security Anomaly logs
         </h3>
         <button
           onClick={fetchIncidents}
           disabled={loading}
-          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           Refresh
         </button>
       </div>
-      <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+      <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: 0 }}>
         Review system alerts raised by active threat-intelligence monitors, brute-force limits checks, and RLS constraint violations.
       </p>
 
       {loading && incidents.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-sec)' }}>
           <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#ef4444' }} />
           Loading alerts logs...
         </div>
       ) : incidents.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', background: '#0f172a', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.02)' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-color)', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
           <ShieldCheck size={36} style={{ color: '#10b981', marginBottom: '0.5rem' }} />
           <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0, fontWeight: 'bold' }}>All Clear. Zero anomalies reported.</p>
         </div>
@@ -90,13 +90,13 @@ export default function IncidentReports() {
             const isOpen = inc.status === 'open';
 
             return (
-              <div key={inc.id} style={{ background: '#0f172a', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div key={inc.id} style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: sev.bg, color: sev.color, fontWeight: 'bold', textTransform: 'uppercase' }}>
                       {inc.severity}
                     </span>
-                    <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{inc.title}</strong>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>{inc.title}</strong>
                   </div>
 
                   {isOpen ? (
@@ -115,11 +115,11 @@ export default function IncidentReports() {
                   )}
                 </div>
 
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-sec)', margin: 0 }}>
                   {inc.description}
                 </p>
 
-                <div style={{ fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.02)', paddingTop: '0.5rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--card-border)', paddingTop: '0.5rem' }}>
                   Reported: {new Date(inc.created_at).toLocaleString()}
                 </div>
               </div>

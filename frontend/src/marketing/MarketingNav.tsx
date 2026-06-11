@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Shield, Sun, Moon } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 
 interface MarketingNavProps {
   themeMode: 'light' | 'dark';
@@ -14,6 +15,9 @@ export default function MarketingNav({
   onOpenAuth,
   onOpenTopic
 }: MarketingNavProps) {
+  const context = useContext(AppContext);
+  const title = context?.webConfig?.WEBSITE_TITLE || 'EAC Solutions';
+
   return (
     <nav style={{
       position: 'sticky',
@@ -38,7 +42,7 @@ export default function MarketingNav({
           }}>
             <Shield size={20} color="#fff" />
           </div>
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--primary-color)' }}>EAC Solutions</span>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--primary-color)' }}>{title}</span>
         </div>
 
         <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem', fontWeight: 600 }}>

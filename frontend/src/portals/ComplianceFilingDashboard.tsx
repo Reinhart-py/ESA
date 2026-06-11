@@ -255,12 +255,12 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff' }}>
-            <Award size={24} style={{ color: '#00a896' }} /> Regional Compliance Desk
+          <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+            <Award size={24} style={{ color: 'var(--accent-color)' }} /> Regional Compliance Desk
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+          <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
             Schedule country-specific calendars, auto-populate tax obligations, and evaluate live scores.
           </p>
         </div>
@@ -269,7 +269,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           {isAccountant && (
             <button 
               onClick={() => setShowCreateObligationModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#B58A2B', color: 'var(--text-primary)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               <PlusCircle size={16} />
               Schedule custom obligation
@@ -279,7 +279,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           <button 
             onClick={handleRunScheduler}
             disabled={runningScheduler}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
           >
             {runningScheduler ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             Run Scheduler Sweep
@@ -288,7 +288,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           <button 
             onClick={loadData} 
             disabled={loading}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', cursor: 'pointer' }}
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
             Sync Tracker
@@ -320,10 +320,10 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', maxHeight: '180px', overflowY: 'auto' }}>
             {alerts.slice(0, 6).map((al, idx) => (
-              <div key={idx} style={{ background: '#111827', padding: '0.75rem', borderRadius: '6px', borderLeft: al.alert_type === 'Late' ? '4px solid #ef4444' : '4px solid #f59e0b', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={idx} style={{ background: 'var(--bg-color)', padding: '0.75rem', borderRadius: '6px', borderLeft: al.alert_type === 'Late' ? '4px solid #ef4444' : '4px solid #f59e0b', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ color: '#cbd5e1', fontWeight: 'bold' }}>{al.compliance_obligations?.title || 'Filing Obligation'}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                  <div style={{ color: 'var(--text-sec)', fontWeight: 'bold' }}>{al.compliance_obligations?.title || 'Filing Obligation'}</div>
+                  <div style={{ color: 'var(--text-sec)', fontSize: '0.75rem', marginTop: '0.2rem' }}>
                     Type: {al.alert_type} | Due: {al.compliance_obligations?.due_date ? new Date(al.compliance_obligations.due_date).toLocaleDateString() : 'Unknown'}
                   </div>
                 </div>
@@ -341,20 +341,20 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
         
         {/* Compliance Timeline / Deadlines */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Filing Obligations & Timeline</h3>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem' }}>Filing Obligations & Timeline</h3>
               
-              <div style={{ display: 'flex', gap: '0.25rem', background: '#0f172a', padding: '0.2rem', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-color)', padding: '0.2rem', borderRadius: '6px' }}>
                 <button 
                   onClick={() => setViewMode('grid')} 
-                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'grid' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'grid' ? 'var(--card-bg)' : 'transparent', border: 'none', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   Calendar Grid
                 </button>
                 <button 
                   onClick={() => setViewMode('list')} 
-                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'list' ? '#1e293b' : 'transparent', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ padding: '0.35rem 0.75rem', background: viewMode === 'list' ? 'var(--card-bg)' : 'transparent', border: 'none', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   Timeline List
                 </button>
@@ -364,7 +364,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
             {viewMode === 'grid' ? (
               <div>
                 {/* Calendar Navigator */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: '#0f172a', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: 'var(--bg-color)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
                   <button 
                     onClick={() => {
                       if (currentMonth === 0) {
@@ -374,11 +374,11 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                         setCurrentMonth(prev => prev - 1);
                       }
                     }}
-                    style={{ background: 'none', border: 'none', color: '#00a896', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
                   >
                     &larr;
                   </button>
-                  <strong style={{ color: '#fff', fontSize: '0.95rem' }}>
+                  <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                     {[
                       'January', 'February', 'March', 'April', 'May', 'June',
                       'July', 'August', 'September', 'October', 'November', 'December'
@@ -393,7 +393,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                         setCurrentMonth(prev => prev + 1);
                       }
                     }}
-                    style={{ background: 'none', border: 'none', color: '#00a896', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}
                   >
                     &rarr;
                   </button>
@@ -402,7 +402,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                 {/* Calendar Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center', marginBottom: '0.5rem' }}>
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <span key={day} style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', paddingBottom: '0.25rem' }}>{day}</span>
+                    <span key={day} style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', paddingBottom: '0.25rem' }}>{day}</span>
                   ))}
                 </div>
 
@@ -434,9 +434,9 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                           key={`day-${d}`} 
                           style={{ 
                             minHeight: '85px', 
-                            background: '#0f172a', 
+                            background: 'var(--bg-color)', 
                             borderRadius: '8px', 
-                            border: '1px solid rgba(255,255,255,0.02)',
+                            border: '1px solid var(--card-border)',
                             padding: '0.35rem', 
                             display: 'flex', 
                             flexDirection: 'column', 
@@ -444,7 +444,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                             alignItems: 'stretch'
                           }}
                         >
-                          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', alignSelf: 'flex-start' }}>{d}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', alignSelf: 'flex-start' }}>{d}</span>
                           
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.2rem' }}>
                             {daySubs.map(sub => {
@@ -487,7 +487,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
             ) : (
               <div>
                 {submissions.length === 0 ? (
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No obligations configured. Select country pack or trigger scheduler sweep.</p>
+                  <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>No obligations configured. Select country pack or trigger scheduler sweep.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {submissions.map(sub => {
@@ -501,7 +501,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                           key={sub.id} 
                           style={{ 
                             padding: '1rem', 
-                            background: '#0f172a', 
+                            background: 'var(--bg-color)', 
                             borderRadius: '8px', 
                             border: isObLate ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.02)',
                             display: 'flex',
@@ -524,15 +524,15 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                             </div>
 
                             <div>
-                              <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 {ob.title}
                                 {isObLate && (
-                                  <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '0.15rem 0.35rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                  <span style={{ fontSize: '0.65rem', background: '#ef4444', color: 'var(--text-primary)', padding: '0.15rem 0.35rem', borderRadius: '4px', fontWeight: 'bold' }}>
                                     OVERDUE
                                   </span>
                                 )}
                               </h4>
-                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                 Deadline: <strong>{new Date(ob.due_date).toLocaleDateString()}</strong> | Authority: {ob.type}
                               </span>
                             </div>
@@ -561,7 +561,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                               style={{
                                 padding: '0.4rem 0.8rem',
                                 background: '#1e3e62',
-                                color: '#fff',
+                                color: 'var(--text-primary)',
                                 border: 'none',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
@@ -585,13 +585,13 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Live Score Tracker Dashboard (Phase 9) */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldCheck size={18} style={{ color: '#10b981' }} /> Compliance Rating
             </h3>
             
-            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>WORKSPACE COMPLIANCE SCORE</span>
+            <div style={{ background: 'var(--bg-color)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-sec)', display: 'block', marginBottom: '0.5rem' }}>WORKSPACE COMPLIANCE SCORE</span>
               <div style={{
                 fontSize: '2.5rem',
                 fontWeight: 'bold',
@@ -599,25 +599,25 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
               }}>
                 {complianceScore !== null ? `${complianceScore}%` : 'Calculating...'}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                 {complianceScore !== null && complianceScore >= 90 ? 'Excellent Standing' : complianceScore !== null && complianceScore >= 70 ? 'Action Recommended' : 'Critical Escalation Active'}
               </div>
             </div>
           </div>
 
           {/* Active Jurisdiction Country Selector (Phase 9) */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Globe size={18} style={{ color: '#3b82f6' }} /> Regulatory Region
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Select Active Filing Jurisdiction</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Select Active Filing Jurisdiction</label>
               <select
                 value={workspaceCountry}
                 disabled={updatingCountry}
                 onChange={e => handleCountryChange(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
               >
                 <option value="US">🇺🇸 United States (CIT, Form 941)</option>
                 <option value="UK">🇬🇧 United Kingdom (HMRC VAT, PAYE)</option>
@@ -629,17 +629,17 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
 
           {/* Subscribe Regional Pack */}
           {!isAccountant && (
-            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Settings size={18} style={{ color: '#00a896' }} /> Bootstrap Legacy Packs
+            <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Settings size={18} style={{ color: 'var(--accent-color)' }} /> Bootstrap Legacy Packs
               </h3>
               
               <form onSubmit={handleSubscribePack} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Available Calendar Pack</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Available Calendar Pack</label>
                 <select
                   value={selectedPackId}
                   onChange={e => setSelectedPackId(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                 >
                   <option value="">Choose Pack...</option>
                   {packs.map(p => (
@@ -652,7 +652,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                 <button 
                   type="submit" 
                   disabled={submitting || !selectedPackId}
-                  style={{ width: '100%', padding: '0.6rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: selectedPackId ? 1 : 0.6 }}
+                  style={{ width: '100%', padding: '0.6rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: selectedPackId ? 1 : 0.6 }}
                 >
                   {submitting ? 'Scheduling...' : 'Bootstrap Deadlines'}
                 </button>
@@ -661,20 +661,20 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           )}
 
           {/* Active Status Metrics */}
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', fontSize: '1.1rem' }}>Compliance Summary</h3>
+          <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>Compliance Summary</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '6px', textAlign: 'center' }}>
+              <div style={{ background: 'var(--bg-color)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center' }}>
                 <div style={{ color: '#10b981', fontSize: '1.5rem', fontWeight: 'bold' }}>
                   {submissions.filter(s => s.status === 'Approved' || s.status === 'Filed').length}
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>FILED</div>
+                <div style={{ color: 'var(--text-sec)', fontSize: '0.7rem' }}>FILED</div>
               </div>
-              <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '6px', textAlign: 'center' }}>
+              <div style={{ background: 'var(--bg-color)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center' }}>
                 <div style={{ color: '#f59e0b', fontSize: '1.5rem', fontWeight: 'bold' }}>
                   {submissions.filter(s => s.status === 'Under Review').length}
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>UNDER REVIEW</div>
+                <div style={{ color: 'var(--text-sec)', fontSize: '0.7rem' }}>UNDER REVIEW</div>
               </div>
             </div>
           </div>
@@ -684,22 +684,22 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
       {/* Details / Submission Overlay Modal */}
       {selectedSub && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+          <div style={{ background: 'var(--card-bg)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--card-border)', position: 'relative' }}>
             
             <button 
               onClick={() => setSelectedSub(null)}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Filing Obligation Detail</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Filing Obligation Detail</h3>
+            <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
               Verify required documents, submit proof files, or review audit decisions.
             </p>
 
-            <div style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1' }}>
-              <div>Obligation: <strong style={{ color: '#fff' }}>{selectedSub.obligation?.title}</strong></div>
+            <div style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-sec)' }}>
+              <div>Obligation: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.obligation?.title}</strong></div>
               <div>Workflow State: <strong style={{ color: '#f59e0b' }}>{selectedSub.status}</strong></div>
               {selectedSub.comments && <div>Notes: <span>{selectedSub.comments}</span></div>}
             </div>
@@ -707,13 +707,13 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
             {/* Evidence Uploader Panel for Clients */}
             {!isAccountant && (selectedSub.status === 'Draft' || selectedSub.status === 'Rejected') && (
               <form onSubmit={handleSubmitEvidence} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ margin: 0, color: '#fff' }}>Submit Evidence Doc</h4>
+                <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Submit Evidence Doc</h4>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Select Vault File</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Select Vault File</label>
                   <select
                     value={selectedFileId}
                     onChange={e => setSelectedFileId(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="">Choose document...</option>
                     {files.map(f => (
@@ -723,19 +723,19 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Filing Comments</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Filing Comments</label>
                   <textarea
                     placeholder="e.g. Attached Q3 VAT computation sheet."
                     value={evidenceComments}
                     onChange={e => setEvidenceComments(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', minHeight: '60px' }}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', minHeight: '60px' }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting || !selectedFileId}
-                  style={{ width: '100%', padding: '0.7rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '0.7rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                   {submitting ? 'Submitting...' : 'Upload Evidence'}
                 </button>
@@ -745,15 +745,15 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
             {/* Review Decision Form for Accountants */}
             {isAccountant && selectedSub.status === 'Under Review' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                <h4 style={{ margin: 0, color: '#fff' }}>Auditor Verification Action</h4>
+                <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Auditor Verification Action</h4>
                 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Audit / Review Comments</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.35rem' }}>Audit / Review Comments</label>
                   <textarea
                     placeholder="Provide details on compliance correctness."
                     value={reviewerComments}
                     onChange={e => setReviewerComments(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', minHeight: '60px' }}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', minHeight: '60px' }}
                   />
                 </div>
 
@@ -761,14 +761,14 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                   <button
                     onClick={() => handleAuditReview(selectedSub.id, 'approve')}
                     disabled={submitting}
-                    style={{ flex: 1, padding: '0.7rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '0.7rem', background: '#10b981', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Approve Filing
                   </button>
                   <button
                     onClick={() => handleAuditReview(selectedSub.id, 'reject')}
                     disabled={submitting}
-                    style={{ flex: 1, padding: '0.7rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '0.7rem', background: '#ef4444', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Reject Submission
                   </button>
@@ -789,40 +789,40 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
       {/* Create Obligation Modal */}
       {showCreateObligationModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '12px', width: '480px', position: 'relative', color: '#fff' }}>
-            <button onClick={() => setShowCreateObligationModal(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={18} /></button>
-            <h3 style={{ margin: '0 0 1.5rem 0', color: '#fff' }}>Schedule Custom Filing Obligation</h3>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '2rem', borderRadius: '12px', width: '480px', position: 'relative', color: 'var(--text-primary)' }}>
+            <button onClick={() => setShowCreateObligationModal(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-sec)' }}><X size={18} /></button>
+            <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)' }}>Schedule Custom Filing Obligation</h3>
             
             <form onSubmit={handleCreateObligation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Obligation Title</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Obligation Title</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Q3 VAT Declaration" 
                   required 
                   value={obligationForm.title} 
                   onChange={e => setObligationForm({ ...obligationForm, title: e.target.value })} 
-                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }} 
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Due Date</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Due Date</label>
                   <input 
                     type="date" 
                     required 
                     value={obligationForm.dueDate} 
                     onChange={e => setObligationForm({ ...obligationForm, dueDate: e.target.value })} 
-                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }} 
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Obligation Type</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Obligation Type</label>
                   <select
                     value={obligationForm.type}
                     onChange={e => setObligationForm({ ...obligationForm, type: e.target.value })}
-                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="GST">GST</option>
                     <option value="VAT">VAT</option>
@@ -839,11 +839,11 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Assign Specialist</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Assign Specialist</label>
                   <select
                     value={obligationForm.assignedSpecialistId}
                     onChange={e => setObligationForm({ ...obligationForm, assignedSpecialistId: e.target.value })}
-                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }}
                   >
                     <option value="">-- Choose Specialist --</option>
                     {specialists.map(sp => (
@@ -852,7 +852,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Score Impact (0-100)</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Score Impact (0-100)</label>
                   <input 
                     type="number" 
                     required 
@@ -860,22 +860,22 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                     max={100}
                     value={obligationForm.complianceScoreImpact} 
                     onChange={e => setObligationForm({ ...obligationForm, complianceScoreImpact: Number(e.target.value) })} 
-                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)' }} 
                   />
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Notes / Description</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-sec)' }}>Notes / Description</label>
                 <textarea 
                   placeholder="Additional details about the filing requirements..."
                   value={obligationForm.notes} 
                   onChange={e => setObligationForm({ ...obligationForm, notes: e.target.value })} 
-                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', minHeight: '60px' }} 
+                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', minHeight: '60px' }} 
                 />
               </div>
 
-              <button type="submit" disabled={submitting} style={{ padding: '0.6rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              <button type="submit" disabled={submitting} style={{ padding: '0.6rem', background: '#B58A2B', color: 'var(--text-primary)', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0.5rem' }}>
                 {submitting ? 'Scheduling...' : 'Schedule Custom Obligation'}
               </button>
             </form>

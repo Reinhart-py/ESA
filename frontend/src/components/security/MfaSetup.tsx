@@ -120,11 +120,11 @@ export default function MfaSetup() {
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
       
       {/* Configuration Status Card */}
-      <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Shield size={18} style={{ color: '#00a896' }} /> Multi-Factor Authentication (MFA)
+      <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Shield size={18} style={{ color: 'var(--accent-color)' }} /> Multi-Factor Authentication (MFA)
         </h3>
-        <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+        <p style={{ color: 'var(--text-sec)', fontSize: '0.85rem', margin: 0 }}>
           Protect your enterprise workspace by enforcing an extra layer of TOTP verification on login attempts.
         </p>
 
@@ -143,14 +143,14 @@ export default function MfaSetup() {
         )}
 
         {/* Current State Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#0f172a', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: 'var(--bg-color)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
           {isEnabled ? (
             <>
               <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.75rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Lock size={24} />
               </div>
               <div>
-                <strong style={{ color: '#fff', display: 'block', fontSize: '0.95rem' }}>MFA Enforced</strong>
+                <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>MFA Enforced</strong>
                 <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Your account is secured with standard TOTP credentials.</span>
               </div>
               <button
@@ -162,17 +162,17 @@ export default function MfaSetup() {
             </>
           ) : (
             <>
-              <div style={{ background: 'rgba(100, 116, 139, 0.15)', color: '#94a3b8', padding: '0.75rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: 'rgba(100, 116, 139, 0.15)', color: 'var(--text-sec)', padding: '0.75rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Unlock size={24} />
               </div>
               <div>
-                <strong style={{ color: '#fff', display: 'block', fontSize: '0.95rem' }}>MFA Inactive</strong>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Secure your account credentials by setting up MFA authentication.</span>
+                <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>MFA Inactive</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Secure your account credentials by setting up MFA authentication.</span>
               </div>
               <button
                 onClick={handleInitiateSetup}
                 disabled={loading}
-                style={{ marginLeft: 'auto', padding: '0.4rem 0.8rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+                style={{ marginLeft: 'auto', padding: '0.4rem 0.8rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
               >
                 Configure setup
               </button>
@@ -182,7 +182,7 @@ export default function MfaSetup() {
 
         {/* Setup Wizard */}
         {setupDetails && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid var(--card-border)', paddingTop: '1.25rem' }}>
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
               {/* QR Code Container */}
               <div style={{ background: '#fff', padding: '0.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -191,15 +191,15 @@ export default function MfaSetup() {
 
               {/* Steps/Info */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-                <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>1. Scan QR Code</span>
-                <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>1. Scan QR Code</span>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-sec)', margin: 0 }}>
                   Scan the QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, or 1Password).
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>OR ENTER TEXT KEY:</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#0f172a', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
-                    <code style={{ fontSize: '0.75rem', color: '#00a896', fontFamily: 'monospace', flex: 1 }}>{setupDetails.secret}</code>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>OR ENTER TEXT KEY:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-color)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
+                    <code style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontFamily: 'monospace', flex: 1 }}>{setupDetails.secret}</code>
                     <button
                       onClick={handleCopySecret}
                       style={{ background: 'none', border: 'none', color: copiedSecret ? '#10b981' : '#94a3b8', cursor: 'pointer' }}
@@ -212,9 +212,9 @@ export default function MfaSetup() {
             </div>
 
             {/* Backup Codes */}
-            <div style={{ background: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
+            <div style={{ background: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 'bold' }}>2. Save Backup Codes</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>2. Save Backup Codes</span>
                 <button
                   onClick={handleDownloadBackupCodes}
                   style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold' }}
@@ -222,7 +222,7 @@ export default function MfaSetup() {
                   <Download size={12} /> Download Codes
                 </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1rem', fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1rem', fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-sec)' }}>
                 {setupDetails.backupCodes.map((c, idx) => (
                   <span key={idx}>{c}</span>
                 ))}
@@ -230,22 +230,22 @@ export default function MfaSetup() {
             </div>
 
             {/* Verification Form */}
-            <form onSubmit={handleEnableMfa} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.02)', paddingTop: '1rem' }}>
+            <form onSubmit={handleEnableMfa} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.25rem' }}>3. Enter Authenticator Token Code</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>3. Enter Authenticator Token Code</label>
                 <input
                   type="text"
                   placeholder="e.g. 123456"
                   maxLength={8}
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                style={{ padding: '0.5rem 1.2rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1.2rem', background: 'var(--accent-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}
               >
                 Verify & Enable
               </button>
@@ -255,11 +255,11 @@ export default function MfaSetup() {
 
         {/* Disable Dialog form */}
         {isDisabling && (
-          <form onSubmit={handleDisableMfa} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+          <form onSubmit={handleDisableMfa} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--card-border)', paddingTop: '1.25rem' }}>
             <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <AlertTriangle size={14} /> Disable Authenticator Security
             </span>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-sec)', margin: 0 }}>
               To disable Multi-Factor Authentication, enter a code from your authenticator app or one of your backup recovery codes.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -268,19 +268,19 @@ export default function MfaSetup() {
                 placeholder="Authenticator code or backup code"
                 value={disableCode}
                 onChange={(e) => setDisableCode(e.target.value)}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
               />
               <button
                 type="submit"
                 disabled={loading}
-                style={{ padding: '0.5rem 1rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1rem', background: '#ef4444', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}
               >
                 Verify & Disable
               </button>
               <button
                 type="button"
                 onClick={() => setIsDisabling(false)}
-                style={{ padding: '0.5rem 1rem', background: 'none', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1rem', background: 'none', color: 'var(--text-sec)', border: '1px solid var(--card-border)', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -290,11 +290,11 @@ export default function MfaSetup() {
       </div>
 
       {/* Info Panel / Side Panel */}
-      <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Key size={16} style={{ color: '#3b82f6' }} /> MFA Security Rules
         </h4>
-        <ul style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+        <ul style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem', color: 'var(--text-sec)' }}>
           <li>
             <strong>Required on Login:</strong> Once enabled, your login screens will prompt for a 6-digit TOTP verification token before issuing session cookies.
           </li>

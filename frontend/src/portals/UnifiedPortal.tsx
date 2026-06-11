@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
-  LayoutDashboard, Users, CalendarClock, FolderOpen, Shield, BookOpen, 
+  LayoutDashboard, Users, Building, CalendarClock, FolderOpen, Shield, BookOpen, 
   FileSpreadsheet, CreditCard, MessageSquare, Settings, LogOut, Sun, Moon, 
   Search, Bell, Sparkles, Plus, Trash2, FolderPlus, Send, AlertCircle, 
   Check, X, FileText, ChevronRight, HelpCircle, Activity, Play, ChevronDown,
@@ -29,7 +29,7 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
     userRole, setUserRole, themeMode, toggleTheme, syncState,
     folders, files, obligations, tasks, messages, tickets, auditLogs,
     subscription, invoices, createFolder, uploadFile, deleteFile, sendMessage,
-    createTask, createTicket, updateObligationStatus, currentUser
+    createTask, createTicket, updateObligationStatus, currentUser, webConfig
   } = context;
 
   // Sidebar navigation and UI states
@@ -218,17 +218,17 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
       {/* 1. PROFESSIONAL ENTERPRISE SIDEBAR */}
       <aside style={{
         width: isSidebarOpen ? 'var(--sidebar-width)' : '80px',
-        background: 'linear-gradient(180deg, #07162c 0%, #0c1b33 100%)',
-        color: '#fff',
+        background: 'var(--sidebar-bg)',
+        color: 'var(--sidebar-text)',
         display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid rgba(181, 138, 43, 0.15)',
+        borderRight: '1px solid var(--sidebar-border)',
         flexShrink: 0,
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: 50
       }}>
         {/* Sidebar Header / Logo */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
           <div style={{
             background: 'linear-gradient(135deg, #B58A2B 0%, #E2B857 100%)',
             minWidth: '38px',
@@ -244,8 +244,8 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
           </div>
           {isSidebarOpen && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h2 style={{ fontSize: '1.1rem', color: '#fff', margin: 0, fontWeight: 800, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>EAC Console</h2>
-              <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.65)', fontWeight: 500 }}>
+              <h2 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 800, letterSpacing: '-0.02em', textTransform: 'uppercase' }}>{webConfig?.WEBSITE_TITLE || 'EAC Console'}</h2>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sec)', fontWeight: 500 }}>
                 {userRole === 'super_admin' ? 'Super Administrator' : (userRole === 'accountant' ? 'Senior Accountant' : 'Client Workspace')}
               </span>
             </div>
@@ -254,12 +254,12 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
 
         {/* Workspace Active Picker */}
         {isSidebarOpen && userRole === 'client_owner' && (
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <label style={{ fontSize: '0.65rem', color: 'var(--accent-color)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Company</label>
             <select
               value={activeTenantId}
               onChange={(e) => handleSwitchTenant(e.target.value)}
-              style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: '#0a1424', color: '#fff', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
               {tenants.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -295,9 +295,9 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
                   padding: '0.75rem 1rem',
                   width: '100%',
                   borderRadius: '10px',
-                  color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.65)',
-                  background: isActive ? 'linear-gradient(90deg, #1E3E62 0%, #173252 100%)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #B58A2B' : '3px solid transparent',
+                  color: isActive ? 'var(--sidebar-active-text)' : 'var(--text-sec)',
+                  background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
+                  borderLeft: isActive ? '3px solid var(--accent-color)' : '3px solid transparent',
                   textAlign: 'left',
                   fontSize: '0.9rem',
                   fontWeight: isActive ? 600 : 500,
@@ -308,7 +308,7 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
                 }}
                 title={item.label}
               >
-                <span style={{ color: isActive ? '#E2B857' : 'inherit' }}>{item.icon}</span>
+                <span style={{ color: isActive ? 'var(--accent-color)' : 'inherit' }}>{item.icon}</span>
                 {isSidebarOpen && <span>{item.label}</span>}
               </button>
             );
@@ -316,9 +316,9 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
         </nav>
 
         {/* Sidebar Footer Actions */}
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', justifyContent: isSidebarOpen ? 'flex-start' : 'center' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-sec)', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', justifyContent: isSidebarOpen ? 'flex-start' : 'center' }}
             onClick={toggleTheme}
           >
             {themeMode === 'light' ? <><Moon size={16} /> {isSidebarOpen && 'Dark Mode'}</> : <><Sun size={16} /> {isSidebarOpen && 'Light Mode'}</>}
@@ -688,7 +688,7 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
                         sortable: true,
                         render: (row) => (
                           <div style={{ cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => setSelectedClient(row)}>
-                            🏢 {row.name}
+                            <Building size={16} style={{ color: 'var(--accent-color)' }} /> {row.name}
                           </div>
                         )
                       },
