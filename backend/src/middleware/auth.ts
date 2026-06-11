@@ -64,8 +64,37 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       }
     }
 
+    let targetUserId = user.id;
+    let targetUserEmail = user.email || '';
+    let targetUserRole = profile.role;
     let tenantId = profile.tenant_id;
-    if ((profile.role === 'super_admin' || profile.role === 'admin' || profile.role === 'senior_accountant') && req.headers['x-impersonate-tenant-id']) {
+
+    if ((profile.role === 'super_admin' || profile.role === 'admin') && req.headers['x-impersonate-user-id']) {
+      const impUserId = req.headers['x-impersonate-user-id'] as string;
+      const { data: impProfile, error: impErr } = await supabase
+        .from('users')
+        .select('id, email, role, tenant_id')
+        .eq('id', impUserId)
+        .maybeSingle();
+
+      if (impErr || !impProfile) {
+        return res.status(400).json({ error: 'Impersonation error: Target user does not exist' });
+      }
+
+      // Log impersonation in admin_impersonation_logs
+      await supabase
+        .from('admin_impersonation_logs')
+        .insert({
+          admin_id: user.id,
+          impersonated_user_id: impUserId,
+          reason: (req.headers['x-impersonate-reason'] as string) || 'Admin session override'
+        });
+
+      targetUserId = impProfile.id;
+      targetUserEmail = impProfile.email;
+      targetUserRole = impProfile.role;
+      tenantId = impProfile.tenant_id;
+    } else if ((profile.role === 'super_admin' || profile.role === 'admin' || profile.role === 'senior_accountant') && req.headers['x-impersonate-tenant-id']) {
       const targetTenantId = req.headers['x-impersonate-tenant-id'] as string;
       const { data: tenantExists, error: tenantErr } = await supabase
         .from('tenants')
@@ -80,9 +109,9 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     }
 
     req.user = {
-      id: user.id,
-      email: user.email || '',
-      role: profile.role,
+      id: targetUserId,
+      email: targetUserEmail,
+      role: targetUserRole,
       tenant_id: tenantId
     };
 

@@ -2,8 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { 
   Key, Radio, Plus, Trash2, Check, Copy, AlertTriangle, 
-  Terminal, ShieldCheck, RefreshCw, Loader2
+  Terminal, ShieldCheck, RefreshCw, Loader2, Blocks, Play
 } from 'lucide-react';
+
+// Subcomponents imports
+import ApiKeyList from '../components/developer/ApiKeyList.tsx';
+import WebhookList from '../components/developer/WebhookList.tsx';
+import WebhookLogs from '../components/developer/WebhookLogs.tsx';
+import ApiRequestHistory from '../components/developer/ApiRequestHistory.tsx';
+import ApiDocumentation from '../components/developer/ApiDocumentation.tsx';
+import WebhookTestPanel from '../components/developer/WebhookTestPanel.tsx';
+import SdkDownloads from '../components/developer/SdkDownloads.tsx';
 
 interface ApiKey {
   id: string;
@@ -22,6 +31,7 @@ interface WebhookConfig {
 }
 
 export default function DeveloperSettings() {
+  const [activeTab, setActiveTab] = useState<'keys' | 'webhooks' | 'logs' | 'docs' | 'sdks'>('keys');
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [hooks, setHooks] = useState<WebhookConfig[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,14 +39,13 @@ export default function DeveloperSettings() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Key form
+  // Key form state
   const [keyName, setKeyName] = useState('');
   const [newKeyDetails, setNewKeyDetails] = useState<{ key: string; expiresAt: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
 
-  // Webhook form
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookSecret, setWebhookSecret] = useState('');
+  // Active testing hook state
+  const [testingHook, setTestingHook] = useState<WebhookConfig | null>(null);
 
   const loadDeveloperData = async () => {
     setLoading(true);
@@ -99,23 +108,19 @@ export default function DeveloperSettings() {
     }
   };
 
-  const handleCreateWebhook = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!webhookUrl.trim() || !webhookSecret.trim()) return;
+  const handleCreateWebhook = async (url: string, secret: string) => {
     setSubmitting(true);
     setErrorMsg('');
     setSuccessMsg('');
     try {
       await apiClient.post('/developer/webhooks', {
-        url: webhookUrl,
-        secret: webhookSecret
+        url,
+        secret
       });
-      setWebhookUrl('');
-      setWebhookSecret('');
-      setSuccessMsg('Webhook configuration added successfully.');
+      setSuccessMsg('Webhook endpoint registered successfully.');
       await loadDeveloperData();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || 'Failed to configure webhook.');
+      setErrorMsg(err.response?.data?.error || 'Failed to register webhook.');
     } finally {
       setSubmitting(false);
     }
@@ -144,8 +149,16 @@ export default function DeveloperSettings() {
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
+  const tabs = [
+    { id: 'keys', label: 'API Keys', icon: Key },
+    { id: 'webhooks', label: 'Webhooks Config', icon: Radio },
+    { id: 'logs', label: 'Delivery Logs', icon: RefreshCw },
+    { id: 'docs', label: 'API Documentation', icon: Terminal },
+    { id: 'sdks', label: 'SDK Downloads', icon: Blocks }
+  ] as const;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', paddingBottom: '3rem' }}>
       {/* Top Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
@@ -153,7 +166,7 @@ export default function DeveloperSettings() {
             <Terminal size={24} style={{ color: '#00a896' }} /> Developer Integration Hub
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
-            Generate API tokens for custom tools and register webhook URLs for real-time state changes.
+            Configure client APIs access, outbound webhook webform payloads, and query development guides.
           </p>
         </div>
         <button 
@@ -162,8 +175,42 @@ export default function DeveloperSettings() {
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer' }}
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-          Sync Connections
+          Sync Core Context
         </button>
+      </div>
+
+      {/* Navigation Sub-Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                setActiveTab(t.id);
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '8px',
+                border: '1px solid ' + (isActive ? 'rgba(0,168,150,0.2)' : 'transparent'),
+                background: isActive ? 'rgba(0,168,150,0.1)' : 'none',
+                color: isActive ? '#00a896' : '#94a3b8',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              <Icon size={16} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Messages */}
@@ -181,156 +228,124 @@ export default function DeveloperSettings() {
         </div>
       )}
 
-      {/* Main split grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-        
-        {/* API KEYS COMPONENT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Key size={18} style={{ color: '#00a896' }} /> Integration API Keys
-            </h3>
-
-            {/* Key creation form */}
-            <form onSubmit={handleCreateKey} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              <input 
-                type="text" 
-                placeholder="Key label, e.g. TaxDomeSync" 
-                value={keyName}
-                onChange={e => setKeyName(e.target.value)}
-                required
-                style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+      {/* Tab Panels */}
+      <div style={{ minHeight: '300px' }}>
+        {activeTab === 'keys' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Key size={18} style={{ color: '#00a896' }} /> Active API Keys
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+                Keys allow external microservices to authenticate requests securely to your workspace. Keep keys private and configure per-key rate limits.
+              </p>
+              <ApiKeyList 
+                keys={keys}
+                onRevoke={handleRevokeKey}
+                onRefresh={loadDeveloperData}
+                submitting={submitting}
               />
-              <button 
-                type="submit" 
-                disabled={submitting}
-                style={{ padding: '0.6rem 1.2rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <Plus size={16} /> Generate Key
-              </button>
-            </form>
+            </div>
 
-            {/* Display newly generated key once */}
-            {newKeyDetails && (
-              <div style={{ background: 'rgba(0,168,150,0.1)', border: '1px solid rgba(0,168,150,0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#00a896', fontWeight: 'bold' }}>COPY KEY - ONLY SHOWN ONCE:</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <h3 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Plus size={18} style={{ color: '#00a896' }} /> Generate Integration Token
+                </h3>
+                <form onSubmit={handleCreateKey} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Key label, e.g. TaxDomeSync" 
+                    value={keyName}
+                    onChange={e => setKeyName(e.target.value)}
+                    required
+                    style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', fontSize: '0.85rem' }}
+                  />
                   <button 
-                    onClick={handleCopyKey}
-                    style={{ background: 'none', border: 'none', color: copiedKey ? '#10b981' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+                    type="submit" 
+                    disabled={submitting}
+                    style={{ padding: '0.6rem 1.2rem', background: '#00a896', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                   >
-                    {copiedKey ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+                    <Plus size={16} /> Generate Key
                   </button>
-                </div>
-                <div style={{ wordBreak: 'break-all', fontFamily: 'monospace', fontSize: '0.85rem', color: '#fff', background: '#0f172a', padding: '0.5rem', borderRadius: '4px' }}>
-                  {newKeyDetails.key}
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-                  Expires: {new Date(newKeyDetails.expiresAt).toLocaleDateString()}
-                </div>
-              </div>
-            )}
+                </form>
 
-            {/* Active Keys List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {keys.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>No active API keys found.</p>
-              ) : (
-                keys.map(k => (
-                  <div key={k.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
-                    <div>
-                      <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{k.key_name}</strong>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace', marginTop: '0.15rem' }}>
-                        {k.key_prefix}******************
-                      </div>
+                {newKeyDetails && (
+                  <div style={{ background: 'rgba(0,168,150,0.1)', border: '1px solid rgba(0,168,150,0.2)', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#00a896', fontWeight: 'bold' }}>COPY KEY - ONLY SHOWN ONCE:</span>
+                      <button 
+                        onClick={handleCopyKey}
+                        style={{ background: 'none', border: 'none', color: copiedKey ? '#10b981' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+                      >
+                        {copiedKey ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+                      </button>
                     </div>
-
-                    <button 
-                      onClick={() => handleRevokeKey(k.id)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.35rem' }}
-                      title="Revoke Key"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ wordBreak: 'break-all', fontFamily: 'monospace', fontSize: '0.85rem', color: '#fff', background: '#0f172a', padding: '0.5rem', borderRadius: '4px' }}>
+                      {newKeyDetails.key}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                      Expires: {new Date(newKeyDetails.expiresAt).toLocaleDateString()}
+                    </div>
                   </div>
-                ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'webhooks' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <WebhookList 
+                hooks={hooks}
+                onDelete={handleDeleteWebhook}
+                onCreate={handleCreateWebhook}
+                onTriggerTest={(h) => {
+                  setTestingHook(h);
+                }}
+                submitting={submitting}
+              />
+            </div>
+
+            <div>
+              {testingHook ? (
+                <WebhookTestPanel 
+                  configs={[testingHook]}
+                  onRefreshLogs={loadDeveloperData}
+                />
+              ) : (
+                <div style={{ background: '#1e293b', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', color: '#64748b', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', height: '100%' }}>
+                  <Play size={32} />
+                  <span>Click "Test" on any registered webhook to trigger test dispatches.</span>
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* WEBHOOKS COMPONENT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Radio size={18} style={{ color: '#3b82f6' }} /> Outbound Webhook Streams
-            </h3>
+        {activeTab === 'logs' && (
+          <WebhookLogs configs={hooks} />
+        )}
 
-            {/* Webhook form */}
-            <form onSubmit={handleCreateWebhook} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Endpoint URL</label>
-                <input 
-                  type="url" 
-                  placeholder="https://api.yourdomain.com/webhooks" 
-                  value={webhookUrl}
-                  onChange={e => setWebhookUrl(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.35rem' }}>HMAC Signature Secret Key</label>
-                <input 
-                  type="text" 
-                  placeholder="Minimum 8 characters" 
-                  value={webhookSecret}
-                  onChange={e => setWebhookSecret(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={submitting}
-                style={{ padding: '0.6rem 1.2rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
-              >
-                <Plus size={16} /> Register Webhook Endpoint
-              </button>
-            </form>
-
-            {/* Active Webhooks List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {hooks.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>No active webhook endpoints registered.</p>
-              ) : (
-                hooks.map(h => (
-                  <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
-                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '1rem' }}>
-                      <div style={{ color: '#fff', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {h.url}
-                      </div>
-                      <span style={{ fontSize: '0.7rem', color: '#00a896', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
-                        <ShieldCheck size={12} /> Active HMAC Signature Enabled
-                      </span>
-                    </div>
-
-                    <button 
-                      onClick={() => handleDeleteWebhook(h.id)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.35rem' }}
-                      title="Delete Webhook"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
+        {activeTab === 'docs' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Terminal size={18} style={{ color: '#00a896' }} /> Interactive REST API Guides
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>
+                Explore exact endpoints paths, parameters schemas mapping, and copyable requests snippets in Node.js, Python, or cURL.
+              </p>
             </div>
+            <ApiDocumentation />
+            <ApiRequestHistory />
           </div>
-        </div>
+        )}
 
+        {activeTab === 'sdks' && (
+          <SdkDownloads />
+        )}
       </div>
     </div>
   );

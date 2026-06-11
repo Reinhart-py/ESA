@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +17,7 @@ import VaultProPanel from './VaultProPanel.tsx';
 import DashboardAnalytics from './DashboardAnalytics.tsx';
 import ReportingDashboard from './ReportingDashboard.tsx';
 import InternalMessagingHub from './InternalMessagingHub.tsx';
-import ProfileSettings from './ProfileSettings.tsx';
+import SecurityLayout from '../components/security/SecurityLayout.tsx';
 
 import CommandPalette from '../components/ui/CommandPalette.tsx';
 import DataTable from '../components/ui/DataTable.tsx';
@@ -35,7 +36,24 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
     themeMode, toggleTheme, invoices, subscription, currentUser, syncState
   } = context;
 
-  const [activeSubTab, setActiveSubTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.startsWith('/client/documents')) return 'documents';
+    if (path.startsWith('/client/compliance')) return 'compliance';
+    if (path.startsWith('/client/reports')) return 'reports';
+    if (path.startsWith('/client/communication')) return 'communication';
+    if (path.startsWith('/client/billing')) return 'billing';
+    if (path.startsWith('/client/security')) return 'security';
+    return 'dashboard';
+  };
+
+  const activeSubTab = getActiveTab();
+  const setActiveSubTab = (tab: string) => {
+    navigate('/client/' + tab);
+  };
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
@@ -115,24 +133,24 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-color)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
       {/* Sidebar with customer action items only */}
-      <aside style={{ width: '260px', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <aside style={{ width: '260px', background: 'var(--sidebar-bg)', color: 'var(--sidebar-text)', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--sidebar-border)', flexShrink: 0 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <div style={{ background: '#B58A2B', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>C</div>
+            <div style={{ background: 'var(--accent-color)', color: '#fff', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>C</div>
             <div>
-              <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Client Console</h2>
-              <span style={{ fontSize: '0.75rem', color: '#B58A2B' }}>{currentUser?.full_name || 'Business Client'}</span>
+              <h2 style={{ fontSize: '1.05rem', color: 'var(--sidebar-text)', margin: 0 }}>Client Console</h2>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)' }}>{currentUser?.full_name || 'Business Client'}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <label style={{ fontSize: '0.7rem', color: '#9CA3AF', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Company</label>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-sec)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Company</label>
             <select
               value={activeTenantId}
               onChange={(e) => handleSwitchTenant(e.target.value)}
-              style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
               {tenants.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -143,58 +161,58 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
         <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'dashboard' ? '#fff' : '#9CA3AF', background: activeSubTab === 'dashboard' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'dashboard' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'dashboard' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('dashboard')}
           >
             <LayoutDashboard size={18} /> Dashboard Overview
           </button>
           
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'documents' ? '#fff' : '#9CA3AF', background: activeSubTab === 'documents' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'documents' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'documents' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('documents')}
           >
             <FolderOpen size={18} /> Document Vault
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'compliance' ? '#fff' : '#9CA3AF', background: activeSubTab === 'compliance' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'compliance' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'compliance' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('compliance')}
           >
             <CalendarClock size={18} /> Compliance Tracker
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'reports' ? '#fff' : '#9CA3AF', background: activeSubTab === 'reports' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'reports' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'reports' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('reports')}
           >
             <FileSpreadsheet size={18} /> Financial Reports
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'communication' ? '#fff' : '#9CA3AF', background: activeSubTab === 'communication' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'communication' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'communication' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('communication')}
           >
             <MessageSquare size={18} /> Chat with Accountant
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? '#fff' : '#9CA3AF', background: activeSubTab === 'billing' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'billing' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('billing')}
           >
             <CreditCard size={18} /> Invoices & Plan
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? '#fff' : '#9CA3AF', background: activeSubTab === 'security' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'security' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.9rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('security')}
           >
             <Shield size={18} /> Security & Profile
           </button>
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#9CA3AF', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-sec)', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }}
             onClick={toggleTheme}
           >
             {themeMode === 'light' ? <><Moon size={16} /> Dark Mode</> : <><Sun size={16} /> Light Mode</>}
@@ -265,26 +283,26 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
         {/* Billing */}
         {activeSubTab === 'billing' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
-            <div style={{ background: '#1e293b', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ background: 'var(--card-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <CreditCard size={24} style={{ color: '#10b981' }} /> Billing & Workspace Tier
+                <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CreditCard size={24} style={{ color: 'var(--accent-color)' }} /> Billing & Workspace Tier
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
                   Manage subscription plans, check workspace resource limits, and retrieve payment invoices.
                 </p>
               </div>
 
               {subscription && (
-                <div style={{ background: '#0f172a', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>WORKSPACE TIER STATUS:</span>
+                <div style={{ background: 'var(--surface-color)', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>WORKSPACE TIER STATUS:</span>
                   <span style={{ 
                      fontSize: '0.8rem', 
                      fontWeight: 'bold', 
                      padding: '0.25rem 0.65rem', 
                      borderRadius: '4px',
-                     background: subscription.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                     color: subscription.status === 'active' ? '#34d399' : '#fbbf24'
+                     background: subscription.status === 'active' ? 'var(--color-success-bg)' : 'var(--color-warning-bg)',
+                     color: subscription.status === 'active' ? 'var(--color-success)' : 'var(--color-warning)'
                   }}>
                     {subscription.status.toUpperCase()}
                   </span>
@@ -305,32 +323,32 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
                   return (
                     <div
-                      key={p.id}
-                      style={{
-                        background: '#1e293b',
-                        padding: '2rem',
-                        borderRadius: '12px',
-                        border: isCurrent ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.05)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        position: 'relative'
-                      }}
+                       key={p.id}
+                       style={{
+                         background: 'var(--card-bg)',
+                         padding: '2rem',
+                         borderRadius: '12px',
+                         border: isCurrent ? '2px solid var(--color-success)' : '1px solid var(--card-border)',
+                         display: 'flex',
+                         flexDirection: 'column',
+                         justifyContent: 'space-between',
+                         position: 'relative'
+                       }}
                     >
                       {isPro && (
-                        <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: '#10b981', color: '#fff', fontSize: '0.65rem', padding: '0.25rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                        <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'var(--accent-color)', color: '#fff', fontSize: '0.65rem', padding: '0.25rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
                           RECOMMENDED
                         </span>
                       )}
 
                       <div>
-                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{p.name}</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{p.name}</h4>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
-                          <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff' }}>${(p.price_cents / 100).toFixed(0)}</span>
-                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>/mo</span>
+                          <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>${(p.price_cents / 100).toFixed(0)}</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>/mo</span>
                         </div>
 
-                        <ul style={{ paddingLeft: '1.2rem', margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', color: '#cbd5e1', fontSize: '0.85rem' }}>
+                        <ul style={{ paddingLeft: '1.2rem', margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', color: 'var(--text-sec)', fontSize: '0.85rem' }}>
                           {featureList.map((f, idx) => (
                             <li key={idx} style={{ position: 'relative' }}>
                               {f}
@@ -345,9 +363,9 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
                         style={{
                           width: '100%',
                           padding: '0.75rem',
-                          background: isCurrent ? 'rgba(16,185,129,0.1)' : (isPro ? '#10b981' : '#1e293b'),
-                          color: isCurrent ? '#10b981' : '#fff',
-                          border: isCurrent ? '1px solid #10b981' : 'none',
+                          background: isCurrent ? 'var(--color-success-bg)' : (isPro ? 'var(--color-success)' : 'var(--surface-color)'),
+                          color: isCurrent ? 'var(--color-success)' : (isPro ? '#fff' : 'var(--text-primary)'),
+                          border: isCurrent ? '1px solid var(--color-success)' : '1px solid var(--card-border)',
                           borderRadius: '8px',
                           fontWeight: 'bold',
                           cursor: billingLoading || isCurrent ? 'default' : 'pointer',
@@ -425,7 +443,7 @@ export default function ClientPortal({ onLogout }: { onLogout: () => void }) {
 
         {/* Profile */}
         {activeSubTab === 'security' && (
-          <ProfileSettings />
+          <SecurityLayout />
         )}
       </main>
       <CommandPalette 

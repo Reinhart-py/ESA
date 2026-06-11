@@ -19,6 +19,7 @@ import ProfileSettings from './ProfileSettings.tsx';
 import LedgerManagement from './LedgerManagement.tsx';
 import CommandPalette from '../components/ui/CommandPalette.tsx';
 import DataTable from '../components/ui/DataTable.tsx';
+import SupportManagement from './SupportManagement.tsx';
 
 export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -279,6 +280,7 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
             { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={18} /> },
             { id: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
             { id: 'messages', label: 'Messages', icon: <MessageSquare size={18} /> },
+            { id: 'support', label: 'Support Desk', icon: <HelpCircle size={18} /> },
             { id: 'settings', label: 'Settings', icon: <Settings size={18} /> }
           ].map(item => {
             const isActive = activeTab === item.id;
@@ -1034,6 +1036,18 @@ export default function UnifiedPortal({ onLogout }: { onLogout: () => void }) {
                 currentUserId={currentUser?.id || 'client'}
                 currentUserName={currentUser?.full_name || 'Client Representative'}
               />
+            </div>
+          )}
+
+          {/* IX-B. SUPPORT DESK MODULE */}
+          {activeTab === 'support' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div>
+                <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Helpdesk & Support Ticketing Desk</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Open requests, track resolving milestones status, and check SLA compliance goals.</p>
+              </div>
+
+              <SupportManagement />
             </div>
           )}
 

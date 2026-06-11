@@ -203,6 +203,294 @@ export const signContractSchema = z.object({
   })
 });
 
+export const createLeadSchema = z.object({
+  body: z.object({
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
+    company: z.string().optional(),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().optional(),
+    source: z.string().optional(),
+    assigned_to: z.string().uuid('Invalid user ID').optional()
+  })
+});
+
+export const updateLeadSchema = z.object({
+  body: z.object({
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    company: z.string().optional(),
+    email: z.string().email('Invalid email address').optional(),
+    phone: z.string().optional(),
+    source: z.string().optional(),
+    status: z.enum(['new', 'contacted', 'qualified', 'nurturing', 'lost']).optional(),
+    assigned_to: z.string().uuid('Invalid user ID').optional()
+  })
+});
+
+export const createContactSchema = z.object({
+  body: z.object({
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().optional(),
+    job_title: z.string().optional(),
+    account_id: z.string().uuid('Invalid account ID').optional()
+  })
+});
+
+export const createDealSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Deal title is required'),
+    amount_cents: z.number().int().positive('Amount must be positive'),
+    stage: z.string().optional(),
+    probability: z.number().int().min(0).max(100).optional(),
+    assigned_to: z.string().uuid('Invalid user ID').optional(),
+    account_id: z.string().uuid('Invalid account ID').optional()
+  })
+});
+
+export const logActivitySchema = z.object({
+  body: z.object({
+    lead_id: z.string().uuid('Invalid lead ID').optional(),
+    deal_id: z.string().uuid('Invalid deal ID').optional(),
+    activity_type: z.string().min(1, 'Activity type is required'),
+    subject: z.string().min(1, 'Subject is required'),
+    details: z.string().optional()
+  })
+});
+
+export const createInvoiceSchema = z.object({
+  body: z.object({
+    amountCents: z.number().int().positive('Amount must be positive'),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format'),
+    currency: z.string().optional().default('USD'),
+    items: z.array(z.object({
+      productId: z.string().uuid().optional().nullable(),
+      description: z.string().min(1, 'Item description is required'),
+      quantity: z.number().int().positive().optional().default(1),
+      unitPriceCents: z.number().int().positive('Unit price must be positive'),
+      taxRateId: z.string().uuid().optional().nullable()
+    })).min(1, 'At least one line item is required')
+  })
+});
+
+export const updateInvoiceSchema = z.object({
+  body: z.object({
+    status: z.enum(['paid', 'unpaid', 'voided']).optional(),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format').optional()
+  })
+});
+
+export const createCheckoutSessionSchema = z.object({
+  body: z.object({
+    invoiceId: z.string().uuid('Invalid invoice ID'),
+    couponCode: z.string().optional()
+  })
+});
+
+export const createProductCatalogSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Product name is required'),
+    price_cents: z.number().int().positive('Price must be positive'),
+    sku: z.string().optional()
+  })
+});
+
+export const createCouponCatalogSchema = z.object({
+  body: z.object({
+    code: z.string().min(1, 'Coupon code is required'),
+    discount_percent: z.number().int().min(0).max(100),
+    expires_at: z.string().optional()
+  })
+});
+
+export const createEmployeeSchema = z.object({
+  body: z.object({
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
+    email: z.string().email('Invalid email address'),
+    role: z.string().optional(),
+    tax_id: z.string().min(1, 'Tax ID is required'),
+    base_salary_cents: z.number().int().nonnegative('Base salary must be non-negative'),
+    status: z.enum(['active', 'suspended', 'terminated']).optional()
+  })
+});
+
+export const updateEmployeeSchema = z.object({
+  body: z.object({
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    email: z.string().email('Invalid email address').optional(),
+    role: z.string().optional(),
+    tax_id: z.string().optional(),
+    base_salary_cents: z.number().int().nonnegative('Base salary must be non-negative').optional(),
+    status: z.enum(['active', 'suspended', 'terminated']).optional()
+  })
+});
+
+export const createTimesheetSchema = z.object({
+  body: z.object({
+    employee_id: z.string().uuid('Invalid employee ID'),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    hours_worked: z.number().min(0).max(24, 'Hours worked must be between 0 and 24')
+  })
+});
+
+export const createPayrollRunSchema = z.object({
+  body: z.object({
+    period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+    period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format')
+  })
+});
+
+export const createPtoRequestSchema = z.object({
+  body: z.object({
+    employee_id: z.string().uuid('Invalid employee ID'),
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format')
+  })
+});
+
+export const resolvePtoRequestSchema = z.object({
+  body: z.object({
+    status: z.enum(['approved', 'rejected'])
+  })
+});
+
+export const createBenefitSchema = z.object({
+  body: z.object({
+    employee_id: z.string().uuid('Invalid employee ID'),
+    type: z.string().min(1, 'Benefit type/name is required'),
+    cost_cents: z.number().int().nonnegative('Cost must be non-negative')
+  })
+});
+
+export const createObligationSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Title is required'),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format'),
+    type: z.enum(['GST', 'VAT', 'TDS', 'Corporate Tax', 'Payroll Tax', 'Company Return', 'License Renewal', 'Regulatory Filing', 'Audit']),
+    assignedSpecialistId: z.string().uuid('Invalid user ID').nullable().optional(),
+    notes: z.string().optional(),
+    complianceScoreImpact: z.number().int().min(0).max(100).optional().default(10)
+  })
+});
+
+export const createTicketReplySchema = z.object({
+  body: z.object({
+    content: z.string().min(1, 'Reply content cannot be empty')
+  })
+});
+
+export const createSlaRuleSchema = z.object({
+  body: z.object({
+    priority: z.string().min(1, 'Priority name is required'),
+    response_time_hours: z.number().int().positive('Response hours must be positive'),
+    resolution_time_hours: z.number().int().positive('Resolution hours must be positive')
+  })
+});
+
+export const createSupportCategorySchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Category name is required'),
+    description: z.string().optional()
+  })
+});
+
+export const createKbArticleSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Title is required'),
+    content: z.string().min(1, 'Content is required'),
+    category: z.string().optional(),
+    is_published: z.boolean().optional()
+  })
+});
+
+export const updateKbArticleSchema = z.object({
+  body: z.object({
+    title: z.string().optional(),
+    content: z.string().optional(),
+    category: z.string().optional(),
+    is_published: z.boolean().optional()
+  })
+});
+
+export const createCsatRatingSchema = z.object({
+  body: z.object({
+    ticket_id: z.string().uuid('Invalid ticket ID'),
+    rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating cannot exceed 5'),
+    feedback: z.string().optional()
+  })
+});
+
+export const createTenantAdminSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    business_type: z.string().min(2, 'Business type must be at least 2 characters'),
+    country: z.string().length(2, 'Country code must be exactly 2 characters').optional().default('US'),
+    storage_limit_bytes: z.number().int().positive('Storage limit must be positive').optional().default(10737418240)
+  })
+});
+
+export const suspendTenantSchema = z.object({
+  body: z.object({
+    reason: z.string().min(5, 'Suspension reason must be at least 5 characters')
+  })
+});
+
+export const updateSystemParameterSchema = z.object({
+  body: z.object({
+    key: z.string().min(1, 'Parameter key is required'),
+    value: z.string().min(1, 'Parameter value is required'),
+    description: z.string().optional()
+  })
+});
+
+export const addIpWhitelistSchema = z.object({
+  body: z.object({
+    ip_address: z.string().min(1, 'IP address is required'),
+    description: z.string().optional()
+  })
+});
+
+export const setRateLimitSchema = z.object({
+  body: z.object({
+    apiKeyId: z.string().uuid('Invalid API key ID'),
+    maxRequestsPerMinute: z.number().int().positive('Rate limit must be at least 1')
+  })
+});
+
+export const mfaVerifySchema = z.object({
+  body: z.object({
+    code: z.string().min(6, 'TOTP verification code must be at least 6 digits').max(8, 'TOTP code cannot exceed 8 digits')
+  })
+});
+
+export const saveSearchSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Saved search name is required'),
+    query: z.string().min(1, 'Query parameter is required'),
+    filters: z.any().optional()
+  })
+});
+
+export const aiChatSchema = z.object({
+  body: z.object({
+    query: z.string().min(1, 'AI chat prompt query is required')
+  })
+});
+
+export const embedDocSchema = z.object({
+  body: z.object({
+    documentId: z.string().uuid('Invalid document file ID'),
+    chunks: z.array(z.object({
+      content: z.string().min(1, 'Chunk content is required')
+    })).min(1, 'At least one document text chunk is required')
+  })
+});
+
+
 
 
 

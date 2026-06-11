@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext.tsx';
 import { apiClient } from '../api/client.ts';
 import { 
@@ -8,7 +9,16 @@ import {
   FileText, Globe, AlertCircle
 } from 'lucide-react';
 import DataTable from '../components/ui/DataTable.tsx';
-import ProfileSettings from './ProfileSettings.tsx';
+import SecurityLayout from '../components/security/SecurityLayout.tsx';
+
+// Super Admin / Governance Modules
+import SystemTelemetry from '../components/admin/SystemTelemetry.tsx';
+import TenantManager from '../components/admin/TenantManager.tsx';
+import SecurityEventLogs from '../components/admin/SecurityEventLogs.tsx';
+import ParameterConfig from '../components/admin/ParameterConfig.tsx';
+import ImpersonatorConsole from '../components/admin/ImpersonatorConsole.tsx';
+import MigrationLogs from '../components/admin/MigrationLogs.tsx';
+import IpWhitelist from '../components/admin/IpWhitelist.tsx';
 
 export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
   const context = useContext(AppContext);
@@ -18,7 +28,27 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
     tickets, auditLogs, syncState
   } = context;
 
-  const [activeSubTab, setActiveSubTab] = useState('metrics');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.startsWith('/admin/clients')) return 'clients';
+    if (path.startsWith('/admin/accountants')) return 'accountants';
+    if (path.startsWith('/admin/approvals')) return 'approvals';
+    if (path.startsWith('/admin/billing')) return 'billing';
+    if (path.startsWith('/admin/files')) return 'files';
+    if (path.startsWith('/admin/audit')) return 'audit';
+    if (path.startsWith('/admin/settings')) return 'settings';
+    if (path.startsWith('/admin/security')) return 'security';
+    if (path.startsWith('/admin/impersonator')) return 'impersonator';
+    return 'metrics';
+  };
+
+  const activeSubTab = getActiveTab();
+  const setActiveSubTab = (tab: string) => {
+    navigate('/admin/' + tab);
+  };
   const [tenants, setTenants] = useState<any[]>([]);
   const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
 
@@ -252,74 +282,81 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
       
       {/* Sidebar - Restructured to 8 Tabs */}
-      <aside style={{ width: 'var(--sidebar-width)', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+      <aside style={{ width: 'var(--sidebar-width)', background: 'var(--sidebar-bg)', color: 'var(--sidebar-text)', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--sidebar-border)', flexShrink: 0 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div style={{ background: '#DC2626', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>S</div>
           <div>
-            <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Admin Portal</h2>
+            <h2 style={{ fontSize: '1.05rem', color: 'var(--sidebar-text)', margin: 0 }}>Admin Portal</h2>
             <span style={{ fontSize: '0.75rem', color: '#EF4444' }}>System Control Center</span>
           </div>
         </div>
 
         <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem', overflowY: 'auto' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'metrics' ? '#fff' : '#9CA3AF', background: activeSubTab === 'metrics' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'metrics' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'metrics' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('metrics')}
           >
             <ShieldCheck size={16} /> Platform Diagnostics
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'clients' ? '#fff' : '#9CA3AF', background: activeSubTab === 'clients' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'clients' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'clients' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('clients')}
           >
             <Building size={16} /> Client Control
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'accountants' ? '#fff' : '#9CA3AF', background: activeSubTab === 'accountants' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'accountants' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'accountants' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('accountants')}
           >
             <Users size={16} /> Accountant Control
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'approvals' ? '#fff' : '#9CA3AF', background: activeSubTab === 'approvals' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'approvals' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'approvals' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('approvals')}
           >
             <UserCheck size={16} /> Approval Center ({pendingPricingPackages.length + pendingRefundRequests.length})
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? '#fff' : '#9CA3AF', background: activeSubTab === 'billing' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'billing' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('billing')}
           >
             <DollarSign size={16} /> Billing & Invoices
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'files' ? '#fff' : '#9CA3AF', background: activeSubTab === 'files' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'files' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'files' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('files')}
           >
             <HardDrive size={16} /> File Governance
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'audit' ? '#fff' : '#9CA3AF', background: activeSubTab === 'audit' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'audit' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'audit' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('audit')}
           >
             <Database size={16} /> Audit & Events
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'settings' ? '#fff' : '#9CA3AF', background: activeSubTab === 'settings' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'settings' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'settings' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => setActiveSubTab('settings')}
           >
             <Settings size={16} /> Platform Settings
           </button>
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'impersonator' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'impersonator' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => setActiveSubTab('impersonator')}
+          >
+            <Eye size={16} /> Session Impersonator
+          </button>
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)' }}>
           <button style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#EF4444', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
             <LogOut size={16} /> Exit Control
           </button>
@@ -331,192 +368,12 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         
         {/* 1. PLATFORM DIAGNOSTICS */}
         {activeSubTab === 'metrics' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>System Health Overview</h1>
-              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Real-time telemetry and database connection states.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
-              <div className="premium-card">
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>SYSTEM HEALTH RATIO</span>
-                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0', color: 'green' }}>100%</h2>
-                <span style={{ fontSize: '0.7rem' }}>All services online</span>
-              </div>
-              <div className="premium-card">
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>TOTAL WORKSPACES</span>
-                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>{tenants.length}</h2>
-                <span style={{ fontSize: '0.7rem', color: '#B58A2B' }}>Estimated MRR: ${(metrics?.systemMonthlyRevenueCents / 100 || 0).toFixed(2)}</span>
-              </div>
-              <div className="premium-card">
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>GLOBAL STORAGE USAGE</span>
-                <h2 style={{ fontSize: '2rem', margin: '0.25rem 0' }}>{(metrics?.totalStorageUsedBytes / 1024 / 1024 || 0).toFixed(2)} MB</h2>
-                <span style={{ fontSize: '0.7rem' }}>Google Drive Adapters connected</span>
-              </div>
-            </div>
-
-            <div className="premium-card">
-              <h3>Infrastructure Telemetry Details</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.4rem' }}>
-                  <span>PostgreSQL Database Connection</span>
-                  <span style={{ color: 'green', fontWeight: 'bold' }}>ONLINE</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.4rem' }}>
-                  <span>Stripe Billing Webhook APIs</span>
-                  <span style={{ color: 'green', fontWeight: 'bold' }}>ACTIVE</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.4rem' }}>
-                  <span>Active SMTP Gateway Service</span>
-                  <span style={{ color: 'green', fontWeight: 'bold' }}>ONLINE</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <SystemTelemetry />
         )}
 
         {/* 2. CLIENT CONTROL */}
         {activeSubTab === 'clients' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Client Workspace Governance</h1>
-              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Comprehensive client CRUD management, organization transfers, and duplicate records merging.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
-              <div>
-                <DataTable
-                  columns={[
-                    {
-                      key: 'name',
-                      label: 'Client Company Name',
-                      sortable: true,
-                      render: (row) => <strong>🏢 {row.name}</strong>
-                    },
-                    {
-                      key: 'business_type',
-                      label: 'Account Status Alignment',
-                      sortable: true,
-                      render: (row) => {
-                        const isSuspended = row.business_type === 'Suspended Enterprise';
-                        return (
-                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: isSuspended ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)', color: isSuspended ? 'red' : 'green' }}>
-                            {isSuspended ? 'SUSPENDED' : 'ACTIVE'}
-                          </span>
-                        );
-                      }
-                    },
-                    {
-                      key: 'actions',
-                      label: 'Admin Direct Operations',
-                      sortable: false,
-                      render: (row) => {
-                        const isSuspended = row.business_type === 'Suspended Enterprise';
-                        return (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button onClick={() => handleToggleClientActive(row)} style={{ padding: '0.35rem 0.65rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>
-                              {isSuspended ? 'Restore' : 'Suspend'}
-                            </button>
-                            <button onClick={() => handleImpersonate(row.id)} style={{ padding: '0.35rem 0.65rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>
-                              Impersonate
-                            </button>
-                          </div>
-                        );
-                      }
-                    }
-                  ]}
-                  data={tenants}
-                  pageSize={5}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Onboard Client Form */}
-                <div className="premium-card">
-                  <h3>Onboard Client Workspace</h3>
-                  <form onSubmit={handleCreateClient} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.25rem' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Organization Name"
-                      value={newClientName}
-                      onChange={e => setNewClientName(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    />
-                    
-                    <select
-                      value={newClientType}
-                      onChange={e => setNewClientType(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    >
-                      <option value="LLC">LLC</option>
-                      <option value="Corporation">Corporation</option>
-                      <option value="Partnership">Partnership</option>
-                    </select>
-
-                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Register Organization
-                    </button>
-                  </form>
-                </div>
-
-                {/* Merge duplicates */}
-                <div className="premium-card">
-                  <h3>Merge Duplicate Organizations</h3>
-                  <form onSubmit={handleMergeClients} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.25rem' }}>
-                    <select
-                      value={mergeSourceId}
-                      onChange={e => setMergeSourceId(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    >
-                      <option value="">-- Select Duplicate Source --</option>
-                      {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-
-                    <select
-                      value={mergeTargetId}
-                      onChange={e => setMergeTargetId(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    >
-                      <option value="">-- Select Target Destination --</option>
-                      {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-
-                    <button type="submit" style={{ padding: '0.5rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Reconcile & Merge Records
-                    </button>
-                  </form>
-                </div>
-
-                {/* Transfer client */}
-                <div className="premium-card">
-                  <h3>Transfer Organization Ownership</h3>
-                  <form onSubmit={handleTransferClient} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.25rem' }}>
-                    <select
-                      value={transferClientId}
-                      onChange={e => setTransferClientId(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    >
-                      <option value="">-- Choose Organization --</option>
-                      {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-
-                    <select
-                      value={transferAccountantId}
-                      onChange={e => setTransferAccountantId(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '100%' }}
-                    >
-                      <option value="">-- Select Specialist Assignee --</option>
-                      {accountants.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-                    </select>
-
-                    <button type="submit" style={{ padding: '0.5rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Disptach Transfer Mandate
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TenantManager onImpersonate={handleImpersonate} impersonatingId={impersonatingId} />
         )}
 
         {/* 3. ACCOUNTANT CONTROL */}
@@ -768,40 +625,9 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         {/* 7. AUDIT & EVENTS */}
         {activeSubTab === 'audit' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>System Audit Logs</h1>
-              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Immutable logs of all billing events, security updates, and file actions.</p>
-            </div>
-
-            <div className="premium-card">
-              <DataTable
-                columns={[
-                  {
-                    key: 'created_at',
-                    label: 'Timestamp',
-                    sortable: true,
-                    render: (row) => <span>{new Date(row.created_at).toLocaleString()}</span>
-                  },
-                  {
-                    key: 'category',
-                    label: 'Event Category',
-                    sortable: true,
-                    render: (row) => <strong style={{ color: '#B58A2B' }}>{row.category}</strong>
-                  },
-                  {
-                    key: 'action',
-                    label: 'Operation Description',
-                    sortable: false
-                  },
-                  {
-                    key: 'user_identity',
-                    label: 'Trigger User',
-                    sortable: true
-                  }
-                ]}
-                data={auditLogs}
-                pageSize={10}
-              />
+            <SecurityEventLogs />
+            <div style={{ marginTop: '2rem' }}>
+              <MigrationLogs />
             </div>
           </div>
         )}
@@ -809,74 +635,21 @@ export default function AdminPortal({ onLogout }: { onLogout: () => void }) {
         {/* 8. PLATFORM SETTINGS */}
         {activeSubTab === 'settings' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Global Platform Settings</h1>
-              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Configure whitelabel branding, toggle menu layouts, SMTP credentials, and mail templates.</p>
+            <ParameterConfig />
+            <div style={{ marginTop: '2rem' }}>
+              <IpWhitelist />
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div className="premium-card">
-                <h3>Whitelabel Customization</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)', display: 'block', marginBottom: '0.25rem' }}>Platform Name</label>
-                    <input 
-                      type="text" 
-                      value={brandingName} 
-                      onChange={e => setBrandingName(e.target.value)} 
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)', display: 'block', marginBottom: '0.25rem' }}>Branding Primary Palette</label>
-                    <select 
-                      value={primaryTheme} 
-                      onChange={e => setPrimaryTheme(e.target.value)} 
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="Classic Navy">Classic Navy & Brushed Gold</option>
-                      <option value="Mint Emerald">Emerald Mint & Charcoal</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="premium-card">
-                <h3>SMTP Outbound Gateways</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)', display: 'block', marginBottom: '0.25rem' }}>Mail Server Address</label>
-                    <input 
-                      type="text" 
-                      value={smtpServer} 
-                      onChange={e => setSmtpServer(e.target.value)} 
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)', display: 'block', marginBottom: '0.25rem' }}>Billing Alerts Cadence</label>
-                    <select 
-                      value={notificationsFrequency} 
-                      onChange={e => setNotificationsFrequency(e.target.value)} 
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="Instant">Instantaneous</option>
-                      <option value="Daily">Daily Summary Digests</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <button onClick={() => alert('Platform configurations updated.')} style={{ alignSelf: 'flex-start', padding: '0.6rem 1.25rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer' }}>
-              Save Global Configuration
-            </button>
           </div>
+        )}
+
+        {/* 9. SESSION IMPERSONATOR */}
+        {activeSubTab === 'impersonator' && (
+          <ImpersonatorConsole />
         )}
 
         {/* SECURITY & PROFILE TAB */}
         {activeSubTab === 'security' && (
-          <ProfileSettings />
+          <SecurityLayout />
         )}
       </main>
     </div>

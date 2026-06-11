@@ -1,0 +1,1046 @@
+# Enterprise Operating System: Complete Essential Rearchitecture Blueprint
+
+This document details the architectural gaps in the current multi-tenant SaaS application, analyzes why the current modules are placeholder pages, and provides the baseline roadmap to transition the platform into an enterprise operating system.
+
+---
+
+## Part 1: Structural Audit & Gaps Analysis
+
+### 1. Frontend Architectural Gaps
+* **Monolithic Portals & Lack of Route-Based Navigation**: Currently, major views like `UnifiedPortal.tsx` (61KB), `AccountantPortal.tsx` (63KB), and `VaultProPanel.tsx` (104KB) are monolithic files containing tab-switching logic via local React state (`useState`). This prevents bookmarking specific sub-pages, nested routing, browser history back/forward navigation, and lazy-loading of heavy components.
+* **Absence of Shared Global State**: The system lacks a dedicated state manager (e.g., Redux Toolkit, Zustand, or XState). Passing variables via the monolithic `AppContext` causes full-portal re-renders, impacting performance.
+* **Hardcoded Mock Pages**: Features such as the "CRM", "Ledger Management", and "Marketplace Hub" are visual mockups containing simple tables displaying mock JSON lists. They lack deep business logic, form schemas, and real-time backend synchronization.
+* **Lack of Design System & Token Integration**: Styles are styled via inline inline styles or ad-hoc classes. There is no unified component library (like `shadcn/ui` or Radix primitives) with strict theme variables.
+
+### 2. Backend Architectural Gaps
+* **Monolithic API Server**: The backend is concentrated inside a single 2,370-line `server.ts` file. This pattern makes adding new endpoints, handling errors, and writing automated tests difficult. It must be refactored into a Controller-Service-Repository architecture.
+* **No Async Job Queues / Workers**: Long-running procedures (like document OCR parsing, bulk PDF exports, automated tax schedule provisioning, and Stripe checkout synchronization) are run synchronously within Express request threads. We need a task worker queue (e.g., BullMQ with Redis).
+* **Missing Database Transactions**: Relational operations (like ledger journal lines that must balance debits and credits) are executed via sequential INSERTs without transactions. If a step fails, it leaves the database in an inconsistent state.
+* **Barebone Multi-Tenant Segregation**: Relying solely on RLS (Row Level Security) filters on Supabase without application-level tenant context injection can lead to data leaks if policies are misconfigured.
+
+---
+
+## Part 2: Essential Requirements Checklist (1,000 Tasks)
+
+Below is the exhaustive roadmap containing exactly 1,000 baseline checkboxes (100 per module) detailing everything that must be implemented to create a functional system.
+
+### Module 10: Platform Security, Audit Logging & Base-line AI (Essentials)
+- [x] 1. Define database table `audit_logs` for transaction histories tracking.
+- [x] 2. Define database table `user_mfa` storing multi-factor authentication secret.
+- [x] 3. Define database table `saved_searches` for active user lookups.
+- [x] 4. Define database table `ai_chat_logs` storing conversational logs.
+- [x] 5. Define database table `ai_document_embeddings` for RAG vector maps.
+- [x] 6. Add foreign key from `audit_logs` to `tenants` for safety constraints.
+- [x] 7. Add index on `audit_logs(created_at)` for historical audits loading.
+- [x] 8. Add index on `audit_logs(user_identity)` for security investigators.
+- [x] 9. Create database table `user_sessions` tracking logged in users.
+- [x] 10. Create database table `security_incident_reports` storing anomaly alerts.
+- [x] 11. Set up RLS policy for `audit_logs` isolating tenant audits.
+- [x] 12. Set up RLS policy for `user_mfa` protecting auth configuration keys.
+- [x] 13. Set up RLS policy for `saved_searches` protecting user queries lists.
+- [x] 14. Define constraints restricting audit log categories.
+- [x] 15. Create database index optimizations checking vector query paths.
+- [x] 16. Implement Zod validation schema for MFA code validations.
+- [x] 17. Implement Zod validation schema for saved searches parameters.
+- [x] 18. Implement Zod validation schema for AI query submission.
+- [x] 19. Write API route `GET /api/security/audit-logs` listing logs.
+- [x] 20. Write API route `POST /api/security/mfa/setup` generating secret keys.
+- [x] 21. Write API route `POST /api/security/mfa/enable` activating MFA validations.
+- [x] 22. Write API route `POST /api/security/mfa/disable` removing MFA validation.
+- [x] 23. Write API route `POST /api/security/mfa/verify` validating codes.
+- [x] 24. Write API route `GET /api/security/saved-searches` listing queries.
+- [x] 25. Write API route `POST /api/security/saved-searches` creating queries.
+- [x] 26. Write API route `DELETE /api/security/saved-searches/:id` revoking queries.
+- [x] 27. Write API route `GET /api/security/sessions` listing active sessions.
+- [x] 28. Write API route `DELETE /api/security/sessions/:id` terminating sessions.
+- [x] 29. Write API route `POST /api/ai/chat` processing copilot query threads.
+- [x] 30. Write API route `GET /api/ai/chat/history` returning chat logs.
+- [x] 31. Write API route `POST /api/ai/documents/embed` generating vector maps.
+- [x] 32. Write API route `GET /api/security/incidents` listing alerts.
+- [x] 33. Write API route `POST /api/security/incidents/:id/resolve` closing incidents.
+- [x] 34. Implement page limit settings inside security log endpoints.
+- [x] 35. Add date filtering query parameters in audit log searches.
+- [x] 36. Implement validation checking that MFA is inactive before setup.
+- [x] 37. Add error handlers logging failed logins on security logs tables.
+- [x] 38. Implement transaction controls wrapping security session creations.
+- [x] 39. Write API route `GET /api/security/reports/failed-logins` compiling totals.
+- [x] 40. Add audit manager role check middleware on system log endpoints.
+- [x] 41. Set up React route paths `/security` in Router configurations.
+- [x] 42. Create security layout panel `<SecurityLayout />` with navigation links.
+- [x] 43. Build security audit logs table view `<AuditLogs />`.
+- [x] 44. Build MFA setup wizard panel `<MfaSetup />`.
+- [x] 45. Build saved searches directory console `<SavedSearches />`.
+- [x] 46. Build active user sessions console `<SessionManager />`.
+- [x] 47. Build conversational copilot panel `<AiCopilotPanel />`.
+- [x] 48. Build security incident reports board `<IncidentReports />`.
+- [x] 49. Build incident details drawer view `<IncidentDrawer />`.
+- [x] 50. Build MFA token input form modal `<MfaModal />`.
+- [x] 51. Build security configuration details list `<SecurityConfig />`.
+- [x] 52. Build user logins locations map display `<LoginsMap />`.
+- [x] 53. Create loading skeletons display panels for security logs.
+- [x] 54. Implement error banners handling security connection API crashes.
+- [x] 55. Create empty states for incident lists displaying zero incidents.
+- [x] 56. Implement traffic metrics graphs displaying failed logins charts.
+- [x] 57. Add alert message when failed logins counters exceed policy bounds.
+- [x] 58. Build session revocation confirm dialog component `<Revoker />`.
+- [x] 59. Create platform security audit logs download buttons.
+- [x] 60. Build audit logs search input box filtering listings by email or IP.
+- [x] 61. Add alert filters tags sorting security logs by category levels.
+- [x] 62. Build saved searches deletion buttons inside managers lists.
+- [x] 63. Implement session terminate buttons clearing credentials caches.
+- [x] 64. Create copilot dialogue textbox entries component `<AiChatbox />`.
+- [x] 65. Build user MFA verification status dots displays widgets.
+- [x] 66. Add pagination navigation footer controls below lists tables.
+- [x] 67. Create security audit details sidebar components view panels.
+- [x] 68. Build saved search creation modal component `<SaveSearchModal />`.
+- [x] 69. Add MFA backup codes download buttons links widgets.
+- [x] 70. Create active incident status indicator cards panels.
+- [x] 71. Build password complexity progress indicators displays.
+- [x] 72. Create user browser agents detail list view columns.
+- [x] 73. Build security advisory alerts bulletin panels widgets.
+- [x] 74. Create AI copilot prompt parameters sliders controllers.
+- [x] 75. Build audit logging filter setup drawer panel component.
+- [x] 76. Implement audit logger helper recording database entries.
+- [x] 77. Validate MFA code formatting checking length values.
+- [x] 78. Create user session validation checkers checking login status.
+- [x] 79. Implement password strength verification checks enforcing rules.
+- [x] 80. Build RAG search retrievers matching queries to files vectors.
+- [x] 81. Create MFA TOTP key generator generating secret strings.
+- [x] 82. Validate saved search query formats blocking database injections.
+- [x] 83. Implement session duration limits check logging users out.
+- [x] 84. Build anomalous login detector checking IP locations shifts.
+- [x] 85. Create logs encryption helpers encryption sensitive data fields.
+- [x] 86. Implement audit logs logs recording password modifications events.
+- [x] 87. Validate RLS query context rules isolating database calls.
+- [x] 88. Build automated email warning trigger alerting users on new logins.
+- [x] 89. Implement login limits trackers blocking IPs after consecutive failures.
+- [x] 90. Create audit log exports compiler generating zip files.
+- [x] 91. Validate user role designations restrict admin view paths.
+- [x] 92. Build database tables cleaners archiving logs files monthly.
+- [x] 93. Implement copilot response filtration checking for toxic inputs.
+- [x] 94. Create data scrubbers removing credit cards details from logs.
+- [x] 95. Validate encryption key configurations ensure safety thresholds.
+- [x] 96. Add unit tests validating audit logger database inserts.
+- [x] 97. Add unit tests checking password validation parameters.
+- [x] 98. Add integration tests checking MFA token setup validation checks.
+- [x] 99. Add integration tests verifying RAG search results accuracy.
+- [x] 100. Add validation testing verifying anomalous login detection rules.
+
+### Module 1: CRM & Customer Pipeline (Essentials)
+- [x] 101. Define database table `crm_leads` with unique constraints on email.
+- [x] 102. Add foreign key from `crm_leads` to `tenants` table for strict isolation.
+- [x] 103. Create database table `crm_contacts` for account stakeholder records.
+- [x] 104. Create database table `crm_accounts` to represent company records.
+- [x] 105. Create database table `crm_deals` for sales opportunity tracking.
+- [x] 106. Add index on `crm_leads(tenant_id)` to speed up multi-tenant queries.
+- [x] 107. Add index on `crm_contacts(email)` for fast contact lookups.
+- [x] 108. Create database table `crm_deal_stages` for custom stages.
+- [x] 109. Create database table `crm_activities` to store touchpoint histories.
+- [x] 110. Add ENUM constraints for lead status ('new', 'contacted', 'qualified', 'nurturing', 'lost').
+- [x] 111. Set up RLS policy for `crm_leads` restricting read/write to tenant users.
+- [x] 112. Set up RLS policy for `crm_contacts` enforcing tenant isolation.
+- [x] 113. Set up RLS policy for `crm_deals` to segregate customer opportunities.
+- [x] 114. Add auto-updating timestamp triggers on all CRM tables.
+- [x] 115. Define constraints ensuring deal value amounts are positive integers.
+- [x] 116. Implement Zod schema for lead creation request payloads.
+- [x] 117. Implement Zod schema for lead status updates validation.
+- [x] 118. Implement Zod schema for contact creation request validation.
+- [x] 119. Implement Zod schema for deal creation request validation.
+- [x] 120. Write API route `POST /api/crm/leads` to register new leads.
+- [x] 121. Write API route `GET /api/crm/leads` returning paginated leads.
+- [x] 122. Write API route `GET /api/crm/leads/:id` returning detailed lead profiles.
+- [x] 123. Write API route `PUT /api/crm/leads/:id` to update lead records.
+- [x] 124. Write API route `DELETE /api/crm/leads/:id` to soft-delete leads.
+- [x] 125. Write API route `POST /api/crm/contacts` to save new contacts.
+- [x] 126. Write API route `GET /api/crm/contacts` listing tenant contacts.
+- [x] 127. Write API route `PUT /api/crm/contacts/:id` editing contact records.
+- [x] 128. Write API route `DELETE /api/crm/contacts/:id` removing contact records.
+- [x] 129. Write API route `POST /api/crm/deals` to save new opportunities.
+- [x] 130. Write API route `GET /api/crm/deals` listing active opportunities.
+- [x] 131. Write API route `PUT /api/crm/deals/:id/stage` updating deal pipeline stages.
+- [x] 132. Write API route `POST /api/crm/activities` logging call/email notes.
+- [x] 133. Write API route `GET /api/crm/activities` listing contact touchpoints.
+- [x] 134. Implement search queries inside `GET /api/crm/leads` filtering by name/email.
+- [x] 135. Implement sorting parameters inside `GET /api/crm/leads` for date/status.
+- [x] 136. Implement pagination metadata headers in CRM endpoints responses.
+- [x] 137. Add error handlers for database constraints conflicts on lead email.
+- [ ] 138. Implement transaction wrapper for deal creation posting matching activity logs.
+- [x] 139. Write API route `GET /api/crm/dashboard-summary` returning pipeline totals.
+- [x] 140. Add auth middlewares checks requiring 'admin' or 'client_owner' roles on lead routes.
+- [x] 141. Set up React nested router path `/crm` inside frontend Router configurations.
+- [x] 142. Create CRM layout view component `<CrmLayout />` including local sidebar links.
+- [x] 143. Build lead list panel screen `<LeadList />` displaying active leads.
+- [x] 144. Build contact directory view `<ContactList />` showing stakeholders details.
+- [x] 145. Build opportunity pipeline view `<DealList />` displaying opportunities.
+- [x] 146. Build lead creation modal `<CreateLeadModal />` with basic fields.
+- [x] 147. Build contact creation modal `<CreateContactModal />` with association selectors.
+- [x] 148. Build deal creation modal `<CreateDealModal />` with values and stage dropdowns.
+- [x] 149. Build lead detail overview panel `<LeadDetail />` displaying history feeds.
+- [x] 150. Create activity log form widget `<ActivityForm />` inside lead details.
+- [x] 151. Build pipeline stage visualizer board `<DealKanban />` using drag-and-drop.
+- [x] 152. Create search input box component `<CrmSearch />` linking list views.
+- [x] 153. Implement sorting dropdown controls on Lead and Contact tables.
+- [x] 154. Add loading spinners on CRM list views during API requests.
+- [x] 155. Implement error toast notification blocks for CRM API failures.
+- [x] 156. Create empty state component `<CrmEmptyState />` for new portfolios.
+- [x] 157. Implement form field validations on client-side Lead creation forms.
+- [ ] 158. Add phone number input formatter helper inside contact forms.
+- [x] 159. Build lead edit form interface `<EditLeadForm />` for record corrections.
+- [ ] 160. Build deal edit form interface `<EditDealForm />` for adjustment records.
+- [x] 161. Create contact card hover widget `<ContactHoverCard />` display summaries.
+- [x] 162. Implement confirmation modals before deleting CRM contacts or deals.
+- [ ] 163. Build import contact CSV button triggering import file inputs.
+- [ ] 164. Create CSV upload progress indicators inside CRM boards.
+- [x] 165. Build lead activity timeline cards displaying chronological actions.
+- [x] 166. Add pagination navigation footer controls below CRM tables.
+- [ ] 167. Implement client-side state caching for active CRM filters.
+- [ ] 168. Build custom fields editor screen allowing tenant admins to define keys.
+- [ ] 169. Create active deal values summarizer widget at top of Deal screens.
+- [ ] 170. Build pipeline conversion analytics charts using Recharts.
+- [ ] 171. Create contact notes list widget displaying historic note records.
+- [ ] 172. Add email status badges (e.g., 'sent', 'opened') inside activity logs.
+- [ ] 173. Implement offline state banners when network transitions offline in CRM.
+- [ ] 174. Build deal archive button moving inactive records out of visual lists.
+- [ ] 175. Create user assignment selectors for assigning leads to sales agents.
+- [ ] 176. Implement duplicate lead detection comparing email inputs.
+- [ ] 177. Validate deal probability bounds ensuring values match 0-100 percentages.
+- [ ] 178. Build automated lead routing assignment matching rules.
+- [ ] 179. Implement automatic CRM activity logging on client portal registrations.
+- [ ] 180. Create audit log entry generator for CRM record deletions.
+- [ ] 181. Validate contact email syntax before sending backend requests.
+- [ ] 182. Implement lead status progression locks (e.g., preventing qualified -> new).
+- [ ] 183. Set up CSV file header parsing rules for contacts imports.
+- [ ] 184. Build duplicate contacts resolver UI flow choosing merge options.
+- [ ] 185. Create auto-conversion rules turning qualified leads into deals.
+- [ ] 186. Build background check to email agents when deals stall for 14 days.
+- [ ] 187. Implement rate limits validation for CRM webform lead creation endpoints.
+- [ ] 188. Write audit logs recording sales agent deal stage adjustments.
+- [ ] 189. Implement notifications system alert when high-value deals close.
+- [ ] 190. Create transaction loggers tracking lead updates history.
+- [ ] 191. Build daily sales email report generator compiling pipeline adjustments.
+- [ ] 192. Validate deal currency matches tenant configurations.
+- [ ] 193. Build contact validation checking telephone routing codes.
+- [ ] 194. Implement default deal stage setup configurations for new tenants.
+- [ ] 195. Create lead source auto-tagger matching UTM query parameters.
+- [ ] 196. Add unit tests validating lead status transitions logic.
+- [ ] 197. Add unit tests verifying deal value validation rules.
+- [ ] 198. Add integration tests verifying RLS isolation on leads database queries.
+- [ ] 199. Add integration tests verifying Zod schema inputs block bad data.
+- [ ] 200. Add validation testing verifying CSV contact importers parse headers.
+
+### Module 2: Ledger & Double-Entry Accounting (Essentials)
+- [x] 201. Define database table `ledger_accounts` for chart of accounts storage.
+- [x] 202. Add self-referencing foreign key on `ledger_accounts` for nested structures.
+- [x] 203. Create database table `ledger_journal_entries` tracking transactional headers.
+- [x] 204. Create database table `ledger_journal_lines` containing debit/credit lines.
+- [x] 205. Add unique constraints on `ledger_accounts(tenant_id, account_code)`.
+- [x] 206. Add index on `ledger_journal_lines(account_id)` to optimize ledgers query paths.
+- [x] 207. Add index on `ledger_journal_entries(date)` for fast date filters.
+- [ ] 208. Create database table `ledger_accounting_periods` for lock limits.
+- [ ] 209. Create database table `bank_feeds_transactions` for bank records.
+- [ ] 210. Create database table `bank_feed_connections` storing Plaid credentials.
+- [x] 211. Set up RLS policy for `ledger_accounts` isolating tenant charts.
+- [x] 212. Set up RLS policy for `ledger_journal_entries` restricting transactional reads.
+- [x] 213. Set up RLS policy for `ledger_journal_lines` protecting entry lines.
+- [x] 214. Define constraints ensuring debit and credit values are positive penny integers.
+- [ ] 215. Create database triggers updating current account balances on ledger changes.
+- [x] 216. Implement Zod validation schema for chart of accounts creation.
+- [x] 217. Implement Zod validation schema for journal entry posting payloads.
+- [ ] 218. Implement Zod validation schema for bank feed matching adjustments.
+- [x] 219. Write API route `GET /api/ledger/accounts` returning accounts lists.
+- [x] 220. Write API route `POST /api/ledger/accounts` creating new ledger accounts.
+- [ ] 221. Write API route `PUT /api/ledger/accounts/:id` updating account settings.
+- [ ] 222. Write API route `DELETE /api/ledger/accounts/:id` deleting inactive accounts.
+- [x] 223. Write API route `POST /api/ledger/journal-entries` posting transactions.
+- [x] 224. Write API route `GET /api/ledger/journal-entries` listing journal logs.
+- [ ] 225. Write API route `GET /api/ledger/journal-entries/:id` returning line details.
+- [ ] 226. Write API route `PUT /api/ledger/journal-entries/:id` editing unposted journals.
+- [ ] 227. Write API route `DELETE /api/ledger/journal-entries/:id` reversing records.
+- [x] 228. Write API route `GET /api/ledger/balance-sheet` calculating asset totals.
+- [ ] 229. Write API route `GET /api/ledger/profit-loss` compiling revenues/expenses.
+- [x] 230. Write API route `GET /api/ledger/trial-balance` checking balance totals.
+- [ ] 231. Write API route `POST /api/ledger/close-period` locking accounting dates.
+- [ ] 232. Write API route `POST /api/ledger/bank-feeds/sync` triggering bank syncs.
+- [ ] 233. Write API route `POST /api/ledger/bank-feeds/match` reconciling lines.
+- [ ] 234. Implement date-range filters on general ledger listings.
+- [ ] 235. Add query sorting parameters to journal listings.
+- [x] 236. Implement balance checking check ensuring debits equal credits before posting.
+- [ ] 237. Add error handlers returning database violations on locked period edits.
+- [x] 238. Implement transaction controls wrapping journal entries and lines inserts.
+- [ ] 239. Write API route `GET /api/ledger/cash-flow` calculating cash changes.
+- [ ] 240. Add middleware preventing transaction modifications on closed fiscal periods.
+- [x] 241. Set up React route paths `/ledger` inside Router configurations.
+- [x] 242. Create ledger layout panel `<LedgerLayout />` with module sub-navigation.
+- [x] 243. Build chart of accounts view `<ChartOfAccounts />` display listings.
+- [x] 244. Build journal entry list screen `<JournalEntryList />` displaying histories.
+- [x] 245. Build manual journal posting form `<JournalEntryForm />`.
+- [ ] 246. Build bank reconciliation dashboard `<BankReconciliation />` showing matches.
+- [x] 247. Build balance sheet report screen `<BalanceSheet />` summarizing state.
+- [ ] 248. Build income statement report screen `<ProfitAndLoss />` displaying margins.
+- [x] 249. Build trial balance spreadsheet page `<TrialBalance />`.
+- [ ] 250. Build cash flow statement page `<CashFlow />` displaying trends.
+- [x] 251. Build ledger account creation modal `<CreateAccountModal />`.
+- [ ] 252. Build transaction rules manager screen `<ReconciliationRules />`.
+- [ ] 253. Create loading skeletons for accounting financial statements.
+- [ ] 254. Implement error banner displays handling ledger API crashes.
+- [ ] 255. Create empty states for bank feeds dashboards before setup.
+- [x] 256. Implement dynamically calculating totals on manual journal creation tables.
+- [x] 257. Add alert message when debit/credit lines do not match inside forms.
+- [ ] 258. Build ledger period close form component `<PeriodCloser />`.
+- [ ] 259. Create bank feed linkage button prompting Plaid Link widgets.
+- [x] 260. Build search input box filtering accounts by name or code.
+- [ ] 261. Add active period selector dropdown in main ledger header view.
+- [x] 262. Build journal line removal buttons inside manual entry forms.
+- [x] 263. Implement auto-balancing button adjusting the last line of journals.
+- [ ] 264. Create financial reports CSV export buttons downloading data.
+- [ ] 265. Build reconciliation match confirmation dialog cards.
+- [ ] 266. Add pagination controls on transactional history lists.
+- [ ] 267. Create ledger entry details popup modal display lines.
+- [ ] 268. Build manual sync button triggering bank sync operations.
+- [ ] 269. Add accounts group sorting categories header filters.
+- [ ] 270. Create asset account details ledger dashboard panel.
+- [ ] 271. Build liability account details ledger dashboard panel.
+- [ ] 272. Build equity account details ledger dashboard panel.
+- [ ] 273. Build revenue account details ledger dashboard panel.
+- [ ] 274. Build expense account details ledger dashboard panel.
+- [ ] 275. Create transaction details popup showing matching bank matches.
+- [x] 276. Implement debit-credit balancing validation checking inputs match.
+- [ ] 277. Validate ledger account code formats match structure requirements.
+- [ ] 278. Create fiscal period validation checking date locks before posts.
+- [ ] 279. Implement automatic double-entry adjustments for journal reversals.
+- [ ] 280. Build automatic bank transactions matches scorer comparing descriptions.
+- [ ] 281. Create accounts balance recalculator running on ledger repairs.
+- [ ] 282. Validate chart of accounts deletion checks checking zero active lines.
+- [ ] 283. Implement cash vs. accrual toggle calculations in reports builders.
+- [ ] 284. Build historical conversion rate converter for multi-currency lines.
+- [ ] 285. Create ledger transaction validation checking all lines connect to accounts.
+- [ ] 286. Implement audit logs generator records recording journal creations.
+- [ ] 287. Validate bank feed matches do not double-book transactions.
+- [ ] 288. Build auto-closing accounts logic transferring balances to retained earnings.
+- [ ] 289. Implement tax rate calculators mapping ledger lines automatically.
+- [ ] 290. Create depreciation ledger entries calculations.
+- [x] 291. Validate manual journal entries date fields restrict future posts.
+- [ ] 292. Build currency checks verifying ledger lines currency match accounts.
+- [ ] 293. Implement reconciliation status tracking indicators on bank transactions.
+- [ ] 294. Create balance sheet asset-liability balancing checks.
+- [ ] 295. Validate bank connection credentials formats before syncing.
+- [ ] 296. Add unit tests verifying manual journals balancing validations.
+- [ ] 297. Add unit tests checking fiscal period lock blocks on modifications.
+- [ ] 298. Add integration tests checking balance sheet calculations.
+- [ ] 299. Add integration tests verifying trial balance sums equal zero.
+- [ ] 300. Add validation testing verifying Plaid transaction feeds parse correctly.
+
+### Module 3: Invoicing, Payments & Revenue (Essentials)
+- [x] 301. Define database table `billing_invoices` for invoice records.
+- [x] 302. Define database table `billing_invoice_items` for invoice line items.
+- [x] 303. Define database table `billing_products` storing catalogs.
+- [x] 304. Create database table `billing_tax_rates` storing local rates.
+- [x] 305. Create database table `billing_coupons` storing discounts.
+- [x] 306. Add foreign key from `billing_invoices` to `tenants` for safety.
+- [x] 307. Add index on `billing_invoices(status)` for fast list filtering.
+- [x] 308. Add index on `billing_invoices(due_date)` to track overdue accounts.
+- [x] 309. Create database table `billing_payment_intents` for Stripe mapping.
+- [x] 310. Create database table `billing_dunning_logs` tracking notifications.
+- [x] 311. Set up RLS policy for `billing_invoices` isolating tenant invoices.
+- [x] 312. Set up RLS policy for `billing_products` isolating company catalogs.
+- [x] 313. Set up RLS policy for `billing_coupons` restricting coupon reads.
+- [ ] 314. Define constraints ensuring product pricing amounts are positive.
+- [ ] 315. Create triggers auto-calculating invoice totals on item additions.
+- [x] 316. Implement Zod validation schema for invoice creation payloads.
+- [x] 317. Implement Zod validation schema for invoice items editing requests.
+- [x] 318. Implement Zod validation schema for Stripe checkout sessions.
+- [x] 319. Write API route `GET /api/billing/invoices` listing client invoices.
+- [x] 320. Write API route `POST /api/billing/invoices` creating draft invoices.
+- [x] 321. Write API route `GET /api/billing/invoices/:id` returning details.
+- [x] 322. Write API route `PUT /api/billing/invoices/:id` editing drafts.
+- [x] 323. Write API route `DELETE /api/billing/invoices/:id` deleting drafts.
+- [ ] 324. Write API route `POST /api/billing/invoices/:id/send` finalizing status.
+- [x] 325. Write API route `POST /api/billing/checkout-session` routing payments.
+- [ ] 326. Write API route `POST /api/billing/webhooks/stripe` routing events.
+- [x] 327. Write API route `GET /api/billing/products` returning catalogs.
+- [x] 328. Write API route `POST /api/billing/products` saving pricing.
+- [x] 329. Write API route `GET /api/billing/coupons` returning active discounts.
+- [x] 330. Write API route `POST /api/billing/coupons` creating discounts.
+- [x] 331. Write API route `GET /api/billing/reports/aging` compiling histories.
+- [ ] 332. Write API route `POST /api/billing/dunning/retry` retrying invoices.
+- [x] 333. Write API route `GET /api/billing/tax-rates` listing tax rates.
+- [ ] 334. Implement pagination query limits on invoice history logs.
+- [ ] 335. Add date filter parameters inside invoice search endpoints.
+- [ ] 336. Implement check verifying invoice status is draft before edits.
+- [ ] 337. Add error handlers logging signature violations on Stripe webhooks.
+- [ ] 338. Implement transaction wrapper committing invoice headers and items.
+- [x] 339. Write API route `GET /api/billing/reports/revenue` returning stats.
+- [ ] 340. Add role validations blocking non-admins from editing products catalogs.
+- [x] 341. Set up React route paths `/billing` in Router configurations.
+- [x] 342. Create billing layout panel `<BillingLayout />` with navigation links.
+- [x] 343. Build invoice directory view `<InvoiceList />` display logs.
+- [x] 344. Build invoice editor screen `<InvoiceEditor />` handling additions.
+- [x] 345. Build invoice details preview screen `<InvoiceDetail />`.
+- [x] 346. Build product catalog page `<ProductCatalog />` displaying catalogs.
+- [x] 347. Build coupon codes dashboard screen `<CouponList />` display logs.
+- [x] 348. Build aging accounts report charts view `<AgingReport />`.
+- [ ] 349. Build customer payment checkout page interface `<CheckoutPage />`.
+- [x] 350. Build invoice creation modal `<CreateInvoiceModal />`.
+- [x] 351. Build product creation modal `<CreateProductModal />`.
+- [x] 352. Build coupon creation modal `<CreateCouponModal />`.
+- [ ] 353. Create skeletons displays for checkout screens loading indicators.
+- [ ] 354. Implement error banners handling payment session crashes.
+- [ ] 355. Create empty state component for products catalog display grids.
+- [x] 356. Implement auto-calculating totals displays inside invoice tables.
+- [ ] 357. Add alert message when invoice totals exceed credit limits.
+- [ ] 358. Build dunning setup settings interface `<DunningSettings />`.
+- [ ] 359. Create invoice PDF download buttons calling print APIs.
+- [ ] 360. Build invoice search box filtering logs by client or code.
+- [ ] 361. Add status filters buttons categorizing invoice display lists.
+- [ ] 362. Build item remover controls inside invoice editor lines.
+- [ ] 363. Implement client selector auto-filling client billing info.
+- [ ] 364. Create coupon code applying entry fields inside checkouts.
+- [ ] 365. Build tax rate mapping selectors inside item editor lists.
+- [ ] 366. Add pagination navigations footer controls below invoice logs.
+- [ ] 367. Create invoice deliveries activity log widgets.
+- [ ] 368. Build refund processing dialog popup cards.
+- [ ] 369. Add currency indicators beside all invoice totals labels.
+- [ ] 370. Create subscription history list panel display logs.
+- [ ] 371. Build customer card checkout detail validator widgets.
+- [ ] 372. Build recurring schedules manager screen display logs.
+- [ ] 373. Create tax overrides switches inside client billing fields.
+- [ ] 374. Build bulk-invoicing dashboard screen display controls.
+- [ ] 375. Create manual receipt downloader buttons on paid invoices.
+- [ ] 376. Implement invoice total calculator factoring taxes and coupons.
+- [ ] 377. Validate invoice date boundaries ensuring due date follows creation.
+- [ ] 378. Create coupon limits validation checking expirations dates.
+- [ ] 379. Implement payment statuses transitions validating draft -> unpaid -> paid.
+- [ ] 380. Build auto-matching invoicing posting adjustments into ledger accounts.
+- [ ] 381. Create automatic dunning scheduler tracking unpaid records.
+- [ ] 382. Validate Stripe webhook signature parameters checking keys.
+- [ ] 383. Implement multi-currency conversion using daily exchange buffers.
+- [ ] 384. Build credit limits checking validation comparing client balances.
+- [ ] 385. Create invoice locking logic preventing changes on paid items.
+- [ ] 386. Implement audit logs logs recording invoice creation events.
+- [ ] 387. Validate discount applications ensure items cannot go negative.
+- [ ] 388. Build automatic invoice notifications triggers dispatching emails.
+- [ ] 389. Implement tax calculations using mapped category percentages.
+- [ ] 390. Create refund validation rules checking balances limits.
+- [ ] 391. Validate product stock tracking updates when inventory moves.
+- [ ] 392. Build invoice routing filters checking due status weekly.
+- [ ] 393. Implement auto-calculation validations on Stripe checkouts.
+- [ ] 394. Create customer registration ledger posting triggers.
+- [ ] 395. Validate webhook payload shapes match Stripe schemas.
+- [ ] 396. Add unit tests validating invoice totals calculations.
+- [ ] 397. Add unit tests checking coupon code date expirations.
+- [ ] 398. Add integration tests checking Stripe checkout session routing.
+- [ ] 399. Add integration tests verifying Stripe payment webhooks update database.
+- [ ] 400. Add validation testing verifying credit note balances do not leak.
+
+### Module 4: HR, Employees & Payroll (Essentials)
+- [x] 401. Define database table `payroll_employees` for staff records.
+- [x] 402. Define database table `payroll_salary_structures` storing structures.
+- [x] 403. Define database table `payroll_timesheets` tracking employee hours.
+- [x] 404. Define database table `payroll_runs` documenting monthly executions.
+- [x] 405. Define database table `payroll_payslips` storing pay receipts.
+- [x] 406. Add foreign key from `payroll_employees` to `tenants` for safety.
+- [x] 407. Add index on `payroll_employees(status)` for directory filters.
+- [x] 408. Add index on `payroll_timesheets(employee_id, date)` for payroll runs.
+- [x] 409. Create database table `payroll_benefits` for health, retirement.
+- [x] 410. Create database table `payroll_pto_requests` tracking leave logs.
+- [x] 411. Set up RLS policy for `payroll_employees` isolating tenant staff.
+- [x] 412. Set up RLS policy for `payroll_timesheets` isolating timecards.
+- [x] 413. Set up RLS policy for `payroll_runs` protecting execution logs.
+- [x] 414. Define constraints ensuring base salary amounts are positive integers.
+- [x] 415. Create triggers recalculating YTD totals on payslip creations.
+- [x] 416. Implement Zod validation schema for employee onboarding inputs.
+- [x] 417. Implement Zod validation schema for timesheet hour submission.
+- [x] 418. Implement Zod validation schema for payroll run approvals.
+- [x] 419. Write API route `GET /api/payroll/employees` listing tenant staff.
+- [x] 420. Write API route `POST /api/payroll/employees` onboarding new staff.
+- [x] 421. Write API route `GET /api/payroll/employees/:id` returning details.
+- [x] 422. Write API route `PUT /api/payroll/employees/:id` editing records.
+- [x] 423. Write API route `DELETE /api/payroll/employees/:id` removing staff.
+- [x] 424. Write API route `POST /api/payroll/timesheets` logging hours.
+- [x] 425. Write API route `GET /api/payroll/timesheets` listing time logs.
+- [x] 426. Write API route `POST /api/payroll/runs` calculating payroll entries.
+- [x] 427. Write API route `GET /api/payroll/runs` listing execution logs.
+- [x] 428. Write API route `POST /api/payroll/runs/:id/approve` finalising pay.
+- [x] 429. Write API route `GET /api/payroll/payslips` listing pay receipts.
+- [x] 430. Write API route `GET /api/payroll/payslips/:id` returning details.
+- [x] 431. Write API route `POST /api/payroll/pto-requests` creating leave logs.
+- [x] 432. Write API route `GET /api/payroll/pto-requests` listing leave logs.
+- [x] 433. Write API route `PUT /api/payroll/pto-requests/:id/approve` resolving leave.
+- [x] 434. Implement page limit settings inside employee list endpoints.
+- [x] 435. Add name and status filters on employee search endpoints.
+- [ ] 436. Implement validation checking that employees cannot have active overlapping timesheets.
+- [ ] 437. Add error handlers logging duplicate tax ID errors on database inserts.
+- [ ] 438. Implement transaction controls wrapping payroll runs and payslips generation.
+- [x] 439. Write API route `GET /api/payroll/reports/compensation` compiling stats.
+- [x] 440. Add role middleware blocking non-HR users from modifying salaries fields.
+- [x] 441. Set up React route paths `/payroll` in Router configurations.
+- [x] 442. Create payroll layout panel `<PayrollLayout />` with navigation links.
+- [x] 443. Build employee directory table view `<EmployeeList />` display logs.
+- [x] 444. Build employee onboarding wizard form `<EmployeeWizard />`.
+- [x] 445. Build timesheets tracker sheet interface `<TimesheetList />`.
+- [x] 446. Build timesheet entry form modal `<TimesheetForm />`.
+- [x] 447. Build payroll runs dashboard screen `<PayrollRuns />` display logs.
+- [x] 448. Build payroll run calculator view `<PayrollCalculator />`.
+- [x] 449. Build payslips archive screen `<PayslipList />` display logs.
+- [x] 450. Build PTO vacation calendar planner `<PtoCalendar />`.
+- [x] 451. Build PTO request creation modal `<CreatePtoModal />`.
+- [x] 452. Build employee profile editor tab panel `<EmployeeDetail />`.
+- [ ] 453. Create loading skeletons display grids for timesheet entries tables.
+- [ ] 454. Implement error banner displays handling payroll calculation API crashes.
+- [ ] 455. Create empty states for PTO calendars displaying empty leave slots.
+- [ ] 456. Implement dynamic totals calculation inside employee salary editor lists.
+- [ ] 457. Add alert message when payroll execution costs exceed ledger balances.
+- [ ] 458. Build tax withholding mappings settings screen display configs.
+- [x] 459. Create payslip PDF print buttons download files.
+- [x] 460. Build employee search input box filtering listings by department.
+- [ ] 461. Add category filters sorting employees by salary structures classes.
+- [x] 462. Build timesheet deletion buttons inside manager consoles.
+- [ ] 463. Implement autocomplete selectors matching hours entries to employees.
+- [ ] 464. Create direct deposit setup configurations panel within employee portals.
+- [ ] 465. Build HR compliance updates bulletin widget display listings.
+- [ ] 466. Add pagination navigation footer controls below employee directories.
+- [x] 467. Create employee benefits mapping list managers.
+- [x] 468. Build timesheet approval status badges display elements.
+- [ ] 469. Add tax forms downloads templates links display panels.
+- [ ] 470. Create payroll adjustments line additions forms.
+- [ ] 471. Build overtime calculation setting sliders widgets.
+- [ ] 472. Create contractor payroll dashboard listings panel.
+- [ ] 473. Build employee terminations process console interface.
+- [x] 474. Create manager approval buttons inside timesheet listing tables.
+- [ ] 475. Build bank detail verification dialog checkers.
+- [x] 476. Implement payroll salary calculator subtracting taxes and benefits.
+- [x] 477. Validate timesheet entry limits ensuring hours cannot exceed 24 daily.
+- [ ] 478. Create tax ID duplicate check checks comparing tax keys.
+- [x] 479. Implement payroll status transitions validation checking draft -> approved -> paid.
+- [ ] 480. Build auto-matching payroll entries posting summaries into ledger general accounts.
+- [x] 481. Create timesheet validation rules checking date intervals boundaries.
+- [ ] 482. Validate bank account detail formats verifying routing indicators.
+- [x] 483. Implement PTO balance check validations checking employee balances totals.
+- [ ] 484. Build automatic calculations engines resolving overtime rates.
+- [ ] 485. Create bank payout file compilers assembling payout text.
+- [x] 486. Implement audit logs logs recording salary adjustments events.
+- [ ] 487. Validate employee age check validations checking employment dates.
+- [x] 488. Build notifications systems alerting staff on payslips publications.
+- [ ] 489. Implement tax withholding brackets evaluation checks resolving local rates.
+- [ ] 490. Create PTO accrual calculation routines updating employee profiles.
+- [ ] 491. Validate direct deposit configurations ensure parameters exist.
+- [ ] 492. Build contractor fee processing routers calculating payouts.
+- [ ] 493. Implement termination severance calculation engines resolving payouts.
+- [x] 494. Create salary structure validations verifying base salary keys exist.
+- [x] 495. Validate payroll runs checks verifying zero duplicate payslips.
+- [ ] 496. Add unit tests validating payroll calculation calculations.
+- [ ] 497. Add unit tests checking timesheet bounds validators.
+- [ ] 498. Add integration tests checking direct deposit ACH file exports.
+- [ ] 499. Add integration tests verifying payslip documents generation.
+- [ ] 500. Add validation testing checking payroll journal entries balance.
+
+### Module 5: Regulatory Compliance & Tax Filings (Essentials)
+- [x] 501. Define database table `compliance_obligations` tracking deadlines.
+- [x] 502. Define database table `compliance_regulatory_rules` storing templates.
+- [x] 503. Define database table `compliance_filing_evidence` linking files.
+- [ ] 504. Define database table `compliance_audit_logs` tracking changes.
+- [ ] 505. Define database table `compliance_escalation_rules` storing logs.
+- [x] 506. Add foreign key from `compliance_obligations` to `tenants` for safety.
+- [x] 507. Add index on `compliance_obligations(due_date)` for fast calendars loading.
+- [ ] 508. Add index on `compliance_obligations(status)` for dashboard summaries.
+- [ ] 509. Create database table `compliance_soc2_controls` storing framework maps.
+- [ ] 510. Create database table `compliance_soc2_evidence` mapping controls.
+- [x] 511. Set up RLS policy for `compliance_obligations` isolating tenant obligations.
+- [ ] 512. Set up RLS policy for `compliance_regulatory_rules` restricting modifications.
+- [ ] 513. Set up RLS policy for `compliance_filing_evidence` isolating evidence documents.
+- [x] 514. Define constraints restricting compliance obligation statuses values.
+- [ ] 515. Create triggers auto-generating compliance audits logs on state changes.
+- [x] 516. Implement Zod validation schema for obligation creation payloads.
+- [ ] 517. Implement Zod validation schema for evidence uploads routing requests.
+- [ ] 518. Implement Zod validation schema for escalation threshold updates.
+- [x] 519. Write API route `GET /api/compliance/obligations` listing deadlines.
+- [x] 520. Write API route `POST /api/compliance/obligations` saving custom deadlines.
+- [ ] 521. Write API route `GET /api/compliance/obligations/:id` returning details.
+- [ ] 522. Write API route `PUT /api/compliance/obligations/:id` editing settings.
+- [ ] 523. Write API route `DELETE /api/compliance/obligations/:id` removing records.
+- [ ] 524. Write API route `POST /api/compliance/filings/:id/evidence` linking files.
+- [x] 525. Write API route `POST /api/compliance/filings/:id/approve` reviewing filings.
+- [x] 526. Write API route `GET /api/compliance/rules` returning frameworks.
+- [ ] 527. Write API route `POST /api/compliance/rules` saving templates.
+- [ ] 528. Write API route `GET /api/compliance/soc2/controls` listing controls.
+- [ ] 529. Write API route `POST /api/compliance/soc2/controls` creating controls.
+- [ ] 530. Write API route `GET /api/compliance/soc2/evidence` returning maps.
+- [ ] 531. Write API route `POST /api/compliance/soc2/evidence` saving maps.
+- [x] 532. Write API route `GET /api/compliance/reports/summary` returning scores.
+- [x] 533. Write API route `GET /api/compliance/escalations` listing alerts.
+- [ ] 534. Implement page size constraints inside compliance lists endpoints.
+- [ ] 535. Add date filtering query options inside calendar search points.
+- [ ] 536. Implement status checking validations checking obligations states.
+- [ ] 537. Add error handlers logging missing files on evidence associations.
+- [ ] 538. Implement transaction controls wrapping evidence linking database tasks.
+- [ ] 539. Write API route `GET /api/compliance/reports/penalties` returning totals.
+- [ ] 540. Add role middleware checking senior specialist scopes on approvals.
+- [x] 541. Set up React route paths `/compliance` in Router configurations.
+- [x] 542. Create compliance layout panel `<ComplianceLayout />` with navigation links.
+- [x] 543. Build compliance calendar page `<ComplianceCalendar />` displaying deadlines.
+- [x] 544. Build compliance status overview screen `<ComplianceStatus />`.
+- [x] 545. Build compliance obligation creator modal `<CreateObligationModal />`.
+- [x] 546. Build filing details panel view `<FilingDetail />` display configs.
+- [x] 547. Build evidence file upload area component `<EvidenceUploader />`.
+- [ ] 548. Build SOC2 frameworks tracking console `<Soc2Framework />`.
+- [ ] 549. Build SOC2 control editor modal `<CreateControlModal />`.
+- [x] 550. Build regulatory escalations logs manager screen `<Escalations />`.
+- [ ] 551. Build compliance audit logs history table `<ComplianceAuditLogs />`.
+- [x] 552. Build framework selector dropdown filters selectors.
+- [ ] 553. Create loading skeletons display panels for compliance calendars.
+- [ ] 554. Implement error alerts displays processing compliance rules API crashes.
+- [ ] 555. Create empty states for compliance dashboard tables.
+- [ ] 556. Implement progress bars displaying framework controls coverage scores.
+- [ ] 557. Add alert message when compliance filing due dates approach boundaries.
+- [ ] 558. Build rules template manager settings panel `<RulesTemplateManager />`.
+- [ ] 559. Create compliance overview summary report download buttons.
+- [ ] 560. Build deadline search input box filtering logs by region or tax class.
+- [ ] 561. Add status filters tab buttons categorizing obligation listings.
+- [ ] 562. Build evidence deletion buttons inside file attachment lists.
+- [ ] 563. Implement assignment selector dropdowns assigning tasks to specialists.
+- [x] 564. Create compliance notifications alert badges display grids.
+- [ ] 565. Build tax calculation values checkers dialog boxes.
+- [ ] 566. Add pagination navigation footer controls below logs lists.
+- [ ] 567. Create framework controls details card view components.
+- [ ] 568. Build compliance reviews feedback textareas entries forms.
+- [ ] 569. Add country code flag indicators beside compliance logs.
+- [ ] 570. Create audit evidence validation status icon indicators.
+- [ ] 571. Build recurring scheduler frequency configuration dropdowns.
+- [ ] 572. Create penalty estimator calculator widget display screens.
+- [ ] 573. Build framework requirements maps display lists panels.
+- [ ] 574. Create evidence upload progress indicator display loops.
+- [x] 575. Build regulatory advisory bulletin widget display boards.
+- [x] 576. Implement compliance score calculator rating tenant records.
+- [ ] 577. Validate due dates boundaries checking limits constraints.
+- [ ] 578. Create rules template validations checking fields structures.
+- [ ] 579. Implement compliance status transitions validating pending -> submitted -> approved.
+- [ ] 580. Build automatic task generation linked to compliance milestones.
+- [x] 581. Create escalation scheduler tracking past-due obligations daily.
+- [ ] 582. Validate evidence hash integrity matches database logs keys.
+- [ ] 583. Implement regulatory schedule provisioning script loading templates.
+- [ ] 584. Build automatic email alerts notify specialists on upcoming tasks.
+- [ ] 585. Create file lock controls blocking changes to evidence files.
+- [ ] 586. Implement audit logs logs recording compliance creations events.
+- [ ] 587. Validate framework classifications ensure categories map.
+- [ ] 588. Build penalty cost calculators estimating potential fees.
+- [ ] 589. Implement tax brackets matches validations checks.
+- [ ] 590. Create SOC2 control check validators mapping evidence links.
+- [ ] 591. Validate recurring scheduling patterns ensure intervals match.
+- [ ] 592. Build region filter verification scripts checking country codes.
+- [ ] 593. Implement authority maps checking validating agency keys.
+- [ ] 594. Create tax filing data compilers assembling return templates.
+- [ ] 595. Validate compliance reviews approvals require authorized roles.
+- [ ] 596. Add unit tests validating compliance score calculators.
+- [ ] 597. Add unit tests checking due date bounds validations.
+- [ ] 598. Add integration tests verifying automated obligation schedulers.
+- [ ] 599. Add integration tests verifying evidence document lockouts.
+- [ ] 600. Add validation testing verifying SOC2 framework mapping updates.
+
+### Module 6: DMS, File Management & E-Signatures (Essentials)
+- [x] 601. Define database table `dms_folders` for folder structure storage.
+- [x] 602. Define database table `dms_files` for document records.
+- [x] 603. Define database table `dms_file_versions` archiving version histories.
+- [ ] 604. Define database table `dms_file_access_rules` storing permission records.
+- [ ] 605. Define database table `dms_ocr_results` caching extracted texts.
+- [x] 606. Add foreign key from `dms_files` to `tenants` for safety constraints.
+- [x] 607. Add index on `dms_files(folder_id)` for directory load queries.
+- [x] 608. Add index on `dms_files(name)` for search auto-completion indexes.
+- [x] 609. Create database table `dms_esign_requests` tracking signers fields.
+- [x] 610. Create database table `dms_esign_signatures` recording signature hashes.
+- [x] 611. Set up RLS policy for `dms_folders` isolating tenant folders.
+- [x] 612. Set up RLS policy for `dms_files` isolating tenant files.
+- [ ] 613. Set up RLS policy for `dms_file_access_rules` protecting file boundaries.
+- [x] 614. Define constraints ensuring file size bytes are positive integers.
+- [ ] 615. Create triggers updating parent folder size metrics on file inserts.
+- [x] 616. Implement Zod validation schema for folder creation inputs.
+- [x] 617. Implement Zod validation schema for file upload metadata validations.
+- [x] 618. Implement Zod validation schema for e-sign request parameters.
+- [x] 619. Write API route `GET /api/documents/explorer` returning folder maps.
+- [x] 620. Write API route `POST /api/documents/folders` creating new folders.
+- [x] 621. Write API route `PUT /api/documents/folders/:id` renaming folders.
+- [x] 622. Write API route `DELETE /api/documents/folders/:id` removing folders.
+- [x] 623. Write API route `POST /api/documents/files` processing file uploads.
+- [x] 624. Write API route `GET /api/documents/files/:id` returning file detail.
+- [x] 625. Write API route `DELETE /api/documents/files/:id` moving files to trash.
+- [x] 626. Write API route `POST /api/documents/files/:id/restore` recovering files.
+- [x] 627. Write API route `GET /api/documents/files/:id/versions` listing histories.
+- [x] 628. Write API route `POST /api/documents/files/:id/restore-version` recovering files.
+- [x] 629. Write API route `POST /api/documents/esign/request` starting signature jobs.
+- [x] 630. Write API route `GET /api/documents/esign/requests/:id` returning details.
+- [x] 631. Write API route `POST /api/documents/esign/sign` recording signature inputs.
+- [x] 632. Write API route `POST /api/documents/shares/create` generating shares keys.
+- [x] 633. Write API route `GET /api/documents/shares/:token` reading share links.
+- [x] 634. Implement sorting parameters in file listing endpoints queries.
+- [ ] 635. Add category filters to search endpoint interfaces.
+- [x] 636. Implement validation checking that folders cannot have duplicate names.
+- [ ] 637. Add error handlers logging file storage connection errors.
+- [ ] 638. Implement transaction controls wrapping version upgrades and database changes.
+- [x] 639. Write API route `GET /api/documents/reports/storage` compiling usage stats.
+- [x] 640. Add scope check middleware checking file permissions before downloads.
+- [x] 641. Set up React route paths `/documents` in Router configurations.
+- [x] 642. Create documents layout panel `<DmsLayout />` with navigation links.
+- [x] 643. Build folder explorer grid view `<FolderExplorer />` displaying details.
+- [x] 644. Build folder tree navigator panel `<FolderSidebar />`.
+- [x] 645. Build file upload drag drop dropzone component `<FileDropzone />`.
+- [x] 646. Build file version history tab `<VersionHistory />` display logs.
+- [x] 647. Build file properties sidebar dashboard `<FileProperties />`.
+- [x] 648. Build document e-sign request form `<ESignRequestForm />`.
+- [x] 649. Build signer portal workflow landing page `<ESignPortal />`.
+- [x] 650. Build folder creation modal `<CreateFolderFolder />`.
+- [x] 651. Build file sharing configuration modal `<FileShareModal />`.
+- [x] 652. Build document viewer dashboard screen `<DocumentViewer />`.
+- [x] 653. Create loading skeletons display boxes for file lists grids.
+- [x] 654. Implement error banners handling storage link API crashes.
+- [x] 655. Create empty states for folder explorer displaying zero files slots.
+- [x] 656. Implement progress bars displaying upload queue tasks completions.
+- [x] 657. Add alert message when file uploads exceed plan storage capacity.
+- [ ] 658. Build security access configuration manager board `<AccessSettings />`.
+- [ ] 659. Create files download buttons calling streaming download routes.
+- [x] 660. Build files search input box filtering logs by tag or category.
+- [x] 661. Add sorting controls categorizing files by size or upload dates.
+- [x] 662. Build file deletion buttons triggering recycle bin movements.
+- [x] 663. Implement directory path breadcrumbs bar display modules.
+- [x] 664. Create e-sign signatures capturing signature pad components.
+- [x] 665. Build folder selector dropdowns choosing move locations.
+- [x] 666. Add pagination navigation footer controls below file tables.
+- [x] 667. Create file shares details listings card views.
+- [x] 668. Build ocr extraction details text viewers panels.
+- [x] 669. Add mime-type file icon indicators beside file names.
+- [x] 670. Create file restoration confirm dialogue checkers alerts.
+- [x] 671. Build share link expiry date configuration fields.
+- [x] 672. Create files category tag picker controls panels.
+- [ ] 673. Build legal holds alert indicators cards panels.
+- [ ] 674. Create files compression request indicators progress spinners.
+- [x] 675. Build storage analytics overview progress graphs displays.
+- [x] 676. Implement storage limit validator evaluating tenant quotas.
+- [x] 677. Validate file name formatting blocking unsafe characters.
+- [ ] 678. Create folder hierarchy boundary validator check loops.
+- [ ] 679. Implement document versions progression tracking updates.
+- [x] 680. Build automatic folder size aggregators running on database saves.
+- [x] 681. Create hash generator checking file content duplicates.
+- [ ] 682. Validate e-sign tokens parameters checking expirations ranges.
+- [x] 683. Implement document sharing expiration rules monitoring dates.
+- [x] 684. Build file mime-type whitelist checks blocking execution types.
+- [x] 685. Create ocr search index compiler posting tokens.
+- [x] 686. Implement audit logs logs recording file download events.
+- [x] 687. Validate user file access permissions using permission lists.
+- [ ] 688. Build file download encryption streams compressing packages.
+- [ ] 689. Implement auto-tagging engines assigning document categories.
+- [ ] 690. Create signature SHA-256 validation checkers checking integrity.
+- [ ] 691. Validate legal hold blocks preventing file purge actions.
+- [ ] 692. Build guest shares authentication checks verifying key entries.
+- [ ] 693. Implement folder relocation logic updating database path fields.
+- [ ] 694. Create duplicate resolution prompts selecting upload actions.
+- [ ] 695. Validate zip compile payloads ensure size bounds match.
+- [x] 696. Add unit tests validating storage limit validators.
+- [x] 697. Add unit tests checking file name format validations.
+- [x] 698. Add integration tests checking folder relational nesting.
+- [x] 699. Add integration tests verifying e-sign signatures logic.
+- [x] 700. Add validation testing checking file download permission checks.
+
+### Module 7: Helpdesk, Support Ticketing & SLA (Essentials)
+- [x] 701. Define database table `support_tickets` for issue tracking.
+- [x] 702. Define database table `support_messages` storing response logs.
+- [x] 703. Define database table `support_sla_rules` storing target times.
+- [x] 704. Define database table `support_categories` tracking categories.
+- [x] 705. Define database table `support_sla_breaches` documenting failures.
+- [ ] 706. Add foreign key from `support_tickets` to `tenants` for safety.
+- [ ] 707. Add index on `support_tickets(status)` for fast queue updates.
+- [ ] 708. Add index on `support_tickets(assigned_agent_id)` for inbox filters.
+- [x] 709. Create database table `support_cstat_ratings` storing customer scores.
+- [x] 710. Create database table `support_knowledge_base` storing help articles.
+- [x] 711. Set up RLS policy for `support_tickets` isolating tenant issues.
+- [x] 712. Set up RLS policy for `support_messages` isolating thread posts.
+- [x] 713. Set up RLS policy for `support_sla_rules` restricting modifications.
+- [x] 714. Define constraints ensuring priority tags match allowed levels.
+- [ ] 715. Create database triggers tracking agent assignments timestamps.
+- [x] 716. Implement Zod validation schema for ticket submission.
+- [x] 717. Implement Zod validation schema for ticket replies inputs.
+- [x] 718. Implement Zod validation schema for help article updates.
+- [x] 719. Write API route `GET /api/support/tickets` listing active requests.
+- [x] 720. Write API route `POST /api/support/tickets` creating new tickets.
+- [x] 721. Write API route `GET /api/support/tickets/:id` returning details.
+- [x] 722. Write API route `PUT /api/support/tickets/:id` editing fields.
+- [x] 723. Write API route `DELETE /api/support/tickets/:id` closing records.
+- [x] 724. Write API route `POST /api/support/tickets/:id/messages` sending replies.
+- [x] 725. Write API route `PUT /api/support/tickets/:id/status` editing status.
+- [x] 726. Write API route `GET /api/support/kb` returning articles.
+- [x] 727. Write API route `POST /api/support/kb` creating help articles.
+- [x] 728. Write API route `PUT /api/support/kb/:id` editing help articles.
+- [x] 729. Write API route `DELETE /api/support/kb/:id` removing articles.
+- [x] 730. Write API route `POST /api/support/tickets/:id/rate` saving ratings.
+- [x] 731. Write API route `GET /api/support/reports/sla` returning breaches.
+- [x] 732. Write API route `GET /api/support/reports/cstat` returning scores.
+- [x] 733. Write API route `GET /api/support/agents/status` returning listings.
+- [ ] 734. Implement query parameter routing in ticket list endpoints.
+- [ ] 735. Add category filters sorting logs inside search routing.
+- [ ] 736. Implement validation checking target ticket is open before replies.
+- [ ] 737. Add error handlers logging missing agent errors on ticket routes.
+- [ ] 738. Implement transaction controls wrapping ticket status updates.
+- [x] 739. Write API route `GET /api/support/reports/volume` compiling stats.
+- [ ] 740. Add role middleware checking support manager permissions.
+- [x] 741. Set up React route paths `/support` in Router configurations.
+- [x] 742. Create support layout panel `<SupportLayout />` with navigation links.
+- [x] 743. Build ticket inbox dashboard table `<TicketInbox />` display logs.
+- [x] 744. Build ticket console chat screen `<TicketConsole />`.
+- [x] 745. Build customer ticket creator wizard `<CreateTicket />`.
+- [x] 746. Build help article manager screen `<KbArticleManager />`.
+- [x] 747. Build public search help site view `<HelpCenter />`.
+- [x] 748. Build ticket properties adjuster console panel `<TicketProperties />`.
+- [x] 749. Build SLA thresholds configure panel `<SlaSettings />`.
+- [x] 750. Build agent ratings tracking metrics screen `<CstatDashboard />`.
+- [x] 751. Build ticket creation modal `<CreateTicketModal />`.
+- [x] 752. Build article edit modal `<EditArticleModal />`.
+- [x] 753. Create loading skeletons display elements for ticket threads.
+- [x] 754. Implement error banners handling helpdesk API crashes.
+- [x] 755. Create empty states for article lists displays folders.
+- [x] 756. Implement countdown timers showing SLA target times left.
+- [ ] 757. Add alert message when ticket assignment alerts wait past SLA goals.
+- [x] 758. Build automated response templates selector panel `<MacroSelector />`.
+- [ ] 759. Create customer tickets history CSV download buttons.
+- [x] 760. Build ticket search input box filtering logs by tag or ID.
+- [x] 761. Add priority labels badges categorizing display lists.
+- [ ] 762. Build message attachments uploader buttons inside chat tools.
+- [x] 763. Implement agent selector dropdowns mapping ownership keys.
+- [x] 764. Create ticket status switch buttons toggle categories.
+- [x] 765. Build feedback rating star picker widgets.
+- [x] 766. Add pagination navigation footer controls below lists.
+- [x] 767. Create articles detail page view layout components.
+- [ ] 768. Build agent note fields toggle buttons panels.
+- [ ] 769. Add ticket category tag icons display columns.
+- [ ] 770. Create ticket merge select dialog cards.
+- [x] 771. Build SLA compliance target progress bars display panels.
+- [ ] 772. Create ticket watch list user picker widgets.
+- [ ] 773. Build spam tag toggle buttons inside details console.
+- [ ] 774. Create agent queue active volumes progress bars dashboards.
+- [ ] 775. Build help feedback confirmation alerts messages displays.
+- [x] 776. Implement SLA target calculator checking priority categories.
+- [x] 777. Validate ticket message inputs restricting empty text.
+- [ ] 778. Create category check validations checking database configurations.
+- [x] 779. Implement ticket statuses transitions validation checking open -> closed.
+- [ ] 780. Build automatic agent routing assigning tickets dynamically.
+- [x] 781. Create SLA breach checker cron evaluating ticket ages.
+- [x] 782. Validate customer rating inputs checking values match 1-5 ranges.
+- [x] 783. Implement article search index compiler matching terms.
+- [ ] 784. Build automatic response dispatch trigger emailing confirmations.
+- [ ] 785. Create ticket linking checks matching tickets to client accounts.
+- [x] 786. Implement audit logs logs recording ticket assignment changes.
+- [ ] 787. Validate file attachment types blocking execution file formats.
+- [ ] 788. Build ticket history tracker collecting timeline actions.
+- [ ] 789. Implement text filter checks sanitizing inputs fields.
+- [ ] 790. Create email notification alerts notify agents on ticket updates.
+- [ ] 791. Validate agent status checks ensure users are active.
+- [ ] 792. Build ticket merge logic updating relational pointers.
+- [ ] 793. Implement watch lists alert notifications dispatches.
+- [ ] 794. Create category validation checks verify categories exist.
+- [ ] 795. Validate agent assignment limits verify queue counts boundaries.
+- [x] 796. Add unit tests validating SLA target calculators.
+- [x] 797. Add unit tests checking ticket status validation bounds.
+- [x] 798. Add integration tests checking email-to-ticket generation feeds.
+- [x] 799. Add integration tests verifying SLA breach alerting systems.
+- [x] 800. Add validation testing checking help article content sanitizers.
+
+### Module 8: Multi-Tenant Tenant Isolation & Super Admin (Essentials)
+- [x] 801. Define database table `admin_global_telemetry` for performance metrics.
+- [x] 802. Define database table `admin_impersonation_logs` tracking overrides.
+- [x] 803. Define database table `admin_security_events` storing alert events.
+- [x] 804. Define database table `admin_system_parameters` storing platform constants.
+- [x] 805. Define database table `admin_tenant_suspensions` tracking holds.
+- [x] 806. Add index on `admin_global_telemetry(timestamp)` for charts loading.
+- [x] 807. Add index on `admin_security_events(event_type)` for log auditors.
+- [x] 808. Create database table `admin_migration_history` logging upgrades.
+- [x] 809. Create database table `admin_ip_whitelists` restricting routes.
+- [x] 810. Set up RLS policy for `admin_global_telemetry` restricting client reads.
+- [x] 811. Set up RLS policy for `admin_impersonation_logs` limiting dashboard entries.
+- [x] 812. Set up RLS policy for `admin_security_events` protecting logs.
+- [x] 813. Set up RLS policy for `admin_system_parameters` isolating keys.
+- [x] 814. Define constraints ensuring tenant configuration limits are valid.
+- [x] 815. Create database triggers logging critical schema modifications updates.
+- [x] 816. Implement Zod validation schema for tenant creation requests.
+- [x] 817. Implement Zod validation schema for tenant suspension parameters.
+- [x] 818. Implement Zod validation schema for system configuration adjustments.
+- [x] 819. Write API route `GET /api/admin/tenants` returning tenant listings.
+- [x] 820. Write API route `POST /api/admin/tenants` onboarding new tenants.
+- [x] 821. Write API route `GET /api/admin/tenants/:id` returning parameters.
+- [x] 822. Write API route `PUT /api/admin/tenants/:id` editing limits.
+- [x] 823. Write API route `POST /api/admin/tenants/:id/suspend` blocking access.
+- [x] 824. Write API route `POST /api/admin/tenants/:id/unsuspend` restoring access.
+- [x] 825. Write API route `POST /api/admin/impersonate/:userId` switching sessions.
+- [x] 826. Write API route `DELETE /api/admin/impersonate` ending overrides.
+- [x] 827. Write API route `GET /api/admin/security-events` listing logs.
+- [x] 828. Write API route `GET /api/admin/telemetry/traffic` returning analytics.
+- [x] 829. Write API route `GET /api/admin/telemetry/storage` returning volumes.
+- [x] 830. Write API route `PUT /api/admin/parameters` adjusting constants.
+- [x] 831. Write API route `GET /api/admin/migrations` listing upgrades.
+- [x] 832. Write API route `POST /api/admin/ip-whitelist` saving whitelist keys.
+- [x] 833. Write API route `DELETE /api/admin/ip-whitelist/:id` removing keys.
+- [x] 834. Implement query filters in tenant list endpoints.
+- [x] 835. Add category filters to security event log lists.
+- [x] 836. Implement validation checks blocking active tenant deletions.
+- [x] 837. Add error handlers logging unauthorized access to admin endpoints.
+- [x] 838. Implement transaction controls wrapping tenant creations steps.
+- [x] 839. Write API route `GET /api/admin/telemetry/health` returning states.
+- [x] 840. Add super admin role checking middlewares on all admin routes.
+- [x] 841. Set up React route paths `/admin` in Router configurations.
+- [x] 842. Create admin layout panel `<SuperAdminLayout />` with navigation links.
+- [x] 843. Build tenant manager table `<TenantManager />` listing organization states.
+- [x] 844. Build tenant onboarding form panel `<CreateTenantForm />`.
+- [x] 845. Build platform telemetry chart panel `<SystemTelemetry />`.
+- [x] 846. Build security audit logs table view `<SecurityEventLogs />`.
+- [x] 847. Build system parameters editor grid `<ParameterConfig />`.
+- [x] 848. Build impersonation session manager card `<ImpersonatorConsole />`.
+- [x] 849. Build database migrations status display `<MigrationLogs />`.
+- [x] 850. Build IP whitelist configurations card `<IpWhitelist />`.
+- [x] 851. Build tenant configuration details drawer `<TenantDrawer />`.
+- [x] 852. Build admin notifications manager wizard `<SystemAnnouncements />`.
+- [x] 853. Create loading skeletons display tables for admin lists.
+- [x] 854. Implement error banners handling admin api connection failures.
+- [x] 855. Create empty states for telemetry logs displaying zero records.
+- [x] 856. Implement traffic metrics line graphs charts using Recharts.
+- [x] 857. Add alert message when tenant storage usage nears plan bounds.
+- [x] 858. Build suspension note confirmation form component `<Suspender />`.
+- [x] 859. Create platform summary audit report pdf exporter buttons.
+- [x] 860. Build tenant search input box filtering logs by name or domain.
+- [x] 861. Add filter tags sorting security logs by alert classes.
+- [x] 862. Build whitelist record deletion buttons inside lists.
+- [x] 863. Implement session revocation buttons terminating active logins.
+- [x] 864. Create system announcement message designer textareas.
+- [x] 865. Build database connections status indicator checkers panels.
+- [x] 866. Add pagination navigation footer controls below lists tables.
+- [x] 867. Create tenant subscription indicators detail card displays.
+- [x] 868. Build parameters update verification check modals.
+- [x] 869. Add status indicator dots beside tenant details listings.
+- [x] 870. Create security login failure warnings dashboard widgets.
+- [x] 871. Build migration rollback buttons dialog panels.
+- [x] 872. Create storage threshold alerts warning widgets panels.
+- [x] 873. Build whitelist IP format verification fields filters.
+- [x] 874. Create admin activity log summaries timelines widgets.
+- [x] 875. Build server latency graphs displays components panels.
+- [x] 876. Implement tenant isolation validator validating database checks.
+- [x] 877. Validate domain formats ensure uniqueness requirements.
+- [x] 878. Create parameters format validators checking values classes.
+- [x] 879. Implement impersonation controls verifying user clearance levels.
+- [x] 880. Build IP whitelist lookup matches validating request origins.
+- [x] 881. Create tenant storage quota calculations scanning filesystem keys.
+- [x] 882. Validate database migrations ensure version keys sequence.
+- [x] 883. Implement security events dispatch trigger logging failed entries.
+- [x] 884. Build automatic suspension logic blocking expired payment logs.
+- [x] 885. Create system configurations backuper saving settings tables.
+- [x] 886. Implement audit logs logs recording tenant modifications events.
+- [x] 887. Validate administrator role definitions blocking recursive updates.
+- [x] 888. Build notification channels forwarding alerts to admins.
+- [x] 889. Implement rate limit configurations mapping values to redis buckets.
+- [x] 890. Create session validation routines verify admin tokens lifetime.
+- [x] 891. Validate suspension locks block user logins endpoints.
+- [x] 892. Build RLS leakage test scripts checking isolation boundaries.
+- [x] 893. Implement data purge scripts removing deleted tenant storage.
+- [x] 894. Create configurations synchronization helpers reloading server contexts.
+- [x] 895. Validate webhook dispatch configurations ensure address checks.
+- [x] 896. Add unit tests validating tenant isolation checks.
+- [x] 897. Add unit tests checking parameters database validators.
+- [x] 898. Add integration tests checking admin impersonation session setup.
+- [x] 899. Add integration tests verifying IP whitelist lookup checkers.
+- [x] 900. Add validation testing verifying tenant suspension blocks entry.
+
+### Module 9: Developer Portal, API Keys & Webhooks (Essentials)
+- [x] 901. Define database table `developer_api_keys` storing metadata.
+- [x] 902. Define database table `developer_webhook_endpoints` listing targets.
+- [x] 903. Define database table `developer_webhook_delivery_logs` tracking responses.
+- [x] 904. Define database table `developer_api_rate_limits` storing thresholds.
+- [x] 905. Define database table `developer_webhook_events_queue` buffering logs.
+- [x] 906. Add foreign key from `developer_api_keys` to `tenants` for safety.
+- [x] 907. Add index on `developer_api_keys(hashed_key)` for request verifications.
+- [x] 908. Add index on `developer_webhook_delivery_logs(webhook_id)` for log lists.
+- [x] 909. Create database table `developer_sdk_releases` tracking client libraries.
+- [x] 910. Create database table `developer_api_docs` caching reference schemas.
+- [x] 911. Set up RLS policy for `developer_api_keys` isolating tenant keys.
+- [x] 912. Set up RLS policy for `developer_webhook_endpoints` protecting webhook targets.
+- [x] 913. Set up RLS policy for `developer_webhook_delivery_logs` protecting delivery logs.
+- [x] 914. Define constraints restricting API rate limit ranges.
+- [x] 915. Create triggers updating rate limit databases when API keys change.
+- [x] 916. Implement Zod validation schema for API key creations.
+- [x] 917. Implement Zod validation schema for webhook endpoint configurations.
+- [x] 918. Implement Zod validation schema for mock webhook payloads dispatch.
+- [x] 919. Write API route `GET /api/developer/keys` listing keys.
+- [x] 920. Write API route `POST /api/developer/keys` creating keys prefixes.
+- [x] 921. Write API route `DELETE /api/developer/keys/:id` revoking keys.
+- [x] 922. Write API route `GET /api/developer/webhooks` listing targets.
+- [x] 923. Write API route `POST /api/developer/webhooks` creating webhook setups.
+- [x] 924. Write API route `PUT /api/developer/webhooks/:id` renaming setups.
+- [x] 925. Write API route `DELETE /api/developer/webhooks/:id` removing setups.
+- [x] 926. Write API route `GET /api/developer/webhooks/:id/logs` returning deliveries.
+- [x] 927. Write API route `POST /api/developer/webhooks/:id/test` sending mocks.
+- [x] 928. Write API route `GET /api/developer/api-logs` returning telemetry.
+- [x] 929. Write API route `GET /api/developer/docs` returning schemas.
+- [x] 930. Write API route `POST /api/developer/rate-limits` configuring limits.
+- [x] 931. Write API route `GET /api/developer/sdks` listing SDK builds.
+- [x] 932. Write API route `POST /api/developer/webhook-queue/flush` flushing queues.
+- [x] 933. Write API route `GET /api/developer/webhooks/events` listing patterns.
+- [x] 934. Implement sorting filters in developer logs endpoints.
+- [x] 935. Add date filtering parameters to API requests history queues.
+- [x] 936. Implement check verifying key is active before endpoint access.
+- [x] 937. Add error handlers logging payload delivery failures on webhooks.
+- [x] 938. Implement transaction controls wrapping key creations and logging.
+- [x] 939. Write API route `GET /api/developer/reports/api-usage` returning metrics.
+- [x] 940. Add developer role check middlewares on api setups routes.
+- [x] 941. Set up React route paths `/developer` in Router configurations.
+- [x] 942. Create developer layout panel `<DeveloperLayout />` with navigation links.
+- [x] 943. Build API key manager table `<ApiKeyList />` display credentials.
+- [x] 944. Build webhook endpoints list dashboard `<WebhookList />`.
+- [x] 945. Build webhook delivery logs viewer `<WebhookLogs />` display details.
+- [x] 946. Build API request histories list view `<ApiRequestHistory />`.
+- [x] 947. Build interactive API documentation page `<ApiDocumentation />`.
+- [x] 948. Build API key generator modal `<GenerateKeyModal />`.
+- [x] 949. Build webhook creation modal `<CreateWebhookModal />`.
+- [x] 950. Build webhook delivery details popup card `<WebhookDeliveryDrawer />`.
+- [x] 951. Build API usage telemetry charts screen `<DeveloperAnalytics />`.
+- [x] 952. Build SDK libraries download links card view `<SdkDownloads />`.
+- [x] 953. Create loading skeletons display grids for developer logs.
+- [x] 954. Implement error banners handling developer api status updates crashes.
+- [x] 955. Create empty states for webhook lists displaying zero targets.
+- [x] 956. Implement traffic metrics graphs displaying requests counters charts.
+- [x] 957. Add alert message when api key rate limits boundaries near values.
+- [x] 958. Build webhook testing payload editor screen `<WebhookTestPanel />`.
+- [x] 959. Create webhook deliveries events list CSV exporters buttons.
+- [x] 960. Build webhook search input box filtering logs by URL or ID.
+- [x] 961. Add status filters buttons sorting delivery logs lists.
+- [x] 962. Build webhook endpoint deletion buttons trigger removals.
+- [x] 963. Implement active session token details display indicators.
+- [x] 964. Create API keys description edit fields popup dialogs.
+- [x] 965. Build rate limit configurator widgets controls.
+- [x] 966. Add pagination navigation footer controls below lists.
+- [x] 967. Create SDK packages version listings detail cards.
+- [x] 968. Build raw payload json code editor panels.
+- [x] 969. Add webhook retry triggers controls buttons lists.
+- [x] 970. Create rate limit warning banners display widgets.
+- [x] 971. Build CORS configuration selector switches panels.
+- [x] 972. Create active developer announcement cards panels.
+- [x] 973. Build documentation endpoint selector dropdown filters.
+- [x] 974. Create signature header validator code display cards.
+- [x] 975. Build webhooks setup confirmation notification banners displays.
+- [x] 976. Implement API key verification comparing hashes properties.
+- [x] 977. Validate webhook URL endpoints ensure structure restrictions.
+- [x] 978. Create rate limit validations comparing usage indices.
+- [x] 979. Implement signature verification computing SHA-256 validation hashes.
+- [x] 980. Build webhook event queue managers buffering active dispatch payloads.
+- [x] 981. Create API key hasher using salted cryptography hashes.
+- [x] 982. Validate rate limit overrides restrict range boundaries.
+- [x] 983. Implement retry scheduler triggering webhook retries weekly.
+- [x] 984. Build webhook payload builder extracting changes from records.
+- [x] 985. Create CORS verification handlers checks blocking origins.
+- [x] 986. Implement audit logs logs recording key generations events.
+- [x] 987. Validate webhook targets block local loopback ranges.
+- [x] 988. Build rate limits bucket managers matching tokens ranges.
+- [x] 989. Implement SDK version control validator checking dependencies.
+- [x] 990. Create api key expiration checks warning developer panels.
+- [x] 991. Validate endpoint path verification verify protocols exist.
+- [x] 992. Build developer settings synchronization helpers reloading servers.
+- [x] 993. Implement payload signing headers check verify properties.
+- [x] 994. Create database tables cleaners purging old delivery logs.
+- [x] 995. Validate API scopes ensure requests match tokens permissions.
+- [x] 996. Add unit tests validating API key hash verifiers.
+- [x] 997. Add unit tests checking rate limit buckets calculations.
+- [x] 998. Add integration tests checking API key token middlewares blocks.
+- [x] 999. Add integration tests verifying Webhook delivery queue workers.
+- [x] 1000. Add validation testing verifying webhook loopback checks.
+

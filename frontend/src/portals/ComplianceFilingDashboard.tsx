@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext.tsx';
 import { 
   Calendar, CheckCircle, AlertTriangle, FileText, Upload, Clock, 
   Settings, Check, X, ShieldAlert, Award, FileUp, Loader2, ArrowRight,
-  ShieldCheck, RefreshCw, AlertCircle, Globe
+  ShieldCheck, RefreshCw, AlertCircle, Globe, PlusCircle
 } from 'lucide-react';
 
 interface FileItem {
@@ -63,6 +63,18 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
   const [updatingCountry, setUpdatingCountry] = useState(false);
   const [runningScheduler, setRunningScheduler] = useState(false);
 
+  // Custom Obligation States
+  const [showCreateObligationModal, setShowCreateObligationModal] = useState(false);
+  const [specialists, setSpecialists] = useState<any[]>([]);
+  const [obligationForm, setObligationForm] = useState({
+    title: '',
+    dueDate: new Date().toISOString().split('T')[0],
+    type: 'GST',
+    assignedSpecialistId: '',
+    notes: '',
+    complianceScoreImpact: 10
+  });
+
   // UI state
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
@@ -77,13 +89,14 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
     setLoading(true);
     setErrorMsg('');
     try {
-      const [packsRes, subsRes, obRes, filesRes, scoreRes, alertsRes] = await Promise.all([
+      const [packsRes, subsRes, obRes, filesRes, scoreRes, alertsRes, specialistsRes] = await Promise.all([
         apiClient.get('/compliance/packs'),
         apiClient.get('/compliance/submissions'),
         apiClient.get('/compliance/obligations').catch(() => ({ data: [] })),
         apiClient.get('/documents').catch(() => ({ data: [] })),
         apiClient.get('/compliance/score').catch(() => ({ data: { score: 100 } })),
-        apiClient.get('/compliance/alerts').catch(() => ({ data: [] }))
+        apiClient.get('/compliance/alerts').catch(() => ({ data: [] })),
+        apiClient.get('/users').catch(() => ({ data: [] }))
       ]);
 
       setPacks(packsRes.data || []);
@@ -92,6 +105,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
       setFiles(filesRes.data?.files || []);
       setComplianceScore(scoreRes.data?.score ?? 100);
       setAlerts(alertsRes.data || []);
+      setSpecialists(specialistsRes.data || []);
 
       // Pull current tenant country from global tenants list
       const tenantsRes = await apiClient.get('/tenants').catch(() => ({ data: [] }));
@@ -105,6 +119,39 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
       setLoading(false);
     }
   };
+
+  const handleCreateObligation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await apiClient.post('/compliance/obligation', {
+        title: obligationForm.title,
+        dueDate: obligationForm.dueDate,
+        type: obligationForm.type,
+        assignedSpecialistId: obligationForm.assignedSpecialistId || null,
+        notes: obligationForm.notes,
+        complianceScoreImpact: Number(obligationForm.complianceScoreImpact)
+      });
+      setSuccessMsg('Filing obligation scheduled successfully!');
+      setShowCreateObligationModal(false);
+      setObligationForm({
+        title: '',
+        dueDate: new Date().toISOString().split('T')[0],
+        type: 'GST',
+        assignedSpecialistId: '',
+        notes: '',
+        complianceScoreImpact: 10
+      });
+      await loadData();
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.error || 'Failed to schedule filing obligation.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   useEffect(() => {
     loadData();
@@ -219,6 +266,16 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
         </div>
         
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {isAccountant && (
+            <button 
+              onClick={() => setShowCreateObligationModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              <PlusCircle size={16} />
+              Schedule custom obligation
+            </button>
+          )}
+
           <button 
             onClick={handleRunScheduler}
             disabled={runningScheduler}
@@ -238,6 +295,7 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
           </button>
         </div>
       </div>
+
 
       {/* Messages */}
       {errorMsg && (
@@ -724,6 +782,103 @@ export default function ComplianceFilingDashboard({ isAccountant = false }: { is
                 ✓ This filing has already been audited & approved.
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Obligation Modal */}
+      {showCreateObligationModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '12px', width: '480px', position: 'relative', color: '#fff' }}>
+            <button onClick={() => setShowCreateObligationModal(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={18} /></button>
+            <h3 style={{ margin: '0 0 1.5rem 0', color: '#fff' }}>Schedule Custom Filing Obligation</h3>
+            
+            <form onSubmit={handleCreateObligation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Obligation Title</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Q3 VAT Declaration" 
+                  required 
+                  value={obligationForm.title} 
+                  onChange={e => setObligationForm({ ...obligationForm, title: e.target.value })} 
+                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Due Date</label>
+                  <input 
+                    type="date" 
+                    required 
+                    value={obligationForm.dueDate} 
+                    onChange={e => setObligationForm({ ...obligationForm, dueDate: e.target.value })} 
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Obligation Type</label>
+                  <select
+                    value={obligationForm.type}
+                    onChange={e => setObligationForm({ ...obligationForm, type: e.target.value })}
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  >
+                    <option value="GST">GST</option>
+                    <option value="VAT">VAT</option>
+                    <option value="TDS">TDS</option>
+                    <option value="Corporate Tax">Corporate Tax</option>
+                    <option value="Payroll Tax">Payroll Tax</option>
+                    <option value="Company Return">Company Return</option>
+                    <option value="License Renewal">License Renewal</option>
+                    <option value="Regulatory Filing">Regulatory Filing</option>
+                    <option value="Audit">Audit</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Assign Specialist</label>
+                  <select
+                    value={obligationForm.assignedSpecialistId}
+                    onChange={e => setObligationForm({ ...obligationForm, assignedSpecialistId: e.target.value })}
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }}
+                  >
+                    <option value="">-- Choose Specialist --</option>
+                    {specialists.map(sp => (
+                      <option key={sp.id} value={sp.id}>{sp.full_name} ({sp.role})</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Score Impact (0-100)</label>
+                  <input 
+                    type="number" 
+                    required 
+                    min={0}
+                    max={100}
+                    value={obligationForm.complianceScoreImpact} 
+                    onChange={e => setObligationForm({ ...obligationForm, complianceScoreImpact: Number(e.target.value) })} 
+                    style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff' }} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Notes / Description</label>
+                <textarea 
+                  placeholder="Additional details about the filing requirements..."
+                  value={obligationForm.notes} 
+                  onChange={e => setObligationForm({ ...obligationForm, notes: e.target.value })} 
+                  style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#fff', minHeight: '60px' }} 
+                />
+              </div>
+
+              <button type="submit" disabled={submitting} style={{ padding: '0.6rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                {submitting ? 'Scheduling...' : 'Schedule Custom Obligation'}
+              </button>
+            </form>
           </div>
         </div>
       )}

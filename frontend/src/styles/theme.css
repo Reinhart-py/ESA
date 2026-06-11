@@ -30,6 +30,15 @@
   --card-bg: #FFFFFF;
   --card-border: #E2E8F0;
   
+  /* Sidebar & Navigation Elements (Completely separate light system) */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #1F2937;
+  --sidebar-border: #E5E7EB;
+  --sidebar-active-bg: rgba(181, 138, 43, 0.08);
+  --sidebar-active-text: #B58A2B;
+  --nav-bg: #FFFFFF;
+  --nav-text: #1F2937;
+
   /* Palette Colors */
   --primary-color: #0A1D37;       /* Deep Royal Navy */
   --accent-color: #B58A2B;        /* Premium Brushed Gold (with high contrast ratio) */
@@ -61,6 +70,15 @@
   --card-bg: #1E293B;             /* Slate 800 */
   --card-border: rgba(197, 155, 39, 0.2); /* Soft Gold highlight */
   
+  /* Sidebar & Navigation Elements (Completely separate dark system) */
+  --sidebar-bg: #111827;
+  --sidebar-text: #F9FAFB;
+  --sidebar-border: rgba(197, 155, 39, 0.25);
+  --sidebar-active-bg: #1E293B;
+  --sidebar-active-text: #E2B857;
+  --nav-bg: #1F2937;
+  --nav-text: #F9FAFB;
+
   /* Palette Colors */
   --primary-color: #B58A2B;       /* Gold becomes primary highlight in dark mode */
   --accent-color: #E2B857;        /* Warm Light Gold */

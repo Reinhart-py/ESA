@@ -90,22 +90,22 @@ export default function DataTable<T extends Record<string, any>>({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       {/* Search Input */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#0f172a', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '320px' }}>
-        <Search size={16} style={{ color: '#64748b' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'var(--surface-color)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--card-border)', maxWidth: '320px' }}>
+        <Search size={16} style={{ color: 'var(--text-muted)' }} />
         <input
           type="text"
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-          style={{ background: 'none', border: 'none', color: '#fff', fontSize: '0.85rem', outline: 'none', width: '100%' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', width: '100%' }}
         />
       </div>
 
       {/* Table Container */}
-      <div style={{ overflowX: 'auto', background: '#0f172a', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ overflowX: 'auto', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#94a3b8', background: 'rgba(255,255,255,0.01)' }}>
+            <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', background: 'var(--surface-color)' }}>
               {columns.map(col => (
                 <th 
                   key={col.key as string}
@@ -132,7 +132,7 @@ export default function DataTable<T extends Record<string, any>>({
           <tbody>
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={columns.length} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No matching records found.
                 </td>
               </tr>
@@ -141,8 +141,8 @@ export default function DataTable<T extends Record<string, any>>({
                 <tr 
                   key={row.id || idx} 
                   style={{ 
-                    borderBottom: '1px solid rgba(255,255,255,0.02)', 
-                    color: '#cbd5e1',
+                    borderBottom: '1px solid var(--card-border)', 
+                    color: 'var(--text-sec)',
                     transition: 'background-color 0.15s ease',
                   }}
                   className="table-row-hover"
@@ -162,7 +162,7 @@ export default function DataTable<T extends Record<string, any>>({
       {/* Pagination Controller */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             Showing Page <strong>{currentPage}</strong> of {totalPages} ({processedData.length} records)
           </span>
 
@@ -177,9 +177,9 @@ export default function DataTable<T extends Record<string, any>>({
                 width: '32px',
                 height: '32px',
                 borderRadius: '6px',
-                background: '#1e293b',
-                border: 'none',
-                color: currentPage === 1 ? '#475569' : '#fff',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--card-border)',
+                color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
                 cursor: currentPage === 1 ? 'default' : 'pointer'
               }}
             >
@@ -195,9 +195,9 @@ export default function DataTable<T extends Record<string, any>>({
                 width: '32px',
                 height: '32px',
                 borderRadius: '6px',
-                background: '#1e293b',
-                border: 'none',
-                color: currentPage === totalPages ? '#475569' : '#fff',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--card-border)',
+                color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
                 cursor: currentPage === totalPages ? 'default' : 'pointer'
               }}
             >

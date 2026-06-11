@@ -46,7 +46,7 @@ export default function AICopilotPanel() {
       // Append query and reply to local messages list
       setMessages(prev => [...prev, {
         user_query: queryText,
-        ai_response: res.data.reply
+        ai_response: res.data.ai_response
       }]);
     } catch (err) {
       console.error('Error sending AI chat query:', err);

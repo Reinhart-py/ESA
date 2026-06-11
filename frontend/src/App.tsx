@@ -1,7 +1,11 @@
 import React, { useContext, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppContext, supabaseClient } from './context/AppContext.tsx';
-import UnifiedPortal from './portals/UnifiedPortal.tsx';
+import ClientPortal from './portals/ClientPortal.tsx';
+import AccountantPortal from './portals/AccountantPortal.tsx';
+import AdminPortal from './portals/AdminPortal.tsx';
 import MarketingLanding from './components/MarketingLanding.tsx';
+import SecurityLayout from './components/security/SecurityLayout.tsx';
 
 
 import { Shield, Lock, Mail, User, Loader2 } from 'lucide-react';
@@ -301,7 +305,31 @@ function App() {
       );
     }
 
-    return <UnifiedPortal onLogout={handleLogout} />;
+    return (
+      <Routes>
+        <Route path="/admin/*" element={
+          (userRole === 'super_admin' || userRole === 'admin') ? 
+            <AdminPortal onLogout={handleLogout} /> : 
+            <Navigate to="/" replace />
+        } />
+        <Route path="/accountant/*" element={
+          ['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(userRole) ? 
+            <AccountantPortal onLogout={handleLogout} /> : 
+            <Navigate to="/" replace />
+        } />
+        <Route path="/client/*" element={
+          (!['super_admin', 'admin', 'accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(userRole)) ? 
+            <ClientPortal onLogout={handleLogout} /> : 
+            <Navigate to="/" replace />
+        } />
+        <Route path="/security/*" element={<SecurityLayout />} />
+        <Route path="*" element={
+          (userRole === 'super_admin' || userRole === 'admin') ? <Navigate to="/admin/dashboard" replace /> :
+          ['accountant', 'senior_accountant', 'tax_specialist', 'compliance_officer', 'payroll_specialist'].includes(userRole) ? <Navigate to="/accountant/dashboard" replace /> :
+          <Navigate to="/client/dashboard" replace />
+        } />
+      </Routes>
+    );
   }
 
   return (

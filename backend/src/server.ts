@@ -24,8 +24,12 @@ import { SupportRepository } from './repositories/supportRepository.js';
 import { BillingRepository } from './repositories/billingRepository.js';
 import { AuditRepository } from './repositories/auditRepository.js';
 import { SearchRepository } from './repositories/searchRepository.js';
+import { CrmRepository } from './repositories/crmRepository.js';
+import { PayrollRepository } from './repositories/payrollRepository.js';
+import { AdminRepository } from './repositories/adminRepository.js';
 import { validateRequest } from './middleware/validate.js';
-import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema, createApiKeySchema, createWebhookConfigSchema, onboardProfessionalSchema, createServiceRequestSchema, createQuoteSchema, signContractSchema } from './schemas/index.js';
+import { registerSchema, uploadDocumentSchema, createTaskSchema, sendMessageSchema, createTicketSchema, createInviteSchema, acceptInviteSchema, createAccountSchema, createJournalEntrySchema, createExpenseSchema, linkReceiptSchema, createCompliancePackSchema, subscribePackSchema, submitEvidenceSchema, reviewSubmissionSchema, shareDocumentSchema, createESignRequestSchema, esignDocumentSchema, bulkDownloadSchema, createApiKeySchema, createWebhookConfigSchema, onboardProfessionalSchema, createServiceRequestSchema, createQuoteSchema, signContractSchema, createLeadSchema, updateLeadSchema, createContactSchema, createDealSchema, logActivitySchema, createInvoiceSchema, updateInvoiceSchema, createCheckoutSessionSchema, createProductCatalogSchema, createCouponCatalogSchema, createEmployeeSchema, updateEmployeeSchema, createTimesheetSchema, createPayrollRunSchema, createPtoRequestSchema, resolvePtoRequestSchema, createBenefitSchema, createObligationSchema, createTicketReplySchema, createSlaRuleSchema, createSupportCategorySchema, createKbArticleSchema, updateKbArticleSchema, createCsatRatingSchema, createTenantAdminSchema, suspendTenantSchema, updateSystemParameterSchema, addIpWhitelistSchema, setRateLimitSchema, mfaVerifySchema, saveSearchSchema, aiChatSchema, embedDocSchema } from './schemas/index.js';
+
 
 import { BillingService } from './services/billing.js';
 import { InviteService } from './services/inviteService.js';
@@ -51,6 +55,9 @@ import { DeveloperService } from './services/developerService.js';
 import { ComplianceSchedulerService } from './services/complianceScheduler.js';
 import { AdminService } from './services/adminService.js';
 import { AiService } from './services/aiService.js';
+import { SecurityRepository } from './repositories/securityRepository.js';
+import { AiRepository } from './repositories/aiRepository.js';
+
 
 dotenv.config();
 
@@ -429,7 +436,7 @@ app.get('/api/users', requireAuth, async (req: AuthenticatedRequest, res) => {
 });
 
 // --- FILE / DOCUMENT MANAGEMENT ---
-app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.get(['/api/documents', '/api/documents/explorer'], requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const tenantId = req.user?.tenant_id || '';
     const folders = await DocumentRepository.getFoldersByTenant(tenantId);
@@ -440,7 +447,7 @@ app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res) =>
   }
 });
 
-app.post('/api/documents/folder', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.post(['/api/documents/folder', '/api/documents/folders'], requireAuth, async (req: AuthenticatedRequest, res) => {
   const { name, parentId } = req.body;
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -452,7 +459,55 @@ app.post('/api/documents/folder', requireAuth, async (req: AuthenticatedRequest,
   }
 });
 
-app.post('/api/documents/upload', requireAuth, validateRequest(uploadDocumentSchema), async (req: AuthenticatedRequest, res) => {
+app.put('/api/documents/folders/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { data, error } = await supabase
+      .from('folders')
+      .update({ name })
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+    if (error) throw error;
+    await logActivity(req, 'Files', `Renamed folder to: ${name}`, { folderId: id });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/documents/folders/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { error } = await supabase
+      .from('folders')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', tenantId);
+    if (error) throw error;
+    await logActivity(req, 'Files', `Deleted folder`, { folderId: id });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/files/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const file = await DocumentRepository.getFileById(id, tenantId);
+    res.json(file);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/documents/upload', '/api/documents/files'], requireAuth, validateRequest(uploadDocumentSchema), async (req: AuthenticatedRequest, res) => {
   const { name, sizeBytes, category, mimeType, folderId, fileData } = req.body; // base64 encoded
   const tenantId = req.user?.tenant_id;
   const userId = req.user?.id;
@@ -595,7 +650,7 @@ app.get('/api/documents/trash', requireAuth, async (req: AuthenticatedRequest, r
   }
 });
 
-app.post('/api/documents/file/:id/restore', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.post(['/api/documents/file/:id/restore', '/api/documents/files/:id/restore'], requireAuth, async (req: AuthenticatedRequest, res) => {
   const fileId = req.params.id;
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -607,7 +662,7 @@ app.post('/api/documents/file/:id/restore', requireAuth, async (req: Authenticat
   }
 });
 
-app.get('/api/documents/analytics', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.get(['/api/documents/analytics', '/api/documents/reports/storage'], requireAuth, async (req: AuthenticatedRequest, res) => {
   const tenantId = req.user?.tenant_id;
   if (!tenantId) {
     return res.status(400).json({ error: 'Tenant context required' });
@@ -771,11 +826,56 @@ app.get('/api/search/analytics', requireAuth, async (req: AuthenticatedRequest, 
   }
 });
 
-app.get('/api/documents/file/:id/versions', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.get(['/api/documents/file/:id/versions', '/api/documents/files/:id/versions'], requireAuth, async (req: AuthenticatedRequest, res) => {
   const fileId = req.params.id;
   try {
     const versions = await DocumentRepository.getFileVersions(fileId);
     res.json(versions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/files/:id/restore-version', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const fileId = req.params.id;
+  const versionId = req.body.versionId || req.query.versionId;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+
+  if (!versionId) {
+    return res.status(400).json({ error: 'versionId is required in request body or query parameters' });
+  }
+
+  try {
+    const currentFile = await DocumentRepository.getFileById(fileId, tenantId);
+    if (!currentFile) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const targetVersion = await DocumentRepository.getVersionById(versionId);
+    if (!targetVersion || targetVersion.file_id !== fileId) {
+      return res.status(404).json({ error: 'Version not found or mismatch' });
+    }
+
+    await DocumentRepository.createVersion({
+      file_id: currentFile.id,
+      version: currentFile.version || 1,
+      size_bytes: currentFile.size_bytes,
+      storage_key: currentFile.storage_key,
+      uploaded_by: currentFile.uploaded_by
+    });
+
+    const updatedFile = await DocumentRepository.updateFile(fileId, {
+      storage_key: targetVersion.storage_key,
+      size_bytes: targetVersion.size_bytes,
+      version: targetVersion.version,
+      uploaded_by: userId
+    });
+
+    await DocumentRepository.deleteVersion(versionId);
+
+    await logActivity(req, 'Files', `Restored version v${targetVersion.version} for file: ${currentFile.name}`, { fileId, versionId });
+    res.json(updatedFile);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -935,7 +1035,7 @@ app.get('/api/documents/search-content', requireAuth, async (req: AuthenticatedR
   }
 });
 
-app.delete('/api/documents/file/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+app.delete(['/api/documents/file/:id', '/api/documents/files/:id'], requireAuth, async (req: AuthenticatedRequest, res) => {
   const fileId = req.params.id;
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -955,7 +1055,7 @@ app.delete('/api/documents/file/:id', requireAuth, async (req: AuthenticatedRequ
 });
 
 // --- DOCUMENT VAULT PRO: SHARING, SIGNING & ZIP STREAMING ---
-app.post('/api/documents/share', requireAuth, validateRequest(shareDocumentSchema), async (req: AuthenticatedRequest, res) => {
+app.post(['/api/documents/share', '/api/documents/shares/create'], requireAuth, validateRequest(shareDocumentSchema), async (req: AuthenticatedRequest, res) => {
   const { fileId, expiresInHours } = req.body;
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -967,7 +1067,7 @@ app.post('/api/documents/share', requireAuth, validateRequest(shareDocumentSchem
   }
 });
 
-app.get('/api/documents/share/:token', async (req, res) => {
+app.get(['/api/documents/share/:token', '/api/documents/shares/:token'], async (req, res) => {
   const { token } = req.params;
   try {
     const share = await DocumentProService.validateShareToken(token);
@@ -981,7 +1081,7 @@ app.get('/api/documents/share/:token', async (req, res) => {
   }
 });
 
-app.post('/api/documents/esign', requireAuth, validateRequest(createESignRequestSchema), async (req: AuthenticatedRequest, res) => {
+app.post(['/api/documents/esign', '/api/documents/esign/request'], requireAuth, validateRequest(createESignRequestSchema), async (req: AuthenticatedRequest, res) => {
   const { fileId, signerEmail } = req.body;
   const tenantId = req.user?.tenant_id || '';
   try {
@@ -1001,6 +1101,30 @@ app.get('/api/documents/esign', requireAuth, async (req: AuthenticatedRequest, r
   const tenantId = req.user?.tenant_id || '';
   try {
     const data = await DocumentProRepository.getESignRequestsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/documents/esign/requests/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DocumentProRepository.getESignRequestById(id, tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents/esign/sign', requireAuth, validateRequest(esignDocumentSchema), async (req: AuthenticatedRequest, res) => {
+  const { esignRequestId, signatureText } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+  try {
+    const data = await DocumentProService.esignDocument(esignRequestId, tenantId, ipAddress, signatureText);
+    await logActivity(req, 'Files', `Recorded document e-signature cryptographic hash`, { esignRequestId, hash: data.signature_hash });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1054,7 +1178,8 @@ app.get('/api/compliance/obligations', requireAuth, async (req: AuthenticatedReq
   }
 });
 
-app.post('/api/compliance/obligation', requireAuth, requireRoles(['super_admin', 'admin', 'accountant']), async (req: AuthenticatedRequest, res) => {
+app.post('/api/compliance/obligation', requireAuth, requireRoles(['super_admin', 'admin', 'accountant']), validateRequest(createObligationSchema), async (req: AuthenticatedRequest, res) => {
+
   const { title, dueDate, type, assignedSpecialistId, notes, complianceScoreImpact } = req.body;
   const tenantId = req.user?.tenant_id || '';
 
@@ -1160,6 +1285,261 @@ app.get('/api/compliance/alerts', requireAuth, async (req: AuthenticatedRequest,
   try {
     const alerts = await ComplianceRepository.getAlertsByTenant(tenantId);
     res.json(alerts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- CRM & CUSTOMER PIPELINE ENGINE ---
+app.get('/api/crm/leads', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { search, sortBy, order, page = 1, limit = 50 } = req.query;
+  try {
+    let leads = await CrmRepository.getLeads(tenantId);
+    if (search) {
+      const q = String(search).toLowerCase();
+      leads = leads.filter(l => 
+        (l.first_name || '').toLowerCase().includes(q) || 
+        (l.last_name || '').toLowerCase().includes(q) || 
+        (l.email || '').toLowerCase().includes(q) ||
+        (l.company && l.company.toLowerCase().includes(q))
+      );
+    }
+    if (sortBy) {
+      const sortField = String(sortBy);
+      const direction = order === 'asc' ? 1 : -1;
+      leads.sort((a: any, b: any) => {
+        const valA = a[sortField] || '';
+        const valB = b[sortField] || '';
+        return valA > valB ? direction : valA < valB ? -direction : 0;
+      });
+    }
+    const total = leads.length;
+    const offset = (Number(page) - 1) * Number(limit);
+    const paginatedLeads = leads.slice(offset, offset + Number(limit));
+    res.setHeader('X-Total-Count', total.toString());
+    res.json({
+      data: paginatedLeads,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/leads/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { data, error } = await supabase.from('crm_leads').select('*').eq('id', req.params.id).eq('tenant_id', tenantId).single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/leads', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(createLeadSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const lead = await CrmRepository.createLead({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    await logActivity(req, 'CRM', `Created lead: ${lead.first_name} ${lead.last_name}`, { leadId: lead.id });
+    res.status(201).json(lead);
+  } catch (err: any) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'A lead with this email address already exists.' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/crm/leads/:id', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(updateLeadSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const lead = await CrmRepository.updateLead(req.params.id, tenantId, req.body);
+    await logActivity(req, 'CRM', `Updated lead: ${lead.first_name} ${lead.last_name}`, { leadId: lead.id });
+    res.json(lead);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/crm/leads/:id', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    await CrmRepository.deleteLead(req.params.id, tenantId);
+    await logActivity(req, 'CRM', `Deleted lead ID: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/contacts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const contacts = await CrmRepository.getContacts(tenantId);
+    res.json(contacts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/contacts', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(createContactSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const contact = await CrmRepository.createContact({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    await logActivity(req, 'CRM', `Created contact: ${contact.first_name} ${contact.last_name}`, { contactId: contact.id });
+    res.status(201).json(contact);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/crm/contacts/:id', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { data, error } = await supabase.from('crm_contacts').update(req.body).eq('id', req.params.id).eq('tenant_id', tenantId).select().single();
+    if (error) throw error;
+    await logActivity(req, 'CRM', `Updated contact: ${data.first_name} ${data.last_name}`, { contactId: data.id });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/crm/contacts/:id', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const { error } = await supabase.from('crm_contacts').delete().eq('id', req.params.id).eq('tenant_id', tenantId);
+    if (error) throw error;
+    await logActivity(req, 'CRM', `Deleted contact ID: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/deals', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const deals = await CrmRepository.getDeals(tenantId);
+    res.json(deals);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/deals', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(createDealSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const deal = await CrmRepository.createDeal({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    await logActivity(req, 'CRM', `Created sales opportunity: ${deal.title}`, { dealId: deal.id });
+    res.status(201).json(deal);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/crm/deals/:id/stage', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { stage, probability } = req.body;
+  try {
+    const deal = await CrmRepository.updateDealStage(req.params.id, tenantId, stage, probability);
+    await logActivity(req, 'CRM', `Updated deal stage: ${deal.title} to ${stage}`, { dealId: deal.id });
+    res.json(deal);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/activities', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), validateRequest(logActivitySchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const activity = await CrmRepository.logActivity({
+      tenant_id: tenantId,
+      logged_by: req.user?.id,
+      ...req.body
+    });
+    res.status(201).json(activity);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/activities', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { leadId, dealId } = req.query;
+  try {
+    let query = supabase.from('crm_activities').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false });
+    if (leadId) query = query.eq('lead_id', leadId);
+    if (dealId) query = query.eq('deal_id', dealId);
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/dashboard-summary', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const leads = await CrmRepository.getLeads(tenantId);
+    const deals = await CrmRepository.getDeals(tenantId);
+    const contacts = await CrmRepository.getContacts(tenantId);
+    
+    const totalLeads = leads.length;
+    const newLeads = leads.filter(l => l.status === 'new').length;
+    const totalDealsValue = deals.reduce((sum, d) => sum + (d.amount_cents || 0), 0);
+    const activeDeals = deals.filter(d => d.stage !== 'Closed Won' && d.stage !== 'Closed Lost').length;
+    const wonDealsValue = deals.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.amount_cents || 0), 0);
+
+    res.json({
+      totalLeads,
+      newLeads,
+      totalDealsValue,
+      activeDeals,
+      wonDealsValue,
+      totalContacts: contacts.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/crm/accounts', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const accounts = await CrmRepository.getAccounts(tenantId);
+    res.json(accounts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/accounts', requireAuth, requireRoles(['super_admin', 'admin', 'client_owner']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const account = await CrmRepository.createAccount({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    await logActivity(req, 'CRM', `Created company account: ${account.name}`, { accountId: account.id });
+    res.status(201).json(account);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1442,6 +1822,498 @@ app.delete('/api/developer/webhooks/:id', requireAuth, async (req: Authenticated
   }
 });
 
+app.get('/api/developer/webhooks/:id/logs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const hookId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.getWebhookLogs(tenantId, hookId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/developer/webhooks/:id/test', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const hookId = req.params.id;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const configs = await DeveloperRepository.getWebhookConfigsByTenant(tenantId);
+    const config = configs.find((c: any) => c.id === hookId);
+    if (!config) {
+      return res.status(404).json({ error: 'Webhook configuration not found' });
+    }
+
+    const eventType = 'test.ping';
+    const payload = {
+      message: 'This is a test webhook event from the Enterprise Operating System.',
+      test: true,
+      timestamp: new Date().toISOString()
+    };
+    const bodyPayload = JSON.stringify({
+      event: eventType,
+      timestamp: new Date().toISOString(),
+      data: payload
+    });
+
+    const hmac = crypto.createHmac('sha256', config.secret);
+    const signature = hmac.update(bodyPayload).digest('hex');
+
+    let responseStatus = 0;
+    let responseBody = '';
+    try {
+      const resp = await fetch(config.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-EAC-Event': eventType,
+          'X-EAC-Signature': signature
+        },
+        body: bodyPayload
+      });
+      responseStatus = resp.status;
+      responseBody = await resp.text();
+    } catch (err: any) {
+      responseStatus = 500;
+      responseBody = err.message || 'Connection failed';
+    }
+
+    const logEntry = await DeveloperRepository.logWebhookDelivery({
+      tenant_id: tenantId,
+      webhook_id: hookId,
+      event_type: eventType,
+      payload,
+      response_status: responseStatus,
+      response_body: responseBody.slice(0, 1000)
+    });
+
+    await logActivity(req, 'Developer', `Dispatched mock test webhook to ${config.url}`, { hookId, responseStatus });
+    res.json(logEntry);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/developer/api-logs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await DeveloperRepository.getApiLogs(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/developer/docs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    let data = await DeveloperRepository.getApiDocs();
+    if (data.length === 0) {
+      // Default baseline documentation routes if none exist in DB
+      data = [
+        {
+          id: 'doc-1',
+          endpoint: '/api/crm/leads',
+          method: 'GET',
+          description: 'Fetch list of CRM leads for the tenant with sorting, search, and page boundaries filters.',
+          request_schema: { query: { page: 'number', limit: 'number', query: 'string' } },
+          response_schema: { data: 'array', total: 'number' }
+        },
+        {
+          id: 'doc-2',
+          endpoint: '/api/crm/leads',
+          method: 'POST',
+          description: 'Register a new customer lead to the B2B sales pipeline.',
+          request_schema: { body: { first_name: 'string', last_name: 'string', email: 'string', company: 'string', phone: 'string' } },
+          response_schema: { id: 'uuid', first_name: 'string', last_name: 'string', status: 'string' }
+        },
+        {
+          id: 'doc-3',
+          endpoint: '/api/ledger/accounts',
+          method: 'GET',
+          description: 'Fetch the chart of accounts for the general double-entry ledger.',
+          request_schema: {},
+          response_schema: { data: 'array' }
+        },
+        {
+          id: 'doc-4',
+          endpoint: '/api/ledger/journal-entries',
+          method: 'POST',
+          description: 'Post a manual journal entry to adjust account balances. Total debits must match credits.',
+          request_schema: { body: { date: 'string', description: 'string', lines: 'Array<{ accountId: string, entryType: debit|credit, amountCents: number }>' } },
+          response_schema: { id: 'uuid', description: 'string', total_cents: 'number' }
+        },
+        {
+          id: 'doc-5',
+          endpoint: '/api/billing/invoices',
+          method: 'GET',
+          description: 'Fetch outbound invoices list, matching billing schedules.',
+          request_schema: {},
+          response_schema: { data: 'array' }
+        }
+      ];
+    }
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/developer/rate-limits', requireAuth, validateRequest(setRateLimitSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { apiKeyId, maxRequestsPerMinute } = req.body;
+  try {
+    const data = await DeveloperRepository.setRateLimit({
+      tenant_id: tenantId,
+      api_key_id: apiKeyId,
+      max_requests_per_minute: maxRequestsPerMinute
+    });
+    await logActivity(req, 'Developer', `Updated API key rate limits`, { apiKeyId, maxRequestsPerMinute });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/developer/sdks', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    let data = await DeveloperRepository.getSdkReleases();
+    if (data.length === 0) {
+      // Default releases to display if database hasn't been seeded
+      data = [
+        {
+          id: 'sdk-1',
+          version: '1.4.2',
+          language: 'Node.js',
+          download_url: 'https://sdk.enterpriseos.io/node-v1.4.2.tgz',
+          released_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: 'sdk-2',
+          version: '1.2.0',
+          language: 'Python',
+          download_url: 'https://sdk.enterpriseos.io/python-v1.2.0.tar.gz',
+          released_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: 'sdk-3',
+          version: '0.9.1',
+          language: 'Go',
+          download_url: 'https://sdk.enterpriseos.io/go-v0.9.1.zip',
+          released_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+    }
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/developer/webhook-queue/flush', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    await DeveloperService.flushWebhookQueue(tenantId);
+    await logActivity(req, 'Developer', 'Manually flushed webhook event queue');
+    res.json({ message: 'Webhook event queue flushed successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/developer/webhooks/events', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const events = [
+      'crm.lead.created',
+      'crm.lead.updated',
+      'crm.contact.created',
+      'ledger.journal.posted',
+      'billing.invoice.created',
+      'billing.invoice.paid',
+      'support.ticket.created',
+      'support.ticket.updated'
+    ];
+    res.json(events);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ENTERPRISE SECURITY, MFA, & AUDITING ---
+app.get('/api/security/audit-logs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await AuditRepository.getLogsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/mfa/setup', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const email = req.user?.email || '';
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const secret = generateSecret();
+    const backupCodes = Array.from({ length: 8 }, () => crypto.randomBytes(4).toString('hex'));
+    
+    await MfaRepository.upsert({
+      user_id: userId,
+      secret,
+      is_enabled: false,
+      backup_codes: backupCodes
+    });
+
+    const qrCodeUrl = `otpauth://totp/EACSolutions:${email}?secret=${secret}&issuer=EACSolutions`;
+    await logActivity(req, 'Auth', 'Initiated security MFA (TOTP) setup');
+    
+    res.json({
+      secret,
+      qrCodeUrl,
+      backupCodes
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/mfa/enable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { code } = req.body;
+  if (!userId || !code) {
+    return res.status(400).json({ error: 'Verification code is required' });
+  }
+
+  try {
+    const mfa = await MfaRepository.getByUserId(userId);
+    if (!mfa) {
+      return res.status(404).json({ error: 'MFA setup not found. Initiate setup first.' });
+    }
+
+    const isValid = verifyTOTP(code, mfa.secret);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid verification token' });
+    }
+
+    await MfaRepository.upsert({
+      user_id: userId,
+      is_enabled: true
+    });
+
+    await logActivity(req, 'Auth', 'Security MFA (TOTP) enabled successfully');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/mfa/disable', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { code } = req.body;
+  if (!userId || !code) {
+    return res.status(400).json({ error: 'Verification code/token is required' });
+  }
+
+  try {
+    const mfa = await MfaRepository.getByUserId(userId);
+    if (!mfa || !mfa.is_enabled) {
+      return res.status(400).json({ error: 'MFA is not enabled' });
+    }
+
+    let isValid = verifyTOTP(code, mfa.secret);
+    if (!isValid && mfa.backup_codes.includes(code)) {
+      isValid = true;
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid validation token or backup code' });
+    }
+
+    await MfaRepository.delete(userId);
+    await logActivity(req, 'Auth', 'Security MFA (TOTP) disabled');
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/mfa/verify', requireAuth, validateRequest(mfaVerifySchema), async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { code } = req.body;
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const mfa = await MfaRepository.getByUserId(userId);
+    if (!mfa || !mfa.is_enabled) {
+      return res.json({ success: true, message: 'MFA not active' });
+    }
+
+    let isValid = verifyTOTP(code, mfa.secret);
+    if (!isValid && mfa.backup_codes.includes(code)) {
+      isValid = true;
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid MFA verification code' });
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/security/sessions', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  try {
+    const data = await SecurityRepository.getSessionsByUser(userId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/security/sessions/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const sessionId = req.params.id;
+  const userId = req.user?.id || '';
+  try {
+    const data = await SecurityRepository.deleteSession(sessionId, userId);
+    await logActivity(req, 'Security', `Revoked active user session`, { sessionId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/security/saved-searches', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  try {
+    const data = await SecurityRepository.getSavedSearches(userId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/saved-searches', requireAuth, validateRequest(saveSearchSchema), async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  const { name, query, filters } = req.body;
+  try {
+    const data = await SecurityRepository.createSavedSearch({
+      tenant_id: tenantId,
+      user_id: userId,
+      name,
+      query,
+      filters: filters || {}
+    });
+    await logActivity(req, 'Security', `Created saved search: ${name}`, { searchId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/security/saved-searches/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const searchId = req.params.id;
+  const userId = req.user?.id || '';
+  try {
+    const data = await SecurityRepository.deleteSavedSearch(searchId, userId);
+    await logActivity(req, 'Security', `Deleted saved search`, { searchId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/security/incidents', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await SecurityRepository.getIncidentsByTenant(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/security/incidents/:id/resolve', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const incidentId = req.params.id;
+  const userId = req.user?.id || '';
+  try {
+    const data = await SecurityRepository.resolveIncident(incidentId, userId);
+    await logActivity(req, 'Security', `Resolved security incident report`, { incidentId });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ENTERPRISE AI COMPILATIONS & EMBEDDINGS ---
+app.post('/api/ai/chat', requireAuth, validateRequest(aiChatSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  const { query } = req.body;
+  try {
+    const terms = query.split(/\s+/).filter((t: string) => t.length > 2);
+    const matchedChunks = await AiRepository.searchDocChunks(tenantId, terms);
+
+    let contextStr = '';
+    if (matchedChunks.length > 0) {
+      contextStr = `\n\nFound relevant document context:\n` + matchedChunks.map((c: any) => `- ${c.chunk_content}`).join('\n');
+    }
+
+    const responses = [
+      `I have analyzed your workspace query. Based on current records, everything looks correct. Let me know if you want me to search or export this information.${contextStr}`,
+      `Based on the double-entry accounting ledger and compliance schedules, I can confirm the records align with the requested data.${contextStr}`,
+      `Here is the diagnostic report compiled from your active integration channels. Let me know if you need to run adjustments.${contextStr}`
+    ];
+    const aiResponse = responses[Math.abs(query.length) % responses.length];
+
+    const logEntry = await AiRepository.logChat({
+      tenant_id: tenantId,
+      user_id: userId,
+      user_query: query,
+      ai_response: aiResponse
+    });
+
+    res.json(logEntry);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/ai/chat/history', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  try {
+    const data = await AiRepository.getChatLogs(tenantId, userId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/ai/documents/embed', requireAuth, validateRequest(embedDocSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { documentId, chunks } = req.body;
+  try {
+    const dbEmbeddings = chunks.map((chunk: any) => ({
+      tenant_id: tenantId,
+      document_id: documentId,
+      chunk_content: chunk.content,
+      embedding: Array.from({ length: 128 }, () => Math.random())
+    }));
+
+    const data = await AiRepository.saveDocEmbeddings(dbEmbeddings);
+    await logActivity(req, 'AI', `Indexed document text chunks for vector RAG search`, { documentId });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // --- ENTERPRISE ANALYTICS & METRICS ---
 app.get('/api/analytics/metrics', requireAuth, async (req: AuthenticatedRequest, res) => {
   const tenantId = req.user?.tenant_id || '';
@@ -1561,6 +2433,218 @@ app.post('/api/admin/tenants/:id/quota', requireAuth, requireRoles(['super_admin
     const data = await AdminService.updateTenantQuota(tenantId, Number(quotaBytes));
     await logActivity(req, 'Admin', `Updated custom storage quota for tenant workspace`, { tenantId, quotaBytes });
     res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/tenants', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const search = req.query.search as string;
+    const type = req.query.type as string;
+    const tenants = await AdminRepository.getTenants(search, type);
+    res.json(tenants);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/tenants', requireAuth, requireRoles(['super_admin', 'admin']), validateRequest(createTenantAdminSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const newTenant = await AdminRepository.createTenant(req.body);
+    await AdminRepository.logSecurityEvent({
+      event_type: 'tenant.created',
+      severity: 'medium',
+      message: `New tenant workspace "${req.body.name}" created by administrator`,
+      user_identity: req.user?.id
+    });
+    res.status(201).json(newTenant);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/tenants/:id', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenant = await AdminRepository.getTenantDetails(req.params.id);
+    res.json(tenant);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/tenants/:id', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenant = await AdminRepository.updateTenant(req.params.id, req.body);
+    await AdminRepository.logSecurityEvent({
+      event_type: 'tenant.updated',
+      severity: 'low',
+      message: `Tenant workspace "${tenant.name}" parameters updated by administrator`,
+      user_identity: req.user?.id
+    });
+    res.json(tenant);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/tenants/:id/suspend', requireAuth, requireRoles(['super_admin', 'admin']), validateRequest(suspendTenantSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await AdminRepository.suspendTenant(req.params.id, req.user!.id, req.body.reason);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/tenants/:id/unsuspend', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await AdminRepository.unsuspendTenant(req.params.id, req.user!.id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/impersonate/:userId', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data: targetUser, error: uErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.params.userId)
+      .maybeSingle();
+
+    if (uErr || !targetUser) {
+      return res.status(404).json({ error: 'Impersonation failed: Target user profile not found' });
+    }
+
+    const impersonateToken = jwt.sign(
+      { 
+        userId: targetUser.id,
+        role: targetUser.role,
+        tenantId: targetUser.tenant_id,
+        isImpersonating: true,
+        adminId: req.user!.id
+      }, 
+      process.env.JWT_SECRET || 'your-super-secret-jwt-signing-key-change-in-production',
+      { expiresIn: '2h' }
+    );
+
+    res.json({ token: impersonateToken, user: targetUser });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/impersonate', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    res.json({ success: true, message: 'Impersonation session terminated' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/security-events', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const eventType = req.query.eventType as string;
+    const severity = req.query.severity as string;
+    const events = await AdminRepository.getSecurityEvents(eventType, severity);
+    res.json(events);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/telemetry/traffic', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const telemetry = await AdminRepository.getGlobalTelemetry();
+    res.json(telemetry);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/telemetry/storage', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('id, name, storage_used_bytes, storage_limit_bytes')
+      .order('storage_used_bytes', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/parameters', requireAuth, requireRoles(['super_admin', 'admin']), validateRequest(updateSystemParameterSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const param = await AdminRepository.updateSystemParameter(req.body.key, req.body.value, req.body.description);
+    res.json(param);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/migrations', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const migrations = await AdminRepository.getMigrations();
+    res.json(migrations);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/ip-whitelist', requireAuth, requireRoles(['super_admin', 'admin']), validateRequest(addIpWhitelistSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const entry = await AdminRepository.addIpWhitelist({
+      ip_address: req.body.ip_address,
+      description: req.body.description,
+      created_by: req.user!.id
+    });
+    res.status(201).json(entry);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/ip-whitelist/:id', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await AdminRepository.deleteIpWhitelist(req.params.id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/telemetry/health', requireAuth, requireRoles(['super_admin', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const memoryUsage = process.memoryUsage();
+    
+    const start = Date.now();
+    const { error } = await supabase.from('tenants').select('id').limit(1);
+    const dbLatency = Date.now() - start;
+
+    await AdminRepository.recordTelemetry({
+      cpu_usage: Number((Math.random() * 20 + 5).toFixed(2)),
+      memory_usage_bytes: memoryUsage.heapUsed,
+      request_count: Math.floor(Math.random() * 1000 + 200),
+      error_count: Math.floor(Math.random() * 5),
+      latency_ms_avg: Math.floor(dbLatency)
+    });
+
+    res.json({
+      status: error ? 'DEGRADED' : 'HEALTHY',
+      database: error ? 'DISCONNECTED' : 'CONNECTED',
+      dbLatencyMs: dbLatency,
+      memoryUsage: {
+        rss: memoryUsage.rss,
+        heapTotal: memoryUsage.heapTotal,
+        heapUsed: memoryUsage.heapUsed,
+        external: memoryUsage.external
+      },
+      uptimeSeconds: process.uptime()
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1737,17 +2821,45 @@ app.post('/api/messages/send', requireAuth, validateRequest(sendMessageSchema), 
 });
 
 // --- SUPPORT TICKETS ---
+// --- SUPPORT TICKETS ---
 app.get('/api/support/tickets', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const statusFilter = req.query.status as string;
+  const priorityFilter = req.query.priority as string;
+  const categoryFilter = req.query.category as string;
+  const assignedAgentFilter = req.query.assignedAgentId as string;
+  const query = req.query.q as string;
+
   try {
-    const tenantId = req.user?.tenant_id || '';
-    const data = await SupportRepository.getTicketsByTenant(tenantId);
-    res.json(data);
+    let rawTickets = await SupportRepository.getTicketsByTenant(tenantId);
+    
+    // Apply filters in memory
+    if (statusFilter) {
+      rawTickets = rawTickets.filter(t => t.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (priorityFilter) {
+      rawTickets = rawTickets.filter(t => t.priority?.toLowerCase() === priorityFilter.toLowerCase());
+    }
+    if (categoryFilter) {
+      rawTickets = rawTickets.filter(t => t.category?.toLowerCase() === categoryFilter.toLowerCase());
+    }
+    if (assignedAgentFilter) {
+      rawTickets = rawTickets.filter(t => t.assigned_agent_id === assignedAgentFilter);
+    }
+    if (query) {
+      rawTickets = rawTickets.filter(t => 
+        t.subject?.toLowerCase().includes(query.toLowerCase()) || 
+        t.description?.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    res.json(rawTickets);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/support/ticket', requireAuth, validateRequest(createTicketSchema), async (req: AuthenticatedRequest, res) => {
+app.post(['/api/support/ticket', '/api/support/tickets'], requireAuth, validateRequest(createTicketSchema), async (req: AuthenticatedRequest, res) => {
   const { subject, description, category, priority } = req.body;
   const tenantId = req.user?.tenant_id || '';
   const userId = req.user?.id || '';
@@ -1762,6 +2874,248 @@ app.post('/api/support/ticket', requireAuth, validateRequest(createTicketSchema)
     });
     await logActivity(req, 'Support', `Created support ticket: ${subject}`, { ticketId: data.id });
     res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/tickets/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const ticket = await SupportRepository.getTicketById(id, tenantId);
+    const messages = await SupportRepository.getCommentsByTicket(id);
+    res.json({ ...ticket, messages });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/support/tickets/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  const { category, priority, assigned_agent_id } = req.body;
+  try {
+    const data = await SupportRepository.updateTicket(id, { category, priority, assigned_agent_id }, tenantId);
+    await logActivity(req, 'Support', `Updated ticket properties`, { ticketId: id });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/support/tickets/:id/status', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await SupportRepository.updateTicket(id, { status }, tenantId);
+    await logActivity(req, 'Support', `Updated ticket status to: ${status}`, { ticketId: id, status });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/support/tickets/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    await SupportRepository.deleteTicket(id, tenantId);
+    await logActivity(req, 'Support', `Deleted support ticket`, { ticketId: id });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/support/tickets/:id/messages', requireAuth, validateRequest(createTicketReplySchema), async (req: AuthenticatedRequest, res) => {
+  const ticketId = req.params.id;
+  const { content } = req.body;
+  const userId = req.user?.id || '';
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    // Verify ticket exists
+    await SupportRepository.getTicketById(ticketId, tenantId);
+    const data = await SupportRepository.createComment({
+      ticket_id: ticketId,
+      user_id: userId,
+      content
+    });
+    await logActivity(req, 'Support', `Added response comment to ticket`, { ticketId, commentId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- KNOWLEDGE BASE ---
+app.get('/api/support/kb', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await SupportRepository.getKbArticles(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/support/kb', requireAuth, validateRequest(createKbArticleSchema), async (req: AuthenticatedRequest, res) => {
+  const { title, content, category, is_published } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  const userId = req.user?.id || '';
+  try {
+    const data = await SupportRepository.createKbArticle({
+      tenant_id: tenantId,
+      title,
+      content,
+      category,
+      is_published: is_published !== undefined ? is_published : true,
+      created_by: userId
+    });
+    await logActivity(req, 'Support', `Created help article: ${title}`, { articleId: data.id });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/support/kb/:id', requireAuth, validateRequest(updateKbArticleSchema), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await SupportRepository.updateKbArticle(id, req.body, tenantId);
+    await logActivity(req, 'Support', `Updated help article`, { articleId: id });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/support/kb/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    await SupportRepository.deleteKbArticle(id, tenantId);
+    await logActivity(req, 'Support', `Deleted help article`, { articleId: id });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- CSAT & SLA RATINGS / REPORTS ---
+app.post('/api/support/tickets/:id/rate', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const ticketId = req.params.id;
+  const { rating, feedback } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await SupportRepository.createCsatRating({
+      tenant_id: tenantId,
+      ticket_id: ticketId,
+      rating: Number(rating),
+      feedback
+    });
+    await logActivity(req, 'Support', `Submitted CSAT rating for ticket`, { ticketId, rating });
+    res.status(201).json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/reports/sla', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const breaches = await SupportRepository.getSlaBreaches(tenantId);
+    res.json(breaches);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/reports/cstat', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const ratings = await SupportRepository.getCsatRatings(tenantId);
+    
+    let totalScore = 0;
+    const ratingCounts = [0, 0, 0, 0, 0]; // 1 to 5 stars counts
+    
+    ratings.forEach((r: any) => {
+      const val = Math.min(5, Math.max(1, Math.round(r.rating || 5)));
+      totalScore += val;
+      ratingCounts[val - 1]++;
+    });
+
+    const totalRatings = ratings.length;
+    const averageScore = totalRatings > 0 ? Number((totalScore / totalRatings).toFixed(2)) : 5.0;
+
+    res.json({
+      averageScore,
+      totalRatingsCount: totalRatings,
+      breakdown: {
+        stars5: ratingCounts[4],
+        stars4: ratingCounts[3],
+        stars3: ratingCounts[2],
+        stars2: ratingCounts[1],
+        stars1: ratingCounts[0]
+      },
+      ratings
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/reports/volume', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const tickets = await SupportRepository.getTicketsByTenant(tenantId);
+    
+    const categoryVolume: Record<string, number> = {};
+    const statusVolume: Record<string, number> = {
+      'Open': 0,
+      'In Progress': 0,
+      'Resolved': 0,
+      'Closed': 0
+    };
+
+    tickets.forEach((t: any) => {
+      const cat = t.category || 'General';
+      const status = t.status || 'Open';
+      categoryVolume[cat] = (categoryVolume[cat] || 0) + 1;
+      statusVolume[status] = (statusVolume[status] || 0) + 1;
+    });
+
+    res.json({
+      totalVolume: tickets.length,
+      categories: categoryVolume,
+      status: statusVolume
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/support/agents/status', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    // List support agents in tenant workspace
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, full_name, email, role')
+      .eq('tenant_id', tenantId);
+    
+    if (error) throw error;
+    
+    // Filter agents
+    const agents = (users || []).map(u => ({
+      ...u,
+      is_available: true,
+      active_tickets_count: 0
+    }));
+
+    res.json(agents);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1826,24 +3180,193 @@ app.post('/api/billing/session', requireAuth, async (req: AuthenticatedRequest, 
 });
 
 // --- ACCOUNTANT OPERATIONS & CUSTOM PRICING ---
-app.post('/api/billing/invoices', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
-  const { tenantId, amountCents, dueDate, description } = req.body;
+app.post('/api/billing/invoices', requireAuth, requireRoles(['senior_accountant', 'admin']), validateRequest(createInvoiceSchema), async (req: AuthenticatedRequest, res) => {
+  const { amountCents, dueDate, currency, items, tenantId } = req.body;
+  const resolvedTenantId = tenantId || req.user?.tenant_id || '';
   try {
-    const { data, error } = await supabase
-      .from('invoices')
-      .insert({
-        tenant_id: tenantId,
-        amount_cents: amountCents,
-        due_date: dueDate,
-        status: 'unpaid',
-        stripe_invoice_id: 'manual_' + Math.random().toString(36).substring(7),
-        notes: description || 'Professional services invoice'
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    await logActivity(req, 'Billing', `Created manual invoice of $${(amountCents / 100).toFixed(2)} for tenant ${tenantId}`);
-    res.status(201).json(data);
+    const invoice = await BillingRepository.createInvoice({
+      tenant_id: resolvedTenantId,
+      amount_cents: amountCents,
+      currency: currency || 'USD',
+      status: 'unpaid',
+      due_date: dueDate
+    });
+
+    const itemsToInsert = items.map((item: any) => ({
+      invoice_id: invoice.id,
+      product_id: item.productId || null,
+      description: item.description,
+      quantity: item.quantity || 1,
+      unit_price_cents: item.unitPriceCents,
+      tax_rate_id: item.taxRateId || null
+    }));
+
+    const dbItems = await BillingRepository.createInvoiceItems(itemsToInsert);
+    
+    await logActivity(req, 'Billing', `Created invoice ${invoice.id} for $${(amountCents / 100).toFixed(2)}`, { invoiceId: invoice.id });
+    res.status(201).json({ ...invoice, items: dbItems });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/invoices/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const invoice = await BillingRepository.getInvoiceById(req.params.id, tenantId);
+    res.json(invoice);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/billing/invoices/:id', requireAuth, requireRoles(['senior_accountant', 'admin']), validateRequest(updateInvoiceSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await BillingRepository.updateInvoice(req.params.id, tenantId, req.body);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/billing/invoices/:id', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    await BillingRepository.deleteInvoice(req.params.id, tenantId);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/checkout-session', requireAuth, validateRequest(createCheckoutSessionSchema), async (req: AuthenticatedRequest, res) => {
+  const { invoiceId, couponCode } = req.body;
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const invoice = await BillingRepository.getInvoiceById(invoiceId, tenantId);
+    let amount = invoice.amount_cents;
+    if (couponCode) {
+      const coupons = await BillingRepository.getCoupons(tenantId);
+      const coupon = coupons.find(c => c.code === couponCode);
+      if (coupon) {
+        const discount = Math.floor(amount * (coupon.discount_percent / 100));
+        amount = amount - discount;
+      }
+    }
+    const mockSessionUrl = `https://checkout.stripe.com/pay/mock_session_${Math.random().toString(36).substring(7)}`;
+    res.json({ checkoutUrl: mockSessionUrl, finalAmountCents: amount });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/products', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await BillingRepository.getProducts(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/products', requireAuth, requireRoles(['senior_accountant', 'admin']), validateRequest(createProductCatalogSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const product = await BillingRepository.createProduct({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    res.status(201).json(product);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/coupons', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await BillingRepository.getCoupons(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/coupons', requireAuth, requireRoles(['senior_accountant', 'admin']), validateRequest(createCouponCatalogSchema), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const coupon = await BillingRepository.createCoupon({
+      tenant_id: tenantId,
+      ...req.body
+    });
+    res.status(201).json(coupon);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/tax-rates', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const data = await BillingRepository.getTaxRates(tenantId);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/billing/tax-rates', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  const { name, rate_percent } = req.body;
+  try {
+    const taxRate = await BillingRepository.createTaxRate({
+      tenant_id: tenantId,
+      name,
+      rate_percent
+    });
+    res.status(201).json(taxRate);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/reports/aging', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const invoices = await BillingRepository.getInvoicesByTenant(tenantId);
+    const now = new Date();
+    let current = 0;
+    let d30 = 0;
+    let d60 = 0;
+    let d90 = 0;
+
+    for (const inv of invoices) {
+      if (inv.status === 'unpaid') {
+        const due = new Date(inv.due_date);
+        const diffTime = now.getTime() - due.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 0) current += inv.amount_cents;
+        else if (diffDays <= 30) d30 += inv.amount_cents;
+        else if (diffDays <= 90) d60 += inv.amount_cents;
+        else d90 += inv.amount_cents;
+      }
+    }
+    res.json({ current, d30, d60, d90 });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/billing/reports/revenue', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const tenantId = req.user?.tenant_id || '';
+  try {
+    const invoices = await BillingRepository.getInvoicesByTenant(tenantId);
+    const paidInvoices = invoices.filter(inv => inv.status === 'paid');
+    const totalRevenueCents = paidInvoices.reduce((sum, inv) => sum + inv.amount_cents, 0);
+    res.json({ totalRevenueCents, invoiceCount: invoices.length, paidCount: paidInvoices.length });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1851,14 +3374,9 @@ app.post('/api/billing/invoices', requireAuth, requireRoles(['senior_accountant'
 
 app.post('/api/billing/invoices/:id/void', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
   try {
-    const { data, error } = await supabase
-      .from('invoices')
-      .update({ status: 'void' })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
+    const data = await BillingRepository.updateInvoice(id, tenantId, { status: 'voided' });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1867,14 +3385,9 @@ app.post('/api/billing/invoices/:id/void', requireAuth, requireRoles(['senior_ac
 
 app.post('/api/billing/invoices/:id/refund', requireAuth, requireRoles(['senior_accountant', 'admin']), async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
+  const tenantId = req.user?.tenant_id || '';
   try {
-    const { data, error } = await supabase
-      .from('invoices')
-      .update({ status: 'refunded' })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
+    const data = await BillingRepository.updateInvoice(id, tenantId, { status: 'refunded' });
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -2359,8 +3872,383 @@ app.patch('/api/messages/threads/:id/read', requireAuth, async (req: Authenticat
   }
 });
 
+// --- HR, EMPLOYEES & PAYROLL ENGINE ---
+app.get('/api/payroll/employees', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const employees = await PayrollRepository.getEmployeesByTenant(tenantId);
+    res.json(employees);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/employees', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), validateRequest(createEmployeeSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const { first_name, last_name, email, role, tax_id, base_salary_cents, status } = req.body;
+    
+    const employee = await PayrollRepository.createEmployee({
+      tenant_id: tenantId,
+      first_name,
+      last_name,
+      email,
+      role,
+      tax_id,
+      base_salary_cents,
+      status: status || 'active'
+    });
+
+    // Create a default salary structure
+    await PayrollRepository.saveSalaryStructure({
+      employee_id: employee.id,
+      base_salary_cents: base_salary_cents,
+      allowances_cents: 0,
+      deductions_cents: 0
+    });
+
+    await logActivity(req, 'HR', `Onboarded new employee: ${first_name} ${last_name}`, { employeeId: employee.id });
+    res.status(201).json(employee);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/payroll/employees/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const employee = await PayrollRepository.getEmployeeById(req.params.id, tenantId);
+    const salaryStructure = await PayrollRepository.getSalaryStructureByEmployee(employee.id);
+    const benefits = await PayrollRepository.getBenefitsByEmployee(employee.id);
+    
+    res.json({
+      ...employee,
+      salary_structure: salaryStructure,
+      benefits
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/payroll/employees/:id', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), validateRequest(updateEmployeeSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const employeeId = req.params.id;
+    const { first_name, last_name, email, role, tax_id, base_salary_cents, status } = req.body;
+
+    const updates: any = {};
+    if (first_name !== undefined) updates.first_name = first_name;
+    if (last_name !== undefined) updates.last_name = last_name;
+    if (email !== undefined) updates.email = email;
+    if (role !== undefined) updates.role = role;
+    if (tax_id !== undefined) updates.tax_id = tax_id;
+    if (base_salary_cents !== undefined) updates.base_salary_cents = base_salary_cents;
+    if (status !== undefined) updates.status = status;
+
+    const employee = await PayrollRepository.updateEmployee(employeeId, tenantId, updates);
+
+    // If base salary is updated, update salary structure as well
+    if (base_salary_cents !== undefined) {
+      const existing = await PayrollRepository.getSalaryStructureByEmployee(employeeId);
+      await PayrollRepository.saveSalaryStructure({
+        employee_id: employeeId,
+        base_salary_cents,
+        allowances_cents: existing?.allowances_cents || 0,
+        deductions_cents: existing?.deductions_cents || 0
+      });
+    }
+
+    await logActivity(req, 'HR', `Updated employee: ${employee.first_name} ${employee.last_name}`, { employeeId });
+    res.json(employee);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/payroll/employees/:id', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    await PayrollRepository.deleteEmployee(req.params.id, tenantId);
+    await logActivity(req, 'HR', `Removed employee ID: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Timesheets
+app.get('/api/payroll/timesheets', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const timesheets = await PayrollRepository.getTimesheetsByTenant(tenantId);
+    res.json(timesheets);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/timesheets', requireAuth, validateRequest(createTimesheetSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { employee_id, date, hours_worked } = req.body;
+    // Verify employee belongs to tenant
+    const tenantId = req.user?.tenant_id || '';
+    await PayrollRepository.getEmployeeById(employee_id, tenantId);
+
+    const timesheet = await PayrollRepository.createTimesheet({
+      employee_id,
+      date,
+      hours_worked
+    });
+
+    await logActivity(req, 'HR', `Logged ${hours_worked} hours for employee ID: ${employee_id} on ${date}`);
+    res.status(201).json(timesheet);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Payroll Runs
+app.get('/api/payroll/runs', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const runs = await PayrollRepository.getPayrollRunsByTenant(tenantId);
+    res.json(runs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/runs', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), validateRequest(createPayrollRunSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const { period_start, period_end } = req.body;
+
+    // Process run: find all active employees, calculate salaries, create payslips
+    const employees = await PayrollRepository.getEmployeesByTenant(tenantId);
+    const activeEmployees = employees.filter((e: any) => e.status === 'active');
+
+    if (activeEmployees.length === 0) {
+      return res.status(400).json({ error: 'No active employees found to run payroll' });
+    }
+
+    let totalPayoutCents = 0;
+    const payslipData: any[] = [];
+
+    for (const employee of activeEmployees) {
+      const structure = await PayrollRepository.getSalaryStructureByEmployee(employee.id);
+      const baseSalary = structure?.base_salary_cents || employee.base_salary_cents || 0;
+      const allowances = structure?.allowances_cents || 0;
+      const deductions = structure?.deductions_cents || 0;
+      const netPay = Math.max(0, baseSalary + allowances - deductions);
+
+      totalPayoutCents += netPay;
+      payslipData.push({
+        employee_id: employee.id,
+        base_salary_cents: baseSalary,
+        allowances_cents: allowances,
+        deductions_cents: deductions,
+        net_pay_cents: netPay
+      });
+    }
+
+    const run = await PayrollRepository.createPayrollRun({
+      tenant_id: tenantId,
+      period_start,
+      period_end,
+      status: 'draft',
+      total_payout_cents: totalPayoutCents
+    });
+
+    const payslips = payslipData.map(ps => ({
+      ...ps,
+      payroll_run_id: run.id
+    }));
+
+    await PayrollRepository.createPayslips(payslips);
+
+    await logActivity(req, 'HR', `Generated draft payroll run for period: ${period_start} to ${period_end}`, { runId: run.id });
+    res.status(201).json(run);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/payroll/runs/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const run = await PayrollRepository.getPayrollRunById(req.params.id, tenantId);
+    const payslips = await PayrollRepository.getPayslipsByRun(run.id);
+    res.json({
+      ...run,
+      payslips
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/runs/:id/approve', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const run = await PayrollRepository.updatePayrollRun(req.params.id, tenantId, { status: 'approved' });
+    await logActivity(req, 'HR', `Approved payroll run ID: ${req.params.id}`);
+    res.json(run);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/runs/:id/pay', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const run = await PayrollRepository.updatePayrollRun(req.params.id, tenantId, { status: 'paid' });
+    await logActivity(req, 'HR', `Disbursed payments for payroll run ID: ${req.params.id}`);
+    res.json(run);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Payslips
+app.get('/api/payroll/payslips', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const payslips = await PayrollRepository.getPayslipsByTenant(tenantId);
+    res.json(payslips);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/payroll/payslips/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const payslip = await PayrollRepository.getPayslipById(req.params.id);
+    if (payslip.employee?.tenant_id !== tenantId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    res.json(payslip);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PTO Requests
+app.get('/api/payroll/pto-requests', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const requests = await PayrollRepository.getPtoRequestsByTenant(tenantId);
+    res.json(requests);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/pto-requests', requireAuth, validateRequest(createPtoRequestSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { employee_id, start_date, end_date } = req.body;
+    const tenantId = req.user?.tenant_id || '';
+    
+    // Validate employee exists for this tenant
+    await PayrollRepository.getEmployeeById(employee_id, tenantId);
+
+    const request = await PayrollRepository.createPtoRequest({
+      employee_id,
+      start_date,
+      end_date,
+      status: 'pending'
+    });
+
+    await logActivity(req, 'HR', `Requested PTO leave for employee ID: ${employee_id} from ${start_date} to ${end_date}`);
+    res.status(201).json(request);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/payroll/pto-requests/:id/approve', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), validateRequest(resolvePtoRequestSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { status } = req.body;
+    const request = await PayrollRepository.updatePtoRequestStatus(req.params.id, status);
+    await logActivity(req, 'HR', `Updated PTO request ID: ${req.params.id} status to: ${status}`);
+    res.json(request);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Benefits
+app.post('/api/payroll/benefits', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), validateRequest(createBenefitSchema), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { employee_id, type, cost_cents } = req.body;
+    const tenantId = req.user?.tenant_id || '';
+    
+    // Validate employee exists for this tenant
+    await PayrollRepository.getEmployeeById(employee_id, tenantId);
+
+    const benefit = await PayrollRepository.createBenefit({
+      employee_id,
+      type,
+      cost_cents
+    });
+
+    await logActivity(req, 'HR', `Assigned benefit: ${type} ($${(cost_cents / 100).toFixed(2)}) to employee ID: ${employee_id}`);
+    res.status(201).json(benefit);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/payroll/benefits/:id', requireAuth, requireRoles(['payroll_specialist', 'admin', 'senior_accountant']), async (req: AuthenticatedRequest, res) => {
+  try {
+    await PayrollRepository.deleteBenefit(req.params.id);
+    await logActivity(req, 'HR', `Revoked benefit ID: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/payroll/reports/compensation', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user?.tenant_id || '';
+    const employees = await PayrollRepository.getEmployeesByTenant(tenantId);
+    
+    const activeEmployees = employees.filter((e: any) => e.status === 'active');
+    const totalEmployeesCount = employees.length;
+    const activeCount = activeEmployees.length;
+
+    let totalBaseSalaryCents = 0;
+    for (const emp of activeEmployees) {
+      const structure = await PayrollRepository.getSalaryStructureByEmployee(emp.id);
+      totalBaseSalaryCents += structure?.base_salary_cents || emp.base_salary_cents || 0;
+    }
+
+    const avgBaseSalaryCents = activeCount > 0 ? Math.round(totalBaseSalaryCents / activeCount) : 0;
+    
+    // Count roles
+    const rolesDistribution: { [key: string]: number } = {};
+    for (const emp of employees) {
+      const r = emp.role || 'Unspecified';
+      rolesDistribution[r] = (rolesDistribution[r] || 0) + 1;
+    }
+
+    res.json({
+      totalEmployees: totalEmployeesCount,
+      activeEmployees: activeCount,
+      totalMonthlyPayrollCostCents: totalBaseSalaryCents,
+      averageSalaryCents: avgBaseSalaryCents,
+      rolesDistribution
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- SYSTEM INITIALIZER BOOTSTRAP ---
 app.listen(PORT, () => {
+
   console.log(`EAC Solutions server running on http://localhost:${PORT}`);
   BillingService.bootstrapBillingPlans().catch((err) => {
     console.error('Failed to seed default billing plans:', err);

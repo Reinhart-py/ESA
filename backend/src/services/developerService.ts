@@ -70,12 +70,65 @@ export class DeveloperService {
             'X-EAC-Signature': signature
           },
           body: bodyPayload
-        }).catch((err) => {
+        })
+        .then(async (res) => {
+          const resBody = await res.text();
+          await DeveloperRepository.logWebhookDelivery({
+            tenant_id: tenantId,
+            webhook_id: hook.id,
+            event_type: eventType,
+            payload,
+            response_status: res.status,
+            response_body: resBody.slice(0, 1000)
+          });
+        })
+        .catch(async (err) => {
           console.error(`Failed to publish webhook to ${hook.url}:`, err.message);
+          await DeveloperRepository.logWebhookDelivery({
+            tenant_id: tenantId,
+            webhook_id: hook.id,
+            event_type: eventType,
+            payload,
+            response_status: 500,
+            response_body: err.message || 'Connection failed'
+          });
         });
       }
     } catch (err: any) {
       console.error('Failed to trigger webhook dispatching:', err.message);
     }
   }
+
+  /**
+   * Processes all pending/failed webhook events from the queue for a tenant
+   */
+  static async flushWebhookQueue(tenantId: string) {
+    try {
+      const queue = await DeveloperRepository.getWebhookQueue(tenantId);
+      const pendingItems = queue.filter((item: any) => item.status === 'pending' || item.status === 'failed');
+
+      for (const item of pendingItems) {
+        // Mark as processing
+        await DeveloperRepository.updateQueueItemStatus(item.id, 'processing', item.attempts + 1);
+
+        try {
+          // Dispatch immediately
+          await this.dispatchWebhook(tenantId, item.event_type, item.payload);
+          await DeveloperRepository.updateQueueItemStatus(item.id, 'processed', item.attempts + 1);
+        } catch (err: any) {
+          const nextAttempt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // retry in 10 mins
+          const newStatus = item.attempts + 1 >= 3 ? 'failed' : 'pending';
+          await DeveloperRepository.updateQueueItemStatus(
+            item.id,
+            newStatus,
+            item.attempts + 1,
+            nextAttempt
+          );
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to flush webhook queue:', err.message);
+    }
+  }
 }
+

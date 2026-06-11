@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,10 +13,13 @@ import {
   Trash, RefreshCw, BarChart3, AlertCircle
 } from 'lucide-react';
 import LedgerManagement from './LedgerManagement.tsx';
+import CrmManagement from './CrmManagement.tsx';
+import BillingManagement from './BillingManagement.tsx';
+import PayrollManagement from './PayrollManagement.tsx';
 import ComplianceFilingDashboard from './ComplianceFilingDashboard.tsx';
 import AICopilotPanel from './AICopilotPanel.tsx';
 import InternalMessagingHub from './InternalMessagingHub.tsx';
-import ProfileSettings from './ProfileSettings.tsx';
+import SecurityLayout from '../components/security/SecurityLayout.tsx';
 import DataTable from '../components/ui/DataTable.tsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.tsx';
 
@@ -37,7 +41,26 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
     obligations, messages, updateObligationStatus, sendMessage, currentUser, tasks, createTask, syncState
   } = context;
 
-  const [activeSubTab, setActiveSubTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.startsWith('/accountant/clients')) return 'clients';
+    if (path.startsWith('/accountant/ledger')) return 'ledger';
+    if (path.startsWith('/accountant/billing')) return 'billing';
+    if (path.startsWith('/accountant/payroll')) return 'payroll';
+    if (path.startsWith('/accountant/files')) return 'files';
+    if (path.startsWith('/accountant/tasks')) return 'tasks';
+    if (path.startsWith('/accountant/filings')) return 'filings';
+    if (path.startsWith('/accountant/conversations')) return 'conversations';
+    if (path.startsWith('/accountant/reporting')) return 'reporting';
+    if (path.startsWith('/accountant/security')) return 'security';
+    return 'dashboard';
+
+  };
+
+  const activeSubTab = getActiveTab();
   const [impersonatingId, setImpersonatingId] = useState<string>(() => localStorage.getItem('impersonate_tenant_id') || '');
   const [tenants, setTenants] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -350,24 +373,24 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
       {/* Sidebar with 10 operational tabs */}
-      <aside style={{ width: 'var(--sidebar-width)', background: '#0B192C', color: '#fff', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <div style={{ background: '#B58A2B', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>A</div>
+      <aside style={{ width: 'var(--sidebar-width)', background: 'var(--sidebar-bg)', color: 'var(--sidebar-text)', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--sidebar-border)', flexShrink: 0 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div style={{ background: 'var(--accent-color)', color: '#fff', width: 35, height: 35, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>A</div>
           <div>
-            <h2 style={{ fontSize: '1.05rem', color: '#fff', margin: 0 }}>Accountant Desk</h2>
-            <span style={{ fontSize: '0.75rem', color: '#B58A2B' }}>{currentUser?.full_name || 'Senior Consultant'}</span>
+            <h2 style={{ fontSize: '1.05rem', color: 'var(--sidebar-text)', margin: 0 }}>Accountant Desk</h2>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)' }}>{currentUser?.full_name || 'Senior Consultant'}</span>
           </div>
         </div>
 
         {currentUser?.role === 'senior_accountant' && (
-          <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <ShieldAlert size={14} style={{ color: '#B58A2B' }} /> Impersonate Tenant
+          <div style={{ padding: '1rem', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-sec)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <ShieldAlert size={14} style={{ color: 'var(--accent-color)' }} /> Impersonate Tenant
             </label>
             <select
               value={impersonatingId}
               onChange={(e) => handleImpersonate(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
             >
               <option value="">-- No Impersonation --</option>
               {tenants.map(t => (
@@ -379,77 +402,85 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
         <nav style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem', overflowY: 'auto' }}>
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'dashboard' ? '#fff' : '#9CA3AF', background: activeSubTab === 'dashboard' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('dashboard')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'dashboard' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'dashboard' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/dashboard')}
           >
             <LayoutDashboard size={16} /> Workspace Dashboard
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'clients' ? '#fff' : '#9CA3AF', background: activeSubTab === 'clients' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('clients')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'clients' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'clients' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/clients')}
           >
             <Users size={16} /> CRM Clients
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? '#fff' : '#9CA3AF', background: activeSubTab === 'ledger' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('ledger')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'ledger' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'ledger' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/ledger')}
           >
             <BookOpen size={16} /> General Ledger
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? '#fff' : '#9CA3AF', background: activeSubTab === 'billing' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('billing')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'billing' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'billing' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/billing')}
           >
             <CreditCard size={16} /> Billing & Pricing
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'files' ? '#fff' : '#9CA3AF', background: activeSubTab === 'files' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('files')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'payroll' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'payroll' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/payroll')}
+          >
+            <DollarSign size={16} style={{ color: 'var(--accent-color)' }} /> HR & Payroll Desk
+          </button>
+
+
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'files' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'files' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/files')}
           >
             <HardDrive size={16} /> Document Vault
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'tasks' ? '#fff' : '#9CA3AF', background: activeSubTab === 'tasks' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('tasks')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'tasks' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'tasks' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/tasks')}
           >
             <Briefcase size={16} /> Task Portfolio
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'filings' ? '#fff' : '#9CA3AF', background: activeSubTab === 'filings' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('filings')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'filings' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'filings' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/filings')}
           >
             <CalendarClock size={16} /> Compliance Obligations
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'conversations' ? '#fff' : '#9CA3AF', background: activeSubTab === 'conversations' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('conversations')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'conversations' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'conversations' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/conversations')}
           >
             <MessageSquare size={16} /> Communications
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'reporting' ? '#fff' : '#9CA3AF', background: activeSubTab === 'reporting' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('reporting')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'reporting' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'reporting' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/reporting')}
           >
             <BarChart3 size={16} /> Reporting Desk
           </button>
 
           <button 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? '#fff' : '#9CA3AF', background: activeSubTab === 'security' ? '#1E3E62' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
-            onClick={() => setActiveSubTab('security')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem', width: '100%', borderRadius: 6, color: activeSubTab === 'security' ? 'var(--sidebar-active-text)' : 'var(--text-sec)', background: activeSubTab === 'security' ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', fontSize: '0.85rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => navigate('/accountant/security')}
           >
             <Shield size={16} /> Security & Settings
           </button>
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)' }}>
           <button style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#EF4444', fontSize: '0.9rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={onLogout}>
             <LogOut size={16} /> Exit Desk
           </button>
@@ -526,130 +557,7 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
         {/* 2. CRM CLIENT MANAGEMENT TAB */}
         {activeSubTab === 'clients' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Client CRM Center</h1>
-                <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Maintain and modify client profile access structures.</p>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
-              <div>
-                <DataTable
-                  columns={[
-                    {
-                      key: 'name',
-                      label: 'Client / Company Name',
-                      sortable: true,
-                      render: (row) => (
-                        <div style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setSelectedClient(row)}>
-                          🏢 {row.name}
-                        </div>
-                      )
-                    },
-                    {
-                      key: 'business_type',
-                      label: 'Status Alignment',
-                      sortable: true,
-                      render: (row) => {
-                        const isSuspended = row.business_type === 'Suspended Enterprise';
-                        return (
-                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: isSuspended ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)', color: isSuspended ? 'red' : 'green' }}>
-                            {isSuspended ? 'SUSPENDED' : 'ACTIVE'}
-                          </span>
-                        );
-                      }
-                    },
-                    {
-                      key: 'actions',
-                      label: 'Modify Account Access',
-                      sortable: false,
-                      render: (row) => {
-                        const isSuspended = row.business_type === 'Suspended Enterprise';
-                        return (
-                          <button
-                            onClick={() => handleToggleClientStatus(row)}
-                            style={{ padding: '0.35rem 0.75rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
-                          >
-                            {isSuspended ? 'Reactivate' : 'Suspend'}
-                          </button>
-                        );
-                      }
-                    }
-                  ]}
-                  data={tenants}
-                  searchPlaceholder="Filter clients..."
-                  searchKey="name"
-                  pageSize={6}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Onboard client profile */}
-                <div className="premium-card">
-                  <h3>Onboard Client Workspace</h3>
-                  <form onSubmit={handleOnboardClientSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Organization Name"
-                      value={newClientName}
-                      onChange={e => setNewClientName(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-                    
-                    <select
-                      value={newClientType}
-                      onChange={e => setNewClientType(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="LLC">Limited Liability (LLC)</option>
-                      <option value="Corporation">C-Corp / S-Corp</option>
-                      <option value="Partnership">Partnership</option>
-                    </select>
-
-                    <select
-                      value={newClientRevenue}
-                      onChange={e => setNewClientRevenue(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="0-100k">0 - 100k Annual Revenue</option>
-                      <option value="100k-500k">100k - 500k Annual Revenue</option>
-                      <option value="500k-2m">500k - 2m Annual Revenue</option>
-                      <option value="2m+">2m+ Enterprise Bracket</option>
-                    </select>
-
-                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Generate Profile Workspace
-                    </button>
-                  </form>
-                </div>
-
-                {/* Selected CRM Profile detail */}
-                {selectedClient && (
-                  <div className="premium-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3>Selected Profile</h3>
-                      <button onClick={() => setSelectedClient(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', fontSize: '0.85rem' }}>
-                      <div><strong>Name:</strong> {selectedClient.name}</div>
-                      <div><strong>Client ID:</strong> <span style={{ fontSize: '0.7rem', fontFamily: 'monospace' }}>{selectedClient.id}</span></div>
-                      <div><strong>Active Status:</strong> {selectedClient.business_type || 'Active Corporation'}</div>
-                      <hr style={{ border: 0, borderTop: '1px solid var(--card-border)' }} />
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        <strong>Historical Activity Timeline:</strong>
-                        <ul style={{ paddingLeft: '1rem', marginTop: '0.25rem' }}>
-                          <li>Onboarding recorded</li>
-                          <li>Base folder generated</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <CrmManagement />
         )}
 
         {/* 3. GENERAL LEDGER TAB */}
@@ -659,150 +567,14 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
         {/* 4. BILLING & CUSTOM PRICING TAB */}
         {activeSubTab === 'billing' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Invoices & Custom Packages</h1>
-              <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Generate statements, record cash payments, and propose custom pricing packages.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
-              <div>
-                <h3>Historical Client Invoices ({invoices.length})</h3>
-                <DataTable
-                  columns={[
-                    {
-                      key: 'id',
-                      label: 'Invoice ID',
-                      sortable: true,
-                      render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{row.id.substring(0, 8)}...</span>
-                    },
-                    {
-                      key: 'amount_cents',
-                      label: 'Amount Due',
-                      sortable: true,
-                      render: (row) => <strong>${(row.amount_cents / 100).toFixed(2)}</strong>
-                    },
-                    {
-                      key: 'status',
-                      label: 'Billing Status',
-                      sortable: true,
-                      render: (row) => (
-                        <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: row.status === 'paid' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: row.status === 'paid' ? 'green' : 'red' }}>
-                          {row.status.toUpperCase()}
-                        </span>
-                      )
-                    },
-                    {
-                      key: 'actions',
-                      label: 'Actions',
-                      sortable: false,
-                      render: (row) => (
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          {row.status === 'unpaid' && (
-                            <button onClick={() => handleVoidInvoice(row.id)} style={{ padding: '0.25rem 0.5rem', background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Void</button>
-                          )}
-                          {row.status === 'paid' && (
-                            <button onClick={() => handleRefundInvoice(row.id)} style={{ padding: '0.25rem 0.5rem', background: 'rgba(239,68,68,0.1)', color: 'red', border: 'none', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}>Refund</button>
-                          )}
-                        </div>
-                      )
-                    }
-                  ]}
-                  data={invoices}
-                  pageSize={5}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Create Manual Invoice */}
-                <div className="premium-card">
-                  <h3>Generate Manual Invoice</h3>
-                  <form onSubmit={handleCreateInvoiceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-                    <select
-                      value={invoiceTenantId}
-                      onChange={e => setInvoiceTenantId(e.target.value)}
-                      required
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="">-- Choose Client --</option>
-                      {tenants.map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-
-                    <input 
-                      type="number" 
-                      placeholder="Amount in Cents (e.g. 15000 for $150)"
-                      value={invoiceAmountCents}
-                      onChange={e => setInvoiceAmountCents(Number(e.target.value))}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <input 
-                      type="date" 
-                      value={invoiceDueDate}
-                      onChange={e => setInvoiceDueDate(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <textarea
-                      placeholder="Invoice description details"
-                      value={invoiceDescription}
-                      onChange={e => setInvoiceDescription(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <button type="submit" style={{ padding: '0.5rem', background: '#B58A2B', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Dispatch Bill Statement
-                    </button>
-                  </form>
-                </div>
-
-                {/* Propose pricing package */}
-                <div className="premium-card">
-                  <h3>Propose Custom Pricing Package</h3>
-                  <form onSubmit={handleProposePackageSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Package Name (e.g. Custom Premium)"
-                      value={packageName}
-                      onChange={e => setPackageName(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <input 
-                      type="text" 
-                      placeholder="Plan Code Identifier"
-                      value={packageCode}
-                      onChange={e => setPackageCode(e.target.value)}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <input 
-                      type="number" 
-                      placeholder="Price Cents per month"
-                      value={packagePriceCents}
-                      onChange={e => setPackagePriceCents(Number(e.target.value))}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <input 
-                      type="number" 
-                      placeholder="Vault Space Limit (GB)"
-                      value={packageStorageGb}
-                      onChange={e => setPackageStorageGb(Number(e.target.value))}
-                      style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                    />
-
-                    <button type="submit" style={{ padding: '0.5rem', background: 'var(--primary-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                      Propose Package Tier
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
+          <BillingManagement />
         )}
+
+        {/* 4b. HR & PAYROLL TAB */}
+        {activeSubTab === 'payroll' && (
+          <PayrollManagement />
+        )}
+
 
         {/* 5. SECURE DOCUMENT VAULT TAB */}
         {activeSubTab === 'files' && (
@@ -1147,7 +919,7 @@ export default function AccountantPortal({ onLogout }: { onLogout: () => void })
 
         {/* 10. SECURITY & SETTINGS TAB */}
         {activeSubTab === 'security' && (
-          <ProfileSettings />
+          <SecurityLayout />
         )}
 
       </main>
